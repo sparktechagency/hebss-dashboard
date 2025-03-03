@@ -41,7 +41,7 @@ const Sidebar = ({ closeDrawer }) => {
     {
       icon: <FaMoneyCheckAlt className="h-5 w-5" />,
       label: "Subscriptions",
-      Link: "/subscriptions",
+      Link: "/subscription",
     },
     {
       icon: <FiUser className="h-5 w-5" />,
@@ -109,7 +109,7 @@ const Sidebar = ({ closeDrawer }) => {
 
   return (
     <div className="bg-white h-full w-72  p-3">
-      <div className="relative mb-4 ml-6">
+      <div className="relative mb-4 ml-6 pt-8">
         <input
           type="text"
           placeholder="Search"
@@ -117,7 +117,7 @@ const Sidebar = ({ closeDrawer }) => {
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full px-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-100 text-gray-700"
         />
-        <AiOutlineSearch className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500" />
+        <AiOutlineSearch className="absolute right-4 top-[55px] transform -translate-y-1/2 text-gray-500" />
       </div>
       <div className="flex flex-col h-full">
         {filteredMenuItems.map((item) => (

@@ -9,40 +9,45 @@ const salesData = Array.from({ length: 60 }, (_, i) => ({
 
 const Dashboard = () => {
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
+    <div className="p-4 sm:p-6 bg-gray-100 min-h-screen">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <h1 className="text-xl sm:text-2xl font-bold">Dashboard</h1>
         {/* <div className="flex items-center gap-4">
           <Bell className="w-6 h-6 text-gray-600" />
           <div className="text-sm font-medium">Eyasin<br /><span className="text-gray-500">Admin</span></div>
         </div> */}
       </div>
 
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      {/* Stats Section */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {["Total User", "Total Order", "Total Sales", "Total Pending"].map((title, i) => (
           <Card key={i} className="p-4 shadow-md bg-white">
             <h3 className="text-gray-600 text-sm">{title}</h3>
-            <p className="text-2xl font-bold">{[40689, 10293, "$89,000", 2040][i]}</p>
+            <p className="text-xl sm:text-2xl font-bold">{[40689, 10293, "$89,000", 2040][i]}</p>
             <span className="text-xs text-green-600">{["8.5% Up", "1.3% Up", "4.3% Down", "1.8% Up"][i]}</span>
           </Card>
         ))}
       </div>
 
-      <div className="bg-white p-4 shadow-md rounded-xl mb-6">
+      {/* Sales Chart */}
+      <div className="bg-white p-4 sm:p-6 shadow-md rounded-xl mb-6">
         <h2 className="text-lg font-semibold mb-4">Sales Details</h2>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={salesData}>
-            <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-            <YAxis tick={{ fontSize: 12 }} />
-            <Tooltip />
-            <Line type="monotone" dataKey="value" stroke="#f87171" strokeWidth={2} fill="#fecaca" />
-          </LineChart>
-        </ResponsiveContainer>
+        <div className="w-full min-w-[300px]">
+          <ResponsiveContainer width="100%" height={250}>
+            <LineChart data={salesData}>
+              <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+              <YAxis tick={{ fontSize: 12 }} />
+              <Tooltip />
+              <Line type="monotone" dataKey="value" stroke="#f87171" strokeWidth={2} fill="#fecaca" />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
-      <div className="bg-white p-4 shadow-md rounded-xl">
-        <h2 className="text-lg font-semibold mb-4">Recent Order</h2>
-        <table className="w-full border-collapse">
+      {/* Recent Orders */}
+      <div className="bg-white p-4 sm:p-6 shadow-md rounded-xl overflow-x-auto">
+        <h2 className="text-lg font-semibold mb-4">Recent Orders</h2>
+        <table className="w-full min-w-[600px] border-collapse">
           <thead>
             <tr className="border-b">
               {["ID", "Name", "Address", "Date", "Type", "Status"].map((col, i) => (

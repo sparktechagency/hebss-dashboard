@@ -20,7 +20,7 @@ const PrivacyPolicy = () => {
     return (
         <div className="container mx-auto">
             <div className="bg-white rounded-lg p-6 md:p-10 mt-5">
-                <h2 className="text-2xl font-bold mb-6">Update Privacy Policy</h2>
+                <h2 className="text-2xl font-bold mb-6">Privacy Policy</h2>
                 <ReactQuill
                     theme="snow"
                     value={value}
