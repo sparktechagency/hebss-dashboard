@@ -1,216 +1,190 @@
-/* eslint-disable no-unused-vars */
+import React, { useState } from "react";
 import { ConfigProvider, Form, Input, message, Modal, Space, Table } from "antd";
-import { useState } from "react";
-import { FaPlus, FaTrash } from "react-icons/fa";
-import { useCreateAdminMutation, useDeleteAdminMutation, useGetAdminQuery } from "../../redux/features/AdminApi/AdminApi";
+import { FaRegEye, FaRegEyeSlash } from "react-icons/fa";
+import { RiDeleteBin6Line } from "react-icons/ri";
+import { FaRegEdit } from "react-icons/fa";
 
 const MakeAdmin = () => {
+    const [form] = Form.useForm();
+    const [showPassword, setShowPassword] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [createAdmin] = useCreateAdminMutation();
-    const { data: AdminsData } = useGetAdminQuery();
-    const [deleteAdmin] = useDeleteAdminMutation()
-    const Admininformation = AdminsData?.data;
+    const [loading, setLoading] = useState(false);
 
-
-
-    // form modal
+    // Mock data for design
+    const [admins, setAdmins] = useState([
+        { id: 1, fullName: "Admin 1", email: "admin1@example.com", role: "admin" },
+        { id: 2, fullName: "Admin 2", email: "admin2@example.com", role: "admin" }
+    ]);
 
     const showModal = () => {
         setIsModalOpen(true);
     };
 
-    const handleOk = () => {
-        setIsModalOpen(false);
-    };
-
     const handleCancel = () => {
         setIsModalOpen(false);
+        form.resetFields();
     };
-    // form Modal
+
     const onFinish = (values) => {
-        try {
-            const data = {
-                fullName: values.name,
+        setLoading(true);
+        // Simulate adding new admin
+        setTimeout(() => {
+            const newAdmin = {
+                id: admins.length + 1,
+                fullName: values.fullName,
                 email: values.email,
-                password: values.password,
-
-            }
-            const response = createAdmin(data).unwrap();
-            console.log(response);
-            message.success("Admin created successfully");
-
-        } catch (error) {
-            console.log(error);
-            message.error("Something went wrong!");
-        }
+                role: "admin"
+            };
+            setAdmins([...admins, newAdmin]);
+            message.success("Admin created successfully!");
+            setLoading(false);
+            handleCancel();
+        }, 1000);
     };
-    const hnadleDelete = async (_id) => {
-        console.log(_id);
-        try {
-            const response = await deleteAdmin(_id).unwrap();
-            message.success("Admin deleted successfully");
-        } catch (error) {
-            console.log(error);
-            message.error("Something went wrong!");
-        }
-    }
+
+    const handleDelete = (record) => {
+        // Simulate delete
+        setAdmins(admins.filter(admin => admin.id !== record.id));
+        message.success("Admin deleted successfully!");
+    };
 
     const columns = [
         {
-            title: 'Sl No',
-            dataIndex: 'slno',
-            render: (text, record, index) => index + 1
+            title: "Name",
+            dataIndex: "fullName",
+            key: "fullName",
         },
         {
-            title: 'Name',
-            key: 'fullName',
+            title: "Email",
+            dataIndex: "email",
+            key: "email",
+        },
+        {
+            title: "Role",
+            dataIndex: "role",
+            key: "role",
+        },
+        {
+            title: "Action",
+            key: "action",
             render: (_, record) => (
-                <div className="flex items-center gap-2">
-
-                    <span>{record.fullName}</span>
-                </div>
+                <Space size="middle">
+                    <button
+                        onClick={() => handleDelete(record)}
+                        className="text-red-500 hover:text-red-700"
+                    >
+                        <RiDeleteBin6Line className="text-xl" />
+                    </button>
+                    <button className="text-blue-500 hover:text-blue-700">
+                        <FaRegEdit className="text-xl" />
+                    </button>
+                </Space>
             ),
         },
-        {
-            title: 'Email',
-            dataIndex: 'email',
-            key: 'email',
-        },
-        {
-            title: 'User Type',
-            dataIndex: 'role',
-            key: 'role',
-
-        },
-        {
-            title: 'Action',
-            key: 'action',
-            render: (_, record) => (
-                <ConfigProvider theme={{
-                    components: {
-                        "Button": {
-                            "defaultHoverBorderColor": "rgb(47,84,235)",
-                            "defaultHoverColor": "rgb(47,84,235)",
-                            "defaultBorderColor": "rgb(47,84,235)"
-                        }
-                    }
-                }}>
-                    <Space size="middle">
-                        <button onClick={() => hnadleDelete(record._id)} className=""><FaTrash className="text-red-500"></FaTrash></button>
-
-
-                    </Space>
-                </ConfigProvider>
-            ),
-        }
     ];
 
-
-
-
-
     return (
-        <div className="h-[100vh]">
-            <div className="flex flex-col md:flex-row justify-between md:items-center gap-5 my-6">
-                <p className="text-textColor md:text-xl font-bold">Make Admin</p>
+        <div className="container mx-auto">
+            <div className="bg-white rounded-lg p-6 md:p-10 mt-5">
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-bold">All Admin</h2>
+                    <button
+                        onClick={showModal}
+                        className="bg-primary text-white px-4 py-2 rounded-lg"
+                    >
+                        Add Admin
+                    </button>
+                </div>
 
-                <button onClick={showModal} className="flex justify-center items-center gap-2 bg-primary px-4 py-2 rounded-md text-white ">
-                    <FaPlus className="text-white" />
-                    Make Admin
-                </button>
-
-            </div>
-
-            <div className="bg-white">
-                <Table columns={columns} dataSource={Admininformation} pagination={false} rowKey="id" className="overflow-x-auto" />
-            </div>
-            {/* modal for add admin */}
-            <ConfigProvider
-                theme={{
+                <ConfigProvider theme={{
                     components: {
-                        "Button": {
-                            "defaultHoverBorderColor": "rgb(47,84,235)",
-                            "defaultHoverColor": "rgb(47,84,235)",
-                            "defaultBorderColor": "rgb(47,84,235)"
-                        }
-                    }
-                }}
-            >
-                <Modal title="Make Admin" open={isModalOpen} onOk={handleOk} onCancel={handleCancel} footer={false} >
+                        Table: {
+                            headerBg: "#F7F7F7",
+                            headerColor: "#333333",
+                            borderColor: "#E5E7EB",
+                            rowHoverBg: "#F9FAFB",
+                        },
+                    },
+                }}>
+                    <Table
+                        columns={columns}
+                        dataSource={admins}
+                        pagination={{ pageSize: 10 }}
+                    />
+                </ConfigProvider>
+
+                <Modal
+                    title="Add New Admin"
+                    open={isModalOpen}
+                    onCancel={handleCancel}
+                    footer={null}
+                >
                     <Form
-                        name="contact"
-                        initialValues={{ remember: false }}
+                        form={form}
+                        name="addAdmin"
                         onFinish={onFinish}
                         layout="vertical"
-
+                        className="mt-4"
                     >
-                        <div className="">
-                            <Form.Item
-                                name="name"
-                                label={<p className=" text-md">Full Name</p>}
-                                style={{}}
-                            >
-                                <Input
-                                    required
-                                    style={{ padding: "6px" }}
-                                    className=" text-md"
-                                    placeholder="John Doe"
-                                />
-                            </Form.Item>
-                            <Form.Item
-                                name="email"
-                                label={<p className=" text-md">E-mail</p>}
-                                style={{}}
-                            >
-                                <Input
-                                    required
-                                    style={{ padding: "6px" }}
-                                    className=" text-md"
-                                    placeholder="abcd@gmail.com"
-                                />
-                            </Form.Item>
+                        <Form.Item
+                            name="fullName"
+                            label="Full Name"
+                            rules={[{ required: true, message: "Please input full name!" }]}
+                        >
+                            <Input placeholder="Enter full name" />
+                        </Form.Item>
 
-                        </div>
-                        <div className="">
-                            <Form.Item
-                                name="user_type"
-                                label={<p className=" text-md">User Type</p>}
-                                style={{}}
-                            >
+                        <Form.Item
+                            name="email"
+                            label="Email"
+                            rules={[
+                                { required: true, message: "Please input email!" },
+                                { type: "email", message: "Please enter a valid email!" }
+                            ]}
+                        >
+                            <Input placeholder="Enter email" />
+                        </Form.Item>
+
+                        <Form.Item
+                            name="password"
+                            label="Password"
+                            rules={[{ required: true, message: "Please input password!" }]}
+                        >
+                            <div className="relative">
                                 <Input
-                                    required
-                                    style={{ padding: "6px" }}
-                                    className=" text-md"
-                                    placeholder="Admin"
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder="Enter password"
                                 />
-                            </Form.Item>
-                            <Form.Item
-                                name="password"
-                                label={<p className=" text-md">Password</p>}
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                                >
+                                    {showPassword ? <FaRegEyeSlash /> : <FaRegEye />}
+                                </button>
+                            </div>
+                        </Form.Item>
 
-                            >
-                                <Input.Password
-                                    required
-                                    style={{ padding: "6px" }}
-                                    className=" text-md"
-                                    placeholder="******"
-                                />
-                            </Form.Item>
-                        </div>
-                        <Form.Item >
-                            <button
-
-                                onClick={handleOk}
-                                className=" w-full py-2 bg-primary text-white font-semiboldbold rounded-lg text-xl  shadow-lg"
-                                type="submit"
-                            >
-                                Confirm
-                            </button>
+                        <Form.Item className="flex justify-end mb-0">
+                            <Space>
+                                <button
+                                    onClick={handleCancel}
+                                    className="bg-gray-100 text-gray-600 px-4 py-2 rounded-lg"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="bg-primary text-white px-4 py-2 rounded-lg"
+                                    disabled={loading}
+                                >
+                                    Add Admin
+                                </button>
+                            </Space>
                         </Form.Item>
                     </Form>
-
                 </Modal>
-            </ConfigProvider>
+            </div>
         </div>
     );
 };

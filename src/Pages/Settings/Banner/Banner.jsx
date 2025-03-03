@@ -1,105 +1,153 @@
-/* eslint-disable no-unused-vars */
+import React, { useState } from "react";
 import { ConfigProvider, Form, Input, message, Modal, Upload } from "antd";
-import { useState } from "react";
-import { FaCamera, FaPlus } from "react-icons/fa";
-import banner from "../../../assets/image/banner.png"
-import AddBanner from "../../../Components/Seetings/Banner/AddBanner/AddBanner";
-import EditBanner from "../../../Components/Seetings/Banner/EditBanner/EditBanner";
-import { useDeleteSliderMutation, useGetAllSlidersQuery } from "../../../redux/features/SettingsApi/settingsApi";
-import { BASE_URL } from "../../../utils/baseUrl";
+import { RiDeleteBin6Line } from "react-icons/ri";
+import { FaRegEdit } from "react-icons/fa";
+import { IoMdAdd } from "react-icons/io";
+
 const Banner = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editModalOpen, setEditModalOpen] = useState(false);
-    const [sliderId, setSliderId] = useState(null);
-    const { data: sliderData, refetch, isLoading } = useGetAllSlidersQuery();
-    const data = sliderData?.data
-    const [deleteSlider] = useDeleteSliderMutation()
-    // console.log("Slider", data)
+    const [loading, setLoading] = useState(false);
+    
+    // Mock data for design
+    const [banners, setBanners] = useState([
+        {
+            id: 1,
+            title: "Welcome to Our Platform",
+            description: "Discover amazing features and services",
+            image: "https://via.placeholder.com/800x400"
+        },
+        {
+            id: 2,
+            title: "Special Offers",
+            description: "Check out our latest deals",
+            image: "https://via.placeholder.com/800x400"
+        }
+    ]);
+
     const showModal = () => {
         setIsModalOpen(true);
-    };
-
-    const handleOk = () => {
-        setIsModalOpen(false);
     };
 
     const handleCancel = () => {
         setIsModalOpen(false);
     };
 
-    const handleEditOk = () => {
-        setEditModalOpen(false);
-    };
-
-    const handleEditCancel = () => {
-        setEditModalOpen(false);
-    };
-    const showEditModal = (id) => {
-        setSliderId(id);
-
-        setEditModalOpen(true);
-    };
-
-    // form Modal
     const onFinish = (values) => {
-        console.log('Success:', values);
+        setLoading(true);
+        // Simulate API call
+        setTimeout(() => {
+            const newBanner = {
+                id: banners.length + 1,
+                ...values,
+                image: "https://via.placeholder.com/800x400"
+            };
+            setBanners([...banners, newBanner]);
+            message.success("Banner added successfully!");
+            setLoading(false);
+            setIsModalOpen(false);
+        }, 1000);
     };
-    const handleDelete = async (_id) => {
-        await deleteSlider(_id).unwrap();
-        message.success('Deleted Successfully');
-    }
+
+    const handleDelete = (id) => {
+        setBanners(banners.filter(banner => banner.id !== id));
+        message.success("Banner deleted successfully!");
+    };
+
     return (
-        <div className="h-auto">
-            <div className="flex flex-col md:flex-row justify-between md:items-center gap-5 my-6">
-                <p className="text-textColor md:text-xl font-bold">Banner</p>
-
-                <button onClick={showModal} className="flex justify-center items-center gap-2 bg-primary px-4 py-2 rounded-md text-white ">
-                    <FaPlus className="text-white" />
-                    Add Banner
-                </button>
-
-            </div>
-            <div className="my-10">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-                    {
-                        !isLoading && data?.length > 0 ? data?.map((item) => (
-                            <div key={item._id} className="p-1 bg-white rounded-md border border-primary">
-                                <div className="relative">
-                                    <img src={`${BASE_URL}/v1/${item.image}`} alt="" className="h-[300px] w-full " />
-                                    <p className="p-2 text-black text-md font-bold">{item.title}</p>
-                                </div>
-                                <div className="flex justify-between items-center my-2">
-                                    <button onClick={() => handleDelete(item._id)} className=" text-center w-full md:w-auto  p-2 font-semibold text-red-500 px-10 py-2 rounded-xl shadow-lg border border-red-500">Delete</button>
-                                    <button onClick={() => showEditModal(item._id)} className="bg-primary text-center w-full md:w-auto  p-2 font-semibold text-white px-10 py-2 rounded-xl shadow-lg">Edit</button>
-                                </div>
-                            </div>
-                        )) : <p>No banner found</p>
-                    }
-
+        <div className="container mx-auto">
+            <div className="bg-white rounded-lg p-6 md:p-10 mt-5">
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-bold">Banner Management</h2>
+                    <button
+                        onClick={showModal}
+                        className="bg-primary text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                    >
+                        <IoMdAdd className="text-xl" />
+                        Add Banner
+                    </button>
                 </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {banners.map(banner => (
+                        <div key={banner.id} className="bg-gray-50 p-4 rounded-lg">
+                            <img
+                                src={banner.image}
+                                alt={banner.title}
+                                className="w-full h-48 object-cover rounded-lg mb-4"
+                            />
+                            <h3 className="font-semibold text-lg mb-2">{banner.title}</h3>
+                            <p className="text-gray-600 mb-4">{banner.description}</p>
+                            <div className="flex justify-end gap-2">
+                                <button
+                                    onClick={() => handleDelete(banner.id)}
+                                    className="text-red-500 hover:text-red-700"
+                                >
+                                    <RiDeleteBin6Line className="text-xl" />
+                                </button>
+                                <button className="text-blue-500 hover:text-blue-700">
+                                    <FaRegEdit className="text-xl" />
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <Modal
+                    title="Add New Banner"
+                    open={isModalOpen}
+                    onCancel={handleCancel}
+                    footer={null}
+                >
+                    <Form
+                        name="bannerForm"
+                        onFinish={onFinish}
+                        layout="vertical"
+                    >
+                        <Form.Item
+                            name="title"
+                            label="Title"
+                            rules={[{ required: true, message: "Please input title!" }]}
+                        >
+                            <Input placeholder="Enter banner title" />
+                        </Form.Item>
+
+                        <Form.Item
+                            name="description"
+                            label="Description"
+                            rules={[{ required: true, message: "Please input description!" }]}
+                        >
+                            <Input.TextArea rows={3} placeholder="Enter banner description" />
+                        </Form.Item>
+
+                        <Form.Item
+                            name="image"
+                            label="Banner Image"
+                            rules={[{ required: true, message: "Please upload an image!" }]}
+                        >
+                            <Upload
+                                listType="picture-card"
+                                maxCount={1}
+                                beforeUpload={() => false}
+                            >
+                                <div>
+                                    <IoMdAdd className="text-2xl" />
+                                    <div className="mt-2">Upload</div>
+                                </div>
+                            </Upload>
+                        </Form.Item>
+
+                        <Form.Item className="flex justify-end mb-0">
+                            <button
+                                type="submit"
+                                className="bg-primary text-white px-4 py-2 rounded-lg"
+                                disabled={loading}
+                            >
+                                {loading ? "Adding..." : "Add Banner"}
+                            </button>
+                        </Form.Item>
+                    </Form>
+                </Modal>
             </div>
-
-
-            <ConfigProvider
-                theme={{
-                    components: {
-                        "Button": {
-                            "defaultHoverBorderColor": "rgb(47,84,235)",
-                            "defaultHoverColor": "rgb(47,84,235)",
-                            "defaultBorderColor": "rgb(47,84,235)"
-                        }
-                    }
-                }}
-            >
-                <Modal title="Add Banner" open={isModalOpen} onOk={handleOk} onCancel={handleCancel} footer={false} >
-                    <AddBanner handleCancel={handleCancel} />
-
-                </Modal>
-                <Modal title="Edit Banner" open={editModalOpen} onOk={handleEditOk} onCancel={handleEditCancel} footer={false} >
-                    <EditBanner handleEditCancel={handleEditCancel} sliderId={sliderId} />
-
-                </Modal>
-            </ConfigProvider>
         </div>
     );
 };

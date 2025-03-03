@@ -1,111 +1,97 @@
-/* eslint-disable no-unused-vars */
-import { Outlet } from "react-router-dom";
-import { useEffect, useState, useMemo, useCallback } from "react";
-import { ConfigProvider, Drawer } from "antd";
-import { GiHamburgerMenu } from "react-icons/gi";
-import { FaX } from "react-icons/fa6";
-import { FaUserShield } from "react-icons/fa6";
-import { Link } from "react-router-dom";
+import React, { useState } from "react";
+import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "../../Components/Sidebar/Sidebar";
+import { ConfigProvider, Drawer } from "antd";
+import { RxHamburgerMenu } from "react-icons/rx";
+import { IoMdClose } from "react-icons/io";
+import { FaRegUser } from "react-icons/fa";
 import brandlogo from "../../assets/image/logo.png";
-import { useGetAdminProfileQuery } from "../../redux/features/AdminApi/AdminApi";
 
 const MainLayout = () => {
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const { data: admin } = useGetAdminProfileQuery(localStorage.getItem("_id"));
+    const [open, setOpen] = useState(false);
+    const location = useLocation();
 
-  // Determine if the screen is mobile
-  const isMobile = useMemo(() => window.innerWidth < 768, []);
-
-  // Toggle drawer state
-  const toggleDrawer = useCallback(() => setDrawerOpen((prev) => !prev), []);
-  const closeDrawer = useCallback(() => setDrawerOpen(false), []);
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 768) closeDrawer();
+    // Mock admin profile data for design
+    const adminProfile = {
+        name: "Admin User",
+        email: "admin@example.com",
+        role: "admin"
     };
 
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [closeDrawer]);
+    const showDrawer = () => {
+        setOpen(true);
+    };
 
-  return (
-    <div className="min-h-screen flex flex-col">
-      {/* Fixed Header */}
-      <header className="h-20 bg-white flex justify-between items-center px-4 md:px-10 shadow-md fixed top-0 left-0 w-full z-50">
-        {/* Mobile Menu Icon */}
-        {isMobile && (
-          <GiHamburgerMenu
-            onClick={toggleDrawer}
-            className="h-8 w-8 cursor-pointer text-gray-700 hover:text-black transition-all"
-          />
-        )}
+    const onClose = () => {
+        setOpen(false);
+    };
 
-        {/* Logo */}
-        <Link to="/">
-          <img
-            src={brandlogo}
-            alt="Brand Logo"
-            className="h-6 md:h-7 object-contain"
-          />
-        </Link>
+    const isAuthPage = location.pathname === "/signin" ||
+        location.pathname === "/forgate-password" ||
+        location.pathname === "/verify-otp" ||
+        location.pathname === "/new-password";
 
-        {/* Admin Profile */}
-        <div className="flex items-center gap-3">
-          <Link to="/admin-profile" className="flex items-center gap-2">
-            <FaUserShield className="w-10 h-10 text-primary" />
-            <p className="hidden md:block text-lg font-semibold text-primary">
-              {admin?.data?.fullName || "Admin"}<br/>
-              <p className="text-sm text-red-300">{admin?.data?.email || "Admin"}</p>
-            </p>
-          </Link>
+    if (isAuthPage) {
+        return <Outlet />;
+    }
+
+    return (
+        <div className="min-h-screen bg-[#F4F7FE]">
+            {/* Header for both mobile and desktop */}
+            <header className="w-full bg-white shadow-sm">
+                <div className="flex justify-between items-center py-3 px-4">
+                    <div>
+                        <img src={brandlogo} alt="logo" className="w-32" />
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <div className="hidden md:block text-right">
+                            <h3 className="text-lg font-semibold">{adminProfile.name}</h3>
+                            <p className="text-sm text-gray-500">{adminProfile.email}</p>
+                        </div>
+                        <div className="hidden md:flex items-center justify-center w-10 h-10 rounded-full bg-gray-100">
+                            <FaRegUser className="text-xl text-gray-600" />
+                        </div>
+                        <button className="block lg:hidden" onClick={showDrawer}>
+                            <RxHamburgerMenu className="text-2xl" />
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <div className="flex">
+                {/* Sidebar for desktop */}
+                <div className="hidden lg:block">
+                    <Sidebar adminProfile={adminProfile} />
+                </div>
+
+                {/* Mobile drawer */}
+                <ConfigProvider
+                    theme={{
+                        components: {
+                            Drawer: {
+                                colorBgElevated: "#ffffff",
+                            },
+                        },
+                    }}
+                >
+                    <Drawer
+                        placement="left"
+                        width="100%"
+                        onClose={onClose}
+                        open={open}
+                        closeIcon={<IoMdClose className="text-2xl" />}
+                    >
+                        <Sidebar adminProfile={adminProfile} />
+                    </Drawer>
+                </ConfigProvider>
+
+                {/* Main content */}
+                <div className="w-full">
+                    <Outlet />
+                </div>
+            </div>
         </div>
-      </header>
-
-      {/* Sidebar & Content Layout */}
-      <ConfigProvider
-        theme={{
-          components: {
-            Drawer: {
-              padding: 0,
-              paddingXS: 30,
-            },
-          },
-        }}
-      >
-        <div className="flex flex-1 pt-20">
-          {" "}
-          {/* Offset for fixed header */}
-          {isMobile ? (
-            <Drawer
-              title="Menu"
-              placement="left"
-              closable
-              onClose={closeDrawer}
-              open={drawerOpen}
-              width="80%"
-              closeIcon={<FaX className="text-black" />}
-            >
-              <Sidebar onClose={closeDrawer} />
-            </Drawer>
-          ) : (
-            <aside className="w-[18%] min-h-screen bg-white shadow-lg fixed left-0 top-24 h-[calc(100vh-80px)]">
-              <Sidebar />
-            </aside>
-          )}
-          {/* Scrollable Content */}
-          <main
-            className={`flex-1 bg-gray-100 p-4 md:p-8 overflow-auto ${
-              isMobile ? "ml-0" : "ml-[18%]"
-            } h-[calc(100vh-80px)]`}
-          >
-            <Outlet />
-          </main>
-        </div>
-      </ConfigProvider>
-    </div>
-  );
+    );
 };
 
 export default MainLayout;

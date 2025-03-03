@@ -1,57 +1,42 @@
 /* eslint-disable no-unused-vars */
-
-import { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { message } from 'antd';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
-import { useCreatePrivacyPolicyMutation, useGetPrivacyPolicyQuery } from '../../../redux/features/SettingsApi/settingsApi';
-import { message } from 'antd';
 
 const PrivacyPolicy = () => {
     const [value, setValue] = useState('');
-    const [createPrivacyPolicy] = useCreatePrivacyPolicyMutation();
-    const { data: privacyData, refetch } = useGetPrivacyPolicyQuery();
-    useEffect(() => {
-        if (privacyData?.data?.privacyPolicy) {
-            setValue(privacyData?.data?.privacyPolicy)
-        }
-    }, [privacyData?.data?.privacyPolicy, refetch])
+    const [loading, setLoading] = useState(false);
+
     const handleSubmit = async (value) => {
-        const data = {
-            privacyPolicy: value
-        }
-        try {
-            const res = await createPrivacyPolicy(data).unwrap();
-            console.log(res);
-            message.success("Privacy policy updated successfully");
-        } catch (error) {
-            console.log(error);
-            message.error("Failed to update privacy policy");
-        }
+        setLoading(true);
+        // Simulate API call
+        setTimeout(() => {
+            message.success("Privacy Policy updated Successfully");
+            setLoading(false);
+        }, 1000);
     };
+
     return (
-        <div className="mx-2 mb-10">
-
-            <div className="">
-
-                {/* show about data */}
-
+        <div className="container mx-auto">
+            <div className="bg-white rounded-lg p-6 md:p-10 mt-5">
+                <h2 className="text-2xl font-bold mb-6">Update Privacy Policy</h2>
                 <ReactQuill
-                    style={{ height: 600 }}
                     theme="snow"
                     value={value}
-                    onChange={setValue} />
-
+                    onChange={setValue}
+                    className="h-[200px] mb-12"
+                />
 
                 <button
                     onClick={() => handleSubmit(value)}
-                    className="px-10 py-3 mt-20  md:my-16 rounded bg-primary text-white font-semiboldbold shadow-lg flex justify-center items-center"
+                    className="bg-primary text-white px-6 py-2 rounded-lg mt-16"
                     type="submit"
+                    disabled={loading}
                 >
-                    Save
+                    {loading ? 'Updating...' : 'Update Privacy Policy'}
                 </button>
-
             </div>
-
         </div>
     );
 };

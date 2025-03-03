@@ -1,189 +1,128 @@
 /* eslint-disable no-unused-vars */
-import { ConfigProvider, Form, Input, message, Modal } from "antd";
-import { IoCall } from "react-icons/io5";
-import { FaEnvelope, FaPen, FaPlus } from "react-icons/fa";
-import { FaRegTrashAlt } from "react-icons/fa";
-import { useState } from "react";
-import { useCreateContactUsMutation, useGetAllContactsQuery } from "../../../redux/features/SettingsApi/settingsApi";
-const ContactUs = () => {
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isEditModal, setIsEditModal] = useState(false);
-    const [createContactUs] = useCreateContactUsMutation();
-    const { data: contactData, refetch } = useGetAllContactsQuery();
-    // console.log("contactData", contactData);
-    // modal ends
-    const [email, setEmail] = useState("");
+import React, { useState } from "react";
+import { ConfigProvider, Form, Input, message } from "antd";
 
-    // for email:
-    const showModal = () => {
-        setIsModalOpen(true)
-    };
-    const handleOk = () => {
-        setIsModalOpen(false)
-    }
-    const handleCancel = () => {
-        setIsModalOpen(false)
-
-    }
-
-    const handleEditModalOpen = (id) => {
-        setIsEditModal(true);
-    }
-    const handleEditOk = () => {
-        setIsEditModal(false);
-    }
-    const handleEditCancel = () => {
-        setIsEditModal(false);
-    }
-
-    // add email button:
-    const onFinish = async (value) => {
-        try {
-            const data = {
-                email: value.email,
-            }
-            const res = createContactUs(data).unwrap();
-            message.success("Email added successfully");
-            handleCancel();
-        } catch (error) {
-            console.log(error);
-            message.error("Something went wrong");
+const ContactUS = () => {
+    const [value, setValue] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [contacts, setContacts] = useState([
+        {
+            id: 1,
+            address: "123 Main St, City",
+            email: "contact@example.com",
+            phone: "+1234567890"
         }
+    ]);
 
+    const handleSubmit = async (value) => {
+        setLoading(true);
+        // Simulate API call
+        setTimeout(() => {
+            setContacts([{
+                id: 1,
+                ...value
+            }]);
+            message.success("Contact Us updated Successfully");
+            setLoading(false);
+        }, 1000);
     };
-    // edit Modal:
-    const onFinishEdit = async (value) => {
-        try {
-            const data = {
-                email: value.email,
-            }
-            const res = createContactUs(data).unwrap();
-            message.success("Email added successfully");
-            handleEditCancel();
-        } catch (error) {
-            console.log(error);
-            message.error("Something went wrong");
-        }
-    }
 
     return (
-        <div className="h-[100vh]">
-            {/* add email number: */}
-            <div className=" max-w-screen-2xl mx-auto flex flex-col justify-start bg-white  md:px-20 py-8 md:w-[50%]">
-                <div className="flex justify-start items-center gap-3 ">
-                    <FaEnvelope className="text-white bg-primary p-1 h-6 w-6 rounded-full" />
-                    <p className="text-xl text-textColor">Write To US</p>
+        <div className="container mx-auto">
+            <div className="bg-white rounded-lg p-6 md:p-10 mt-5">
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-bold">Contact Information</h2>
                 </div>
-                <div className="my-6">
-                    <div className="flex flex-col justify-center items-center gap-5 mb-5">
 
-                        <div className="flex justify-center items-center gap-5">
-                            <p className="px-5 py-2 border-2 rounded-lg w-60 md:w-96">{contactData?.data?.email} </p>
-                            <FaPen onClick={() => handleEditModalOpen(contactData?.data?._id)} className="h-5 w-5 cursor-pointer" />
+                {contacts.map(contact => (
+                    <div key={contact.id} className="bg-gray-50 p-6 rounded-lg">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <h3 className="font-semibold mb-2">Address</h3>
+                                <p>{contact.address}</p>
+                            </div>
+                            <div>
+                                <h3 className="font-semibold mb-2">Email</h3>
+                                <p>{contact.email}</p>
+                            </div>
+                            <div>
+                                <h3 className="font-semibold mb-2">Phone</h3>
+                                <p>{contact.phone}</p>
+                            </div>
                         </div>
-
                     </div>
-                    <button
-                        onClick={showModal}
-                        className=" bg-primary text-white font-semiboldbold text-xl rounded-full shadow-lg flex justify-end items-end"
-                        type="submit"
-                    >
-                        <FaPlus className="text-white bg-primary h-8 w-8 p-1 rounded-full"></FaPlus>
-                    </button>
-                    <ConfigProvider theme={
-                        {
-                            components: {
-                                "Modal": {
-                                    "colorIcon": "rgb(0,0,0)",
-                                    "colorIconHover": "rgb(0,0,0)",
-                                    "colorBgTextHover": "#ffa496",
-                                    "colorBgTextActive": "#ffa496"
-                                },
+                ))}
 
-                            }
-                        }
-                    }>
+                <div className="mx-2 mb-10">
+                    <div className="">
+                        <Form
+                            name="contact-us"
+                            initialValues={{ remember: true }}
+                            style={{ maxWidth: 550 }}
+                            layout="vertical"
+                            className=" bg-white py-10 md:py-28 mx-4 md:mx-0 px-6 md:px-10 rounded-2xl w-[450px] border-2 shadow-xl"
+                        >
+                            <div className="mb-4 text-center">
+                                <h2
+                                    className=" text-center text-2xl md:text-3xl font-bold mb-6"
+                                >
+                                    Contact Us
+                                </h2>
+                            </div>
 
-                        <Modal title="Add Email" open={isModalOpen} onOk={handleOk} onCancel={handleCancel} footer={null}>
-                            <Form
-                                name="contact"
-                                initialValues={{ remember: false }}
-                                onFinish={onFinish}
-                                layout="vertical"
-
+                            <Form.Item
+                                name="address"
+                                label={<p className="text-md font-semibold">Address :</p>}
                             >
-                                <div className=" gap-2">
-                                    <Form.Item
-                                        name="email"
-                                        label={<p className=" text-md"></p>}
-                                        style={{}}
-                                    >
-                                        <Input
-                                            required
-                                            style={{ padding: "6px" }}
-                                            className=" text-md"
-                                            placeholder="xxxxxxx@gmail.com"
-                                        />
-                                    </Form.Item>
+                                <Input.TextArea
+                                    required
+                                    style={{ padding: "6px" }}
+                                    className="text-md"
+                                    placeholder="Enter your address"
+                                    rows={4}
+                                />
+                            </Form.Item>
 
-
-                                </div>
-
-                                <Form.Item >
-                                    <button
-
-                                        className="px-4 py-2 rounded bg-primary text-white font-semiboldbold   shadow-lg flex justify-end items-end"
-                                        type="submit"
-                                    >
-                                        save
-                                    </button>
-                                </Form.Item>
-                            </Form>
-                        </Modal>
-                        {/* Edit Modal */}
-                        <Modal title="Edit Email" open={isEditModal} onOk={handleEditOk} onCancel={handleEditCancel} footer={null}>
-                            <Form
-                                name="contact"
-                                initialValues={{ remember: false }}
-                                onFinish={onFinishEdit}
-                                layout="vertical"
-
+                            <Form.Item
+                                name="email"
+                                label={<p className="text-md font-semibold">Email :</p>}
                             >
-                                <div className=" gap-2">
-                                    <Form.Item
-                                        name="email"
-                                        label={<p className=" text-md"></p>}
-                                        style={{}}
-                                    >
-                                        <Input
-                                            required
-                                            style={{ padding: "6px" }}
-                                            className=" text-md"
-                                            placeholder="xxxxxxx@gmail.com"
-                                        />
-                                    </Form.Item>
+                                <Input
+                                    required
+                                    style={{ padding: "6px" }}
+                                    className="text-md"
+                                    placeholder="Enter your email"
+                                />
+                            </Form.Item>
 
+                            <Form.Item
+                                name="phone"
+                                label={<p className="text-md font-semibold">Phone :</p>}
+                            >
+                                <Input
+                                    required
+                                    style={{ padding: "6px" }}
+                                    className="text-md"
+                                    placeholder="Enter your phone"
+                                />
+                            </Form.Item>
 
-                                </div>
-
-                                <Form.Item >
-                                    <button
-
-                                        className="px-4 py-2 rounded bg-primary text-white font-semiboldbold   shadow-lg flex justify-end items-end"
-                                        type="submit"
-                                    >
-                                        save
-                                    </button>
-                                </Form.Item>
-                            </Form>
-                        </Modal>
-                    </ConfigProvider>
+                            <Form.Item className="text-center">
+                                <button
+                                    onClick={() => handleSubmit(value)}
+                                    className="bg-primary text-center w-full p-2 font-semibold text-white px-10 py-2 rounded-2xl shadow-lg"
+                                    type="submit"
+                                    disabled={loading}
+                                >
+                                    {loading ? 'Saving...' : 'Save'}
+                                </button>
+                            </Form.Item>
+                        </Form>
+                    </div>
                 </div>
             </div>
-
-
         </div>
-
     );
 };
-export default ContactUs;
+
+export default ContactUS;
