@@ -24,6 +24,8 @@ import InvoiceHistoryPage from "../Pages/UserList/InvoiceHistory";
 import ReviewsPage from "../Pages/Reviews/Reviews";
 import BlogPage from "../Pages/Blog/Blog";
 import AdminManagementPage from "../Pages/Admin/Admin";
+import FAQPage from "../Pages/Settings/FAQs/FAQs";
+import TeamPage from "../Pages/Settings/Team/Team";
 // import PrivateRoute from "./privateRoute";
 
 export const router = createBrowserRouter([
@@ -111,6 +113,14 @@ export const router = createBrowserRouter([
           {
             path: "/administrator",
             element: <AdminManagementPage />,
+          },
+          {
+            path: "/settings/faqs",
+            element: <FAQPage />,
+          },
+          {
+            path: "/settings/team",
+            element: <TeamPage />,
           },
           // {
           //     path: "/user-management/doctor",

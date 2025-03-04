@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Table, Input, Pagination } from "antd";
+import { Table, Input, Pagination, Modal, Button } from "antd";
 import { EyeOutlined } from "@ant-design/icons";
 
 const { Search } = Input;
@@ -7,6 +7,8 @@ const { Search } = Input;
 const OrderList = () => {
   const [searchText, setSearchText] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [currentOrder, setCurrentOrder] = useState(null);
   const pageSize = 5;
 
   const data = [
@@ -30,10 +32,14 @@ const OrderList = () => {
     {
       title: "View",
       key: "view",
-      render: () => (
-        <button className="px-2 py-1 bg-red-500 text-white rounded">
-          <EyeOutlined />
-        </button>
+      render: (text, record) => (
+        <Button
+          type="link"
+          icon={<EyeOutlined />}
+          onClick={() => showOrderDetails(record)}
+        >
+          View
+        </Button>
       ),
     },
   ];
@@ -45,6 +51,28 @@ const OrderList = () => {
   );
 
   const paginatedData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  // Function to show the modal with the order details
+  const showOrderDetails = (order) => {
+    setCurrentOrder(order);
+    setIsModalVisible(true);
+  };
+
+  // Function to close the modal
+  const handleCancel = () => {
+    setIsModalVisible(false);
+  };
+
+  // Modal content displaying the order details
+  const modalContent = currentOrder ? (
+    <div>
+      <p><strong>Order ID:</strong> {currentOrder.id}</p>
+      <p><strong>Name:</strong> {currentOrder.name}</p>
+      <p><strong>Address:</strong> {currentOrder.address}</p>
+      <p><strong>Order Date:</strong> {currentOrder.date}</p>
+      <p><strong>Type:</strong> {currentOrder.type}</p>
+    </div>
+  ) : null;
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
@@ -75,6 +103,20 @@ const OrderList = () => {
           />
         </div>
       </div>
+
+      {/* Modal to show the order details */}
+      <Modal
+        title="Order Details"
+        visible={isModalVisible}
+        onCancel={handleCancel}
+        footer={[
+          <Button key="close" onClick={handleCancel}>
+            Close
+          </Button>,
+        ]}
+      >
+        {modalContent}
+      </Modal>
     </div>
   );
 };

@@ -14,8 +14,8 @@ const MainLayout = () => {
 
   // Mock admin profile data for design
   const adminProfile = {
-    name: "Admin User",
-    email: "admin@example.com",
+    name: "Fahad Hossain",
+    email: "fahadhossain0503@gmail.com",
     role: "admin",
   };
 
@@ -41,12 +41,12 @@ const MainLayout = () => {
     <div className="min-h-screen bg-[#F4F7FE] flex flex-col">
       {/* Header */}
       <header className="w-full bg-white shadow-sm fixed top-0 left-0 z-10">
-        <div className="flex justify-between items-center py-3 px-4">
+        <div className="flex justify-between items-center py-3 px-4 md:pl-20">
           <div>
             <img src={brandlogo} alt="logo" className="w-32" />
           </div>
           <div
-            className="flex items-center gap-4 cursor-pointer"
+            className="flex items-center gap-4 cursor-pointer md:mr-8"
             onClick={() => navigate("/admin-profile")}
           >
             <div className="hidden md:block text-right">
