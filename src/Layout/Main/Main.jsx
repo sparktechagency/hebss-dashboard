@@ -5,7 +5,7 @@ import { ConfigProvider, Drawer } from "antd";
 import { RxHamburgerMenu } from "react-icons/rx";
 import { IoMdClose } from "react-icons/io";
 import { FaRegUser } from "react-icons/fa";
-import brandlogo from "../../assets/image/logo.png";
+import brandlogo from "../../assets/image/Logo.png";
 
 const MainLayout = () => {
   const [open, setOpen] = useState(false);
@@ -32,7 +32,7 @@ const MainLayout = () => {
     location.pathname === "/forgate-password" ||
     location.pathname === "/verify-otp" ||
     location.pathname === "/new-password";
-
+console.log(isAuthPage)
   if (isAuthPage) {
     return <Outlet />;
   }

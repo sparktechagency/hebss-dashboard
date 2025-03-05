@@ -1,6 +1,8 @@
-import { ConfigProvider, Input, Form, message } from "antd";
-import { useState } from "react";
+import React, { useState } from "react";
+import { Tabs, Button, Input, Form, message, Typography, ConfigProvider } from "antd";
 import { FaRegEye, FaRegEyeSlash } from "react-icons/fa";
+
+const { TabPane } = Tabs;
 
 const AdminProfile = () => {
   const [showOldPassword, setShowOldPassword] = useState(false);
@@ -12,13 +14,10 @@ const AdminProfile = () => {
   const adminData = {
     name: "Admin User",
     email: "admin@example.com",
-    phone: "+1234567890",
-    address: "123 Admin Street",
   };
 
   const onFinish = (values) => {
     setLoading(true);
-    // Simulate update
     setTimeout(() => {
       message.success("Profile updated successfully!");
       setLoading(false);
@@ -27,7 +26,6 @@ const AdminProfile = () => {
 
   const onPasswordChange = (values) => {
     setLoading(true);
-    // Simulate password change
     setTimeout(() => {
       message.success("Password changed successfully!");
       setLoading(false);
@@ -35,104 +33,82 @@ const AdminProfile = () => {
   };
 
   return (
-    <div className="container mx-auto">
-      <div className="bg-white rounded-lg p-6 md:p-10 mt-5">
-        <div>
-          <h2 className="text-2xl font-bold mb-6">Update Profile</h2>
-          <div>
+    <div className="container mx-auto bg-gray-50 min-h-screen py-10">
+      <div className="max-w-screen-lg mx-auto bg-white p-8 rounded-lg shadow-lg">
+        {/* Tabs for Profile and Password */}
+        <Tabs defaultActiveKey="1" size="large" className="space-y-6">
+          {/* Profile Tab */}
+          <TabPane tab="Update Profile" key="1">
+            <Typography.Title level={3} className="mb-6 text-center">Update Profile</Typography.Title>
             <Form
               name="updateProfile"
               onFinish={onFinish}
               initialValues={adminData}
               layout="vertical"
+              className="space-y-4"
             >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <ConfigProvider>
                   <Form.Item
-                    label={<p className="text-md">Name</p>}
+                    label="Full Name"
                     name="name"
+                    className="mb-4"
                   >
                     <Input
-                      style={{ padding: "6px" }}
                       placeholder="Enter your name"
-                      className="text-md"
+                      className="rounded-md border-red-500 focus:border-red-500 focus:ring focus:ring-red-500 focus:ring-opacity-50"
                     />
                   </Form.Item>
                 </ConfigProvider>
 
                 <ConfigProvider>
                   <Form.Item
-                    label={<p className="text-md">Email</p>}
+                    label="Email"
                     name="email"
+                    className="mb-4"
                   >
                     <Input
-                      style={{ padding: "6px" }}
                       placeholder="Enter your email"
-                      className="text-md"
-                    />
-                  </Form.Item>
-                </ConfigProvider>
-
-                <ConfigProvider>
-                  <Form.Item
-                    label={<p className="text-md">Phone</p>}
-                    name="phone"
-                  >
-                    <Input
-                      style={{ padding: "6px" }}
-                      placeholder="Enter your phone"
-                      className="text-md"
-                    />
-                  </Form.Item>
-                </ConfigProvider>
-
-                <ConfigProvider>
-                  <Form.Item
-                    label={<p className="text-md">Address</p>}
-                    name="address"
-                  >
-                    <Input
-                      style={{ padding: "6px" }}
-                      placeholder="Enter your address"
-                      className="text-md"
+                      className="rounded-md border-red-500 focus:border-red-500 focus:ring focus:ring-red-500 focus:ring-opacity-50"
                     />
                   </Form.Item>
                 </ConfigProvider>
               </div>
 
-              <div className="flex justify-end mt-4">
-                <button
-                  className="bg-primary text-white px-6 py-2 rounded-lg"
-                  type="submit"
-                  disabled={loading}
+              <div className="flex justify-end">
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  loading={loading}
+                  className="bg-red-500 text-white rounded-md px-6 py-2 shadow-md hover:bg-red-600"
                 >
                   Update Profile
-                </button>
+                </Button>
               </div>
             </Form>
-          </div>
-        </div>
+          </TabPane>
 
-        <div className="mt-10">
-          <h2 className="text-2xl font-bold mb-6">Change Password</h2>
-          <div>
+          {/* Password Change Tab */}
+          <TabPane tab="Change Password" key="2">
+            <Typography.Title level={3} className="mb-6 text-center">Change Password</Typography.Title>
             <Form
               name="changePassword"
               onFinish={onPasswordChange}
               layout="vertical"
+              className="space-y-4"
             >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div className="relative">
                   <Form.Item
-                    label={<p className="text-md">Old Password</p>}
+                    label="Old Password"
                     name="oldPassword"
+                    className="mb-4"
                   >
                     <div className="relative">
                       <Input
                         type={showOldPassword ? "text" : "password"}
-                        style={{ padding: "6px" }}
                         placeholder="Enter old password"
-                        className="text-md pr-10"
+                        className="rounded-md border-red-500 focus:border-red-500 focus:ring focus:ring-red-500 focus:ring-opacity-50 pr-10"
                       />
                       <button
                         type="button"
@@ -147,15 +123,15 @@ const AdminProfile = () => {
 
                 <div className="relative">
                   <Form.Item
-                    label={<p className="text-md">New Password</p>}
+                    label="New Password"
                     name="newPassword"
+                    className="mb-4"
                   >
                     <div className="relative">
                       <Input
                         type={showNewPassword ? "text" : "password"}
-                        style={{ padding: "6px" }}
                         placeholder="Enter new password"
-                        className="text-md pr-10"
+                        className="rounded-md border-red-500 focus:border-red-500 focus:ring focus:ring-red-500 focus:ring-opacity-50 pr-10"
                       />
                       <button
                         type="button"
@@ -170,15 +146,15 @@ const AdminProfile = () => {
 
                 <div className="relative">
                   <Form.Item
-                    label={<p className="text-md">Confirm Password</p>}
+                    label="Confirm Password"
                     name="confirmPassword"
+                    className="mb-4"
                   >
                     <div className="relative">
                       <Input
                         type={showConfirmPassword ? "text" : "password"}
-                        style={{ padding: "6px" }}
                         placeholder="Confirm new password"
-                        className="text-md pr-10"
+                        className="rounded-md border-red-500 focus:border-red-500 focus:ring focus:ring-red-500 focus:ring-opacity-50 pr-10"
                       />
                       <button
                         type="button"
@@ -194,18 +170,19 @@ const AdminProfile = () => {
                 </div>
               </div>
 
-              <div className="flex justify-end mt-4">
-                <button
-                  className="bg-primary text-white px-6 py-2 rounded-lg"
-                  type="submit"
-                  disabled={loading}
+              <div className="flex justify-end">
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  loading={loading}
+                  className="bg-red-500 text-white rounded-md px-6 py-2 shadow-md hover:bg-red-600"
                 >
                   Change Password
-                </button>
+                </Button>
               </div>
             </Form>
-          </div>
-        </div>
+          </TabPane>
+        </Tabs>
       </div>
     </div>
   );
