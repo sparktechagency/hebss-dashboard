@@ -1,4 +1,5 @@
-import { Card } from "antd";
+import { useState } from "react";
+import { Card, Modal } from "antd";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { Bell, Eye } from "lucide-react";
 
@@ -8,14 +9,29 @@ const salesData = Array.from({ length: 60 }, (_, i) => ({
 }));
 
 const Dashboard = () => {
+  const [isModalVisible, setIsModalVisible] = useState(false); // Modal visibility state
+  const [activeOrder, setActiveOrder] = useState(null); // State for the selected order
+
+  const handleEyeClick = (order) => {
+    setActiveOrder(order); // Set the active order when the eye icon is clicked
+    setIsModalVisible(true); // Show the modal
+  };
+
+  const handleModalClose = () => {
+    setIsModalVisible(false); // Hide the modal
+    setActiveOrder(null); // Reset active order
+  };
+
+  const orders = [
+    { id: "00001", name: "Christine Brooks", address: "089 Kutch Green Apt. 448", date: "04 Sep 2019", type: "Electric" },
+    { id: "00002", name: "Rosie Pearson", address: "979 Immanuel Ferry Suite 526", date: "28 May 2019", type: "Book" },
+    { id: "00003", name: "Darrell Caldwell", address: "8587 Frida Ports", date: "23 Nov 2019", type: "Medicine" },
+  ];
+
   return (
     <div className="p-4 sm:p-6 bg-gray-100 min-h-screen">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-xl sm:text-2xl font-bold">Dashboard</h1>
-        {/* <div className="flex items-center gap-4">
-          <Bell className="w-6 h-6 text-gray-600" />
-          <div className="text-sm font-medium">Eyasin<br /><span className="text-gray-500">Admin</span></div>
-        </div> */}
       </div>
 
       {/* Stats Section */}
@@ -50,29 +66,48 @@ const Dashboard = () => {
         <table className="w-full min-w-[600px] border-collapse">
           <thead>
             <tr className="border-b">
-              {["ID", "Name", "Address", "Date", "Type", "Status"].map((col, i) => (
+              {["ID", "Name", "Address", "Date", "Type", "Details"].map((col, i) => (
                 <th key={i} className="text-left p-2 text-gray-600 text-sm">{col}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {[
-              { id: "00001", name: "Christine Brooks", address: "089 Kutch Green Apt. 448", date: "04 Sep 2019", type: "Electric" },
-              { id: "00002", name: "Rosie Pearson", address: "979 Immanuel Ferry Suite 526", date: "28 May 2019", type: "Book" },
-              { id: "00003", name: "Darrell Caldwell", address: "8587 Frida Ports", date: "23 Nov 2019", type: "Medicine" }
-            ].map((order, i) => (
+            {orders.map((order, i) => (
               <tr key={i} className="border-b">
                 <td className="p-2 text-sm">{order.id}</td>
                 <td className="p-2 text-sm">{order.name}</td>
                 <td className="p-2 text-sm">{order.address}</td>
                 <td className="p-2 text-sm">{order.date}</td>
                 <td className="p-2 text-sm">{order.type}</td>
-                <td className="p-2 text-sm"><Eye className="w-5 h-5 text-gray-500" /></td>
+                <td className="p-2 text-sm">
+                  <Eye
+                    className="w-5 h-5 text-gray-500 cursor-pointer"
+                    onClick={() => handleEyeClick(order)} // Open modal with order details
+                  />
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {/* Modal for Order Details */}
+      <Modal
+        title="Order Details"
+        visible={isModalVisible}
+        onCancel={handleModalClose}
+        footer={null}
+      >
+        {activeOrder && (
+          <div>
+            <p><strong>Order ID:</strong> {activeOrder.id}</p>
+            <p><strong>Name:</strong> {activeOrder.name}</p>
+            <p><strong>Address:</strong> {activeOrder.address}</p>
+            <p><strong>Date:</strong> {activeOrder.date}</p>
+            <p><strong>Type:</strong> {activeOrder.type}</p>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

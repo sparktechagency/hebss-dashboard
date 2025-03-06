@@ -30,16 +30,20 @@ const ContactUS = () => {
     <div className="container mx-auto max-w-4xl mt-10">
       <div className="bg-white rounded-lg p-6 shadow-lg">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-700">Contact Email Configuration</h2>
+          <h2 className="text-2xl font-bold text-gray-700">
+            Contact Email Configuration
+          </h2>
         </div>
 
         {/* Email Configuration Card */}
         <Card
-        //   title="Email Configuration"
+          //   title="Email Configuration"
           className="mt-5 p-6 rounded-xl shadow-md border-2"
           style={{ backgroundColor: "#f9fafb" }}
         >
-          <h3 className="font-semibold mb-4 text-gray-600">Admin Contact Email</h3>
+          <h3 className="font-semibold mb-4 text-gray-600">
+            Admin Contact Email
+          </h3>
           <p className="text-lg">{email || "No email configured yet!"}</p>
           <Button
             type="primary"
@@ -86,7 +90,9 @@ const ContactUS = () => {
 
               <Form.Item
                 name="email"
-                label={<p className="text-md font-semibold text-gray-700">Email :</p>}
+                label={
+                  <p className="text-md font-semibold text-gray-700">Email :</p>
+                }
                 rules={[{ required: true, message: "Please input an email!" }]}
               >
                 <Input
