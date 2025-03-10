@@ -52,10 +52,10 @@ const BookList = () => {
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-        <h1 className="text-3xl font-bold">Book List</h1>
+        <h1 className="text-3xl font-bold">Products</h1>
         <div className="flex flex-wrap gap-4 items-center">
           <Input
-            placeholder="Search books..."
+            placeholder="Search products..."
             prefix={<SearchOutlined className="text-gray-500" />}
             className="w-72"
           />
@@ -69,7 +69,7 @@ const BookList = () => {
             style={{ backgroundColor: primaryColor, borderColor: primaryColor }}
             onClick={() => setIsAddModalVisible(true)}
           >
-            Add New Book
+            Add New Product
           </Button>
         </div>
       </div>

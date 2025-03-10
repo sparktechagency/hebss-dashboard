@@ -116,9 +116,9 @@ const UserList = () => {
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
       <div className="flex flex-col md:flex-row justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold">Order List</h2>
+        <h2 className="text-3xl font-bold">User List</h2>
         <Search
-          placeholder="Search orders..."
+          placeholder="Search users..."
           onChange={(e) => setSearchText(e.target.value)}
           className="w-72"
           allowClear

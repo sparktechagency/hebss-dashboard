@@ -1,24 +1,16 @@
 import { useState, useEffect } from "react";
-import { Modal, Input, Select, Button, Upload } from "antd";
+import { Modal, Input, Select, Button, Upload, Switch, Radio } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 
 const EditBookPopup = ({ visible, onClose, book, onSave }) => {
-  const defaultBookData = {
-    name: "",
-    price: "",
-    readerAge: "",
-    grade: "",
-    collections: "",
-    author: "",
-    language: "",
-    level: "",
-    cover: null,
-  };
-
-  const [bookData, setBookData] = useState(defaultBookData);
+  const [bookData, setBookData] = useState({
+    ...book,
+  });
 
   useEffect(() => {
-    setBookData(book || defaultBookData);
+    if (book) {
+      setBookData({ ...book });
+    }
   }, [book]);
 
   const handleInputChange = (e) => {
@@ -33,9 +25,17 @@ const EditBookPopup = ({ visible, onClose, book, onSave }) => {
     setBookData({ ...bookData, cover: file });
   };
 
+  const handleDiscountToggle = (checked) => {
+    setBookData({ ...bookData, discountAvailable: checked });
+  };
+
+  const handleDiscountTypeChange = (e) => {
+    setBookData({ ...bookData, discountType: e.target.value });
+  };
+
   return (
     <Modal
-      title="Edit Book"
+      title="Edit Product"
       open={visible}
       onCancel={onClose}
       footer={null}
@@ -56,16 +56,16 @@ const EditBookPopup = ({ visible, onClose, book, onSave }) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium">Book Name</label>
+            <label className="block text-sm font-medium">Product Name</label>
             <Input
               name="name"
               value={bookData.name}
               onChange={handleInputChange}
-              placeholder="Enter book name"
+              placeholder="Enter product name"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium">Book Price</label>
+            <label className="block text-sm font-medium">Product Price</label>
             <Input
               name="price"
               value={bookData.price}
@@ -76,9 +76,9 @@ const EditBookPopup = ({ visible, onClose, book, onSave }) => {
           <div>
             <label className="block text-sm font-medium">Reader Age</label>
             <Select
-              placeholder="Select Age Group"
               value={bookData.readerAge}
               onChange={(value) => handleSelectChange("readerAge", value)}
+              placeholder="Select Age Group"
             >
               <Select.Option value="0-3">0-3</Select.Option>
               <Select.Option value="4-7">4-7</Select.Option>
@@ -88,9 +88,9 @@ const EditBookPopup = ({ visible, onClose, book, onSave }) => {
           <div>
             <label className="block text-sm font-medium">Reader Grade</label>
             <Select
-              placeholder="Select Grade"
               value={bookData.grade}
               onChange={(value) => handleSelectChange("grade", value)}
+              placeholder="Select Grade"
             >
               <Select.Option value="1st">1st</Select.Option>
               <Select.Option value="2nd">2nd</Select.Option>
@@ -100,9 +100,9 @@ const EditBookPopup = ({ visible, onClose, book, onSave }) => {
           <div>
             <label className="block text-sm font-medium">Collections</label>
             <Select
+              value={bookData.collection}
+              onChange={(value) => handleSelectChange("collection", value)}
               placeholder="Select Collection"
-              value={bookData.collections}
-              onChange={(value) => handleSelectChange("collections", value)}
             >
               <Select.Option value="Fiction">Fiction</Select.Option>
               <Select.Option value="Non-Fiction">Non-Fiction</Select.Option>
@@ -120,27 +120,82 @@ const EditBookPopup = ({ visible, onClose, book, onSave }) => {
           <div>
             <label className="block text-sm font-medium">Language</label>
             <Select
-              placeholder="Select Language"
               value={bookData.language}
               onChange={(value) => handleSelectChange("language", value)}
+              placeholder="Select Language"
             >
               <Select.Option value="English">English</Select.Option>
               <Select.Option value="Arabic">Arabic</Select.Option>
               <Select.Option value="French">French</Select.Option>
             </Select>
           </div>
+
+          {/* Level Dropdown */}
           <div>
             <label className="block text-sm font-medium">Level</label>
             <Select
-              placeholder="Select Level"
               value={bookData.level}
               onChange={(value) => handleSelectChange("level", value)}
+              placeholder="Select Level"
             >
               <Select.Option value="Beginner">Beginner</Select.Option>
               <Select.Option value="Intermediate">Intermediate</Select.Option>
               <Select.Option value="Advanced">Advanced</Select.Option>
             </Select>
           </div>
+
+          {/* Summary Field */}
+          <div className="col-span-2">
+            <label className="block text-sm font-medium">Summary</label>
+            <Input.TextArea
+              name="summary"
+              value={bookData.summary}
+              onChange={handleInputChange}
+              placeholder="Enter a brief summary of the book"
+              rows={4}
+              className="w-full"
+            />
+          </div>
+
+          {/* Discount Available Toggle */}
+          <div className="col-span-2">
+            <label className="block text-sm font-medium">
+              Discount Available
+            </label>
+            <Switch
+              checked={bookData.discountAvailable}
+              onChange={handleDiscountToggle}
+            />
+          </div>
+
+          {/* Discount Type and Discount Price */}
+          {bookData.discountAvailable && (
+            <div className="col-span-2 flex gap-4">
+              {/* Discount Type (Radio Buttons) */}
+              <div className="w-1/2">
+                <label className="block text-sm font-medium">Discount Type</label>
+                <Radio.Group
+                  value={bookData.discountType}
+                  onChange={handleDiscountTypeChange}
+                  className="w-full"
+                >
+                  <Radio value="percentage">Percentage</Radio>
+                  <Radio value="fixed">Fixed</Radio>
+                </Radio.Group>
+              </div>
+
+              {/* Discount Price */}
+              <div className="w-1/2">
+                <label className="block text-sm font-medium">Discount Price</label>
+                <Input
+                  name="discountPrice"
+                  value={bookData.discountPrice}
+                  onChange={handleInputChange}
+                  placeholder="$0.00"
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         <Button

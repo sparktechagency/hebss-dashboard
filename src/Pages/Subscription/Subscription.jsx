@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Card, Button, Modal, Form, Input, Select } from "antd";
-import { EditOutlined, DeleteOutlined, PlusOutlined } from "@ant-design/icons";
+import { EditOutlined, DeleteOutlined, PlusOutlined, UsergroupAddOutlined } from "@ant-design/icons"; // Import multi-user icon
+import { useNavigate } from "react-router-dom";
 
 const SubscriptionPage = () => {
   const [subscriptions, setSubscriptions] = useState([
@@ -34,6 +35,7 @@ const SubscriptionPage = () => {
   const [features, setFeatures] = useState([]);
   const [featureInput, setFeatureInput] = useState("");
   const [editingSubscription, setEditingSubscription] = useState(null);
+  const navigate = useNavigate();
   const primaryColor = "#F37975";
 
   const handleDelete = (id) => {
@@ -85,6 +87,11 @@ const SubscriptionPage = () => {
     setFeatures([]);
   };
 
+  const handleSubscribersClick = (subscriptionId) => {
+    navigate(`/subscription/subscribers`);
+    // Here you can perform any action like opening a modal or navigating
+  };
+
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
       <div className="flex justify-between items-center mb-6">
@@ -106,6 +113,10 @@ const SubscriptionPage = () => {
             className="p-6 rounded-xl shadow-lg bg-white relative border border-gray-200"
           >
             <div className="absolute top-4 right-4 flex gap-2">
+              <UsergroupAddOutlined
+                className="cursor-pointer text-gray-500 hover:text-gray-700"
+                onClick={() => handleSubscribersClick(sub.id)} // Handle the subscribers button click
+              />
               <EditOutlined
                 className="cursor-pointer text-gray-500 hover:text-gray-700"
                 onClick={() => handleEdit(sub)}
@@ -131,6 +142,13 @@ const SubscriptionPage = () => {
                 </li>
               ))}
             </ul>
+            {/* <Button
+              type="primary"
+              className="mt-4 w-full"
+              style={{ backgroundColor: primaryColor }}
+            >
+              Subscribers
+            </Button> */}
           </Card>
         ))}
       </div>

@@ -4,6 +4,7 @@ import ProfileTab from "./ProfileTab";
 import InvoiceTab from "./InvoiceTab";
 import CurrentBoxTab from "./CurrentTab";
 import SubscriptionTab from "./SubscriptionTab";
+import SendMailTab from "./SendMail";
 
 const { TabPane } = Tabs;
 
@@ -29,6 +30,10 @@ const UserDetails = () => {
 
           <TabPane tab="Subscription" key="subscription">
             <SubscriptionTab />
+          </TabPane>
+
+          <TabPane tab="Send Mail" key="sendMail">
+            <SendMailTab />
           </TabPane>
         </Tabs>
       </div>

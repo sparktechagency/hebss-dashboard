@@ -27,13 +27,13 @@ const Sidebar = ({ closeDrawer }) => {
     },
     {
       icon: <MdMenuBook className="h-5 w-5" />,
-      label: "Book List",
+      label: "Products",
       Link: "/book-list",
     },
     { icon: <BsGraphUp className="h-5 w-5" />, label: "Boxes", Link: "/boxes" },
     {
       icon: <LuCircleDollarSign className="h-5 w-5" />,
-      label: "Order List",
+      label: "Orders",
       Link: "/order-list",
     },
     {
