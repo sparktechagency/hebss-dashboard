@@ -29,25 +29,25 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="p-4 sm:p-6 bg-gray-100 min-h-screen">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold">Dashboard</h1>
+    <div className="min-h-screen p-4 bg-gray-100 sm:p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-xl font-bold sm:text-2xl">Dashboard</h1>
       </div>
 
       {/* Stats Section */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 gap-4 mb-6 sm:grid-cols-2 lg:grid-cols-4">
         {["Total User", "Total Order", "Total Sales", "Total Pending"].map((title, i) => (
-          <Card key={i} className="p-4 shadow-md bg-white">
-            <h3 className="text-gray-600 text-sm">{title}</h3>
-            <p className="text-xl sm:text-2xl font-bold">{[40689, 10293, "$89,000", 2040][i]}</p>
+          <Card key={i} className="p-4 bg-white shadow-md">
+            <h3 className="text-sm text-gray-600">{title}</h3>
+            <p className="text-xl font-bold sm:text-2xl">{[40689, 10293, "$89,000", 2040][i]}</p>
             <span className="text-xs text-green-600">{["8.5% Up", "1.3% Up", "4.3% Down", "1.8% Up"][i]}</span>
           </Card>
         ))}
       </div>
 
       {/* Sales Chart */}
-      <div className="bg-white p-4 sm:p-6 shadow-md rounded-xl mb-6">
-        <h2 className="text-lg font-semibold mb-4">Sales Details</h2>
+      <div className="p-4 mb-6 bg-white shadow-md sm:p-6 rounded-xl">
+        <h2 className="mb-4 text-lg font-semibold">Sales Details</h2>
         <div className="w-full min-w-[300px]">
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={salesData}>
@@ -61,13 +61,13 @@ const Dashboard = () => {
       </div>
 
       {/* Recent Orders */}
-      <div className="bg-white p-4 sm:p-6 shadow-md rounded-xl overflow-x-auto">
-        <h2 className="text-lg font-semibold mb-4">Recent Orders</h2>
+      <div className="p-4 overflow-x-auto bg-white shadow-md sm:p-6 rounded-xl">
+        <h2 className="mb-4 text-lg font-semibold">Recent Orders</h2>
         <table className="w-full min-w-[600px] border-collapse">
           <thead>
             <tr className="border-b">
               {["ID", "Name", "Address", "Date", "Type", "Details"].map((col, i) => (
-                <th key={i} className="text-left p-2 text-gray-600 text-sm">{col}</th>
+                <th key={i} className="p-2 text-sm text-left text-gray-600">{col}</th>
               ))}
             </tr>
           </thead>
