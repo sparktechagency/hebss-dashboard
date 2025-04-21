@@ -2,29 +2,49 @@ import { Checkbox, Form, Input, message, Typography } from "antd";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { FaRegEye, FaRegEyeSlash } from "react-icons/fa";
+import { useLoginMutation } from "../../../redux/features/auth/authApi";
 
 const SignIn = () => {
   const navigate = useNavigate();
   const [showpassword, setShowpassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const [login, { isLoading, isError, error }] = useLoginMutation(); // Use the mutation hook
+
+
+
   const togglePasswordVisibility = () => {
     setShowpassword(!showpassword);
   };
 
-  const onFinish = (values) => {
+  const onFinish = async (values) => {
     setLoading(true);
     // Simulating login without actual API call
-    setTimeout(() => {
+    // setTimeout(() => {
+    //   setLoading(false);
+    //   navigate("/dashboard");
+    // }, 1500);
+    try {
+      const response = await login({
+        email: values.email,
+        password: values.password,
+      }).unwrap();
+      
+      // If login is successful, redirect to dashboard
+      navigate('/dashboard');
+      message.success('Login successful');
+    } catch (err) {
+      // Handle error if login fails
+      message.error('Login failed. Please check your credentials');
+    } finally {
       setLoading(false);
-      navigate("/dashboard");
-    }, 1500);
+    }
   };
 
   return (
     <div className="bg-white">
       <div className="container mx-auto">
-        <div className="w-full md:max-w-screen-md mx-auto flex flex-col md:flex-row justify-between items-center gap-2 md:gap-20">
+        <div className="flex flex-col items-center justify-between w-full gap-2 mx-auto md:max-w-screen-md md:flex-row md:gap-20">
           <div className="w-full md:w-[50%] order-2 md:order-1">
             <div className="md:h-[100vh] w-full flex items-center justify-center ">
               <Form
@@ -35,11 +55,11 @@ const SignIn = () => {
                 className="py-10 md:py-28 mx-2 md:mx-0 px-6 md:px-10 rounded-2xl w-[450px] border-2 border-[#eef6ff] mt-10"
               >
                 <div className="mb-4 text-center">
-                  <h2 className=" text-center text-2xl md:text-3xl font-bold mb-6">
+                  <h2 className="mb-6 text-2xl font-bold text-center md:text-3xl">
                     {" "}
                     Login to Account{" "}
                   </h2>
-                  <Typography.Text className="text-black text-center text-base ">
+                  <Typography.Text className="text-base text-center text-black ">
                     {" "}
                     Please enter your email and password to continue{" "}
                   </Typography.Text>
@@ -58,14 +78,14 @@ const SignIn = () => {
                   name="password"
                   label={<p className=" text-md">Password</p>}
                 >
-                  <div className="relative flex justify-center items-center">
+                  <div className="relative flex items-center justify-center">
                     <Input
                       // required
                       className=" text-md"
                       type={showpassword ? "password" : "text"}
                       placeholder="Password"
                     />
-                    <div className="flex justify-center absolute right-0 px-3">
+                    <div className="absolute right-0 flex justify-center px-3">
                       <button onClick={togglePasswordVisibility} type="button">
                         {showpassword ? (
                           <FaRegEyeSlash className="" />
@@ -76,22 +96,22 @@ const SignIn = () => {
                     </div>
                   </div>
                 </Form.Item>
-                <div className="flex justify-between items-center my-2">
+                <div className="flex items-center justify-between my-2">
                   <Form.Item name="remember" valuePropName="checked" noStyle>
-                    <Checkbox className=" text-black text-md hover:text-black text-md">
+                    <Checkbox className="text-black text-md hover:text-black">
                       {" "}
                       Remember Password{" "}
                     </Checkbox>
                   </Form.Item>
-                  <Link to="/forgate-password" className=" ">
-                    <p className="text-red-600 hover:text-red-600 text-md  ">
+                  <Link to="/forgate-password" className="">
+                    <p className="text-red-600 hover:text-red-600 text-md ">
                       Forgate Password
                     </p>
                   </Link>
                 </div>
-                <Form.Item className="text-center my-10">
+                <Form.Item className="my-10 text-center">
                   <button
-                    className="bg-primary text-center w-full  p-2 font-semibold  text-white px-10 py-2 rounded-2xl shadow-lg"
+                    className="w-full p-2 px-10 py-2 font-semibold text-center text-white shadow-lg bg-primary rounded-2xl"
                     type="submit"
                     disabled={loading}
                   >
@@ -102,10 +122,10 @@ const SignIn = () => {
             </div>
           </div>
           <div className="w-full md:w-[50%] px-3 flex flex-col justify-center items-center order-1 md:order-2 mt-10">
-            <h1 className="text-2xl md:text-3xl font-bold mb-5 md:mb-16 ">
+            <h1 className="mb-5 text-2xl font-bold md:text-3xl md:mb-16 ">
               Welcome Back
             </h1>
-            <p className="text-neutral-500 text-center text-lg ">
+            <p className="text-lg text-center text-neutral-500 ">
               Please Sign in into your account with the given details to
               continue
             </p>
