@@ -33,8 +33,8 @@ const AdminProfile = () => {
   };
 
   return (
-    <div className="container mx-auto bg-gray-50 min-h-screen py-10">
-      <div className="max-w-screen-lg mx-auto bg-white p-8 rounded-lg shadow-lg">
+    <div className="container min-h-screen py-10 mx-auto bg-gray-50">
+      <div className="max-w-screen-lg p-8 mx-auto bg-white rounded-lg shadow-lg">
         {/* Tabs for Profile and Password */}
         <Tabs defaultActiveKey="1" size="large" className="space-y-6">
           {/* Profile Tab */}
@@ -56,11 +56,10 @@ const AdminProfile = () => {
                   >
                     <Input
                       placeholder="Enter your name"
-                      className="rounded-md border-red-500 focus:border-red-500 focus:ring focus:ring-red-500 focus:ring-opacity-50"
+                      className="border-red-500 rounded-md focus:border-red-500 focus:ring focus:ring-red-500 focus:ring-opacity-50"
                     />
                   </Form.Item>
                 </ConfigProvider>
-
                 <ConfigProvider>
                   <Form.Item
                     label="Email"
@@ -69,18 +68,17 @@ const AdminProfile = () => {
                   >
                     <Input
                       placeholder="Enter your email"
-                      className="rounded-md border-red-500 focus:border-red-500 focus:ring focus:ring-red-500 focus:ring-opacity-50"
+                      className="border-red-500 rounded-md focus:border-red-500 focus:ring focus:ring-red-500 focus:ring-opacity-50"
                     />
                   </Form.Item>
                 </ConfigProvider>
               </div>
-
               <div className="flex justify-end">
                 <Button
                   type="primary"
                   htmlType="submit"
                   loading={loading}
-                  className="bg-red-500 text-white rounded-md px-6 py-2 shadow-md hover:bg-red-600"
+                  className="px-6 py-2 text-white bg-red-500 rounded-md shadow-md hover:bg-red-600"
                 >
                   Update Profile
                 </Button>
@@ -108,12 +106,12 @@ const AdminProfile = () => {
                       <Input
                         type={showOldPassword ? "text" : "password"}
                         placeholder="Enter old password"
-                        className="rounded-md border-red-500 focus:border-red-500 focus:ring focus:ring-red-500 focus:ring-opacity-50 pr-10"
+                        className="pr-10 border-red-500 rounded-md focus:border-red-500 focus:ring focus:ring-red-500 focus:ring-opacity-50"
                       />
                       <button
                         type="button"
                         onClick={() => setShowOldPassword(!showOldPassword)}
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                        className="absolute transform -translate-y-1/2 right-2 top-1/2"
                       >
                         {showOldPassword ? <FaRegEyeSlash /> : <FaRegEye />}
                       </button>
@@ -131,12 +129,12 @@ const AdminProfile = () => {
                       <Input
                         type={showNewPassword ? "text" : "password"}
                         placeholder="Enter new password"
-                        className="rounded-md border-red-500 focus:border-red-500 focus:ring focus:ring-red-500 focus:ring-opacity-50 pr-10"
+                        className="pr-10 border-red-500 rounded-md focus:border-red-500 focus:ring focus:ring-red-500 focus:ring-opacity-50"
                       />
                       <button
                         type="button"
                         onClick={() => setShowNewPassword(!showNewPassword)}
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                        className="absolute transform -translate-y-1/2 right-2 top-1/2"
                       >
                         {showNewPassword ? <FaRegEyeSlash /> : <FaRegEye />}
                       </button>
@@ -154,14 +152,14 @@ const AdminProfile = () => {
                       <Input
                         type={showConfirmPassword ? "text" : "password"}
                         placeholder="Confirm new password"
-                        className="rounded-md border-red-500 focus:border-red-500 focus:ring focus:ring-red-500 focus:ring-opacity-50 pr-10"
+                        className="pr-10 border-red-500 rounded-md focus:border-red-500 focus:ring focus:ring-red-500 focus:ring-opacity-50"
                       />
                       <button
                         type="button"
                         onClick={() =>
                           setShowConfirmPassword(!showConfirmPassword)
                         }
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                        className="absolute transform -translate-y-1/2 right-2 top-1/2"
                       >
                         {showConfirmPassword ? <FaRegEyeSlash /> : <FaRegEye />}
                       </button>
@@ -175,7 +173,7 @@ const AdminProfile = () => {
                   type="primary"
                   htmlType="submit"
                   loading={loading}
-                  className="bg-red-500 text-white rounded-md px-6 py-2 shadow-md hover:bg-red-600"
+                  className="px-6 py-2 text-white bg-red-500 rounded-md shadow-md hover:bg-red-600"
                 >
                   Change Password
                 </Button>

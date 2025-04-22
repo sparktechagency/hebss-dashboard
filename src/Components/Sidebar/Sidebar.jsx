@@ -3,7 +3,7 @@ import { AiOutlineSetting, AiOutlineSearch } from "react-icons/ai";
 import { FiUser, FiLogOut } from "react-icons/fi";
 import { BsGraphUp } from "react-icons/bs";
 import { BiChevronDown } from "react-icons/bi";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   MdDashboard,
   MdMenuBook,
@@ -19,79 +19,81 @@ const Sidebar = ({ closeDrawer }) => {
   const [openDropdown, setOpenDropdown] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
+  const navigate = useNavigate();
+
   const menuItems = [
     {
-      icon: <MdDashboard className="h-5 w-5" />,
+      icon: <MdDashboard className="w-5 h-5" />,
       label: "Dashboard",
       Link: "/",
     },
     {
-      icon: <MdMenuBook className="h-5 w-5" />,
+      icon: <MdMenuBook className="w-5 h-5" />,
       label: "Products",
       Link: "/book-list",
     },
-    { icon: <BsGraphUp className="h-5 w-5" />, label: "Boxes", Link: "/boxes" },
+    { icon: <BsGraphUp className="w-5 h-5" />, label: "Boxes", Link: "/boxes" },
     {
-      icon: <LuCircleDollarSign className="h-5 w-5" />,
+      icon: <LuCircleDollarSign className="w-5 h-5" />,
       label: "Orders",
       Link: "/order-list",
     },
     {
-      icon: <FaMoneyCheckAlt className="h-5 w-5" />,
+      icon: <FaMoneyCheckAlt className="w-5 h-5" />,
       label: "Subscriptions",
       Link: "/subscription",
     },
     {
-      icon: <FiUser className="h-5 w-5" />,
+      icon: <FiUser className="w-5 h-5" />,
       label: "User List",
       Link: "/user-list",
     },
-    { icon: <MdMenuBook className="h-5 w-5" />, label: "Blog", Link: "/blog" },
+    { icon: <MdMenuBook className="w-5 h-5" />, label: "Blog", Link: "/blog" },
     {
-      icon: <FaEdit className="h-5 w-5" />,
+      icon: <FaEdit className="w-5 h-5" />,
       label: "Reviews",
       Link: "/reviews",
     },
 
     {
-      icon: <AiOutlineSetting className="h-5 w-5" />,
+      icon: <AiOutlineSetting className="w-5 h-5" />,
       label: "Settings",
       isDropdown: true,
       subItems: [
         {
-          icon: <FaEdit className="h-5 w-5" />,
+          icon: <FaEdit className="w-5 h-5" />,
           label: "About Us",
           Link: "/settings/about-us",
         },
         {
-          icon: <MdPrivacyTip className="h-5 w-5" />,
+          icon: <MdPrivacyTip className="w-5 h-5" />,
           label: "Privacy Policy",
           Link: "/settings/privacy-policy",
         },
         {
-          icon: <MdMenuBook className="h-5 w-5" />,
+          icon: <MdMenuBook className="w-5 h-5" />,
           label: "Team",
           Link: "/settings/team",
         },
         {
-          icon: <MdContactPhone className="h-5 w-5" />,
+          icon: <MdContactPhone className="w-5 h-5" />,
           label: "Contact Setting",
           Link: "/settings/contact-us",
         },
         {
-          icon: <MdMenuBook className="h-5 w-5" />,
+          icon: <MdMenuBook className="w-5 h-5" />,
           label: "FAQs",
           Link: "/settings/faqs",
         },
         {
-          icon: <RiTerminalWindowLine className="h-5 w-5" />,
+          icon: <RiTerminalWindowLine className="w-5 h-5" />,
           label: "Terms & Conditions",
           Link: "/settings/terms-condition",
         },
       ],
     },
     {
-      icon: <FaUserShield className="h-5 w-5" />,
+      icon: <FaUserShield className="w-5 h-5" />,
       label: "Administrator",
       Link: "/administrator",
     },
@@ -119,15 +121,20 @@ const Sidebar = ({ closeDrawer }) => {
 
   const filteredItems = filterMenuItems(menuItems);
 
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    navigate("/sign-in");
+  };
+
   return (
-    <div className="bg-white h-full w-72 p-3 flex flex-col">
-      <div className="relative mb-4 ml-6 pt-8">
+    <div className="flex flex-col h-full p-3 bg-white w-72">
+      <div className="relative pt-8 mb-4 ml-6">
         <input
           type="text"
           placeholder="Search"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full px-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-100 text-gray-700"
+          className="w-full px-4 py-2 text-gray-700 bg-gray-100 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
         <AiOutlineSearch className="absolute right-4 top-[55px] transform -translate-y-1/2 text-gray-500" />
       </div>
@@ -148,7 +155,7 @@ const Sidebar = ({ closeDrawer }) => {
                   : setActive(item.label)
               }
             >
-              <Link to={item.Link} className="flex items-center gap-3 w-full">
+              <Link to={item.Link} className="flex items-center w-full gap-3">
                 {item.icon}
                 <p>{item.label}</p>
                 {item.isDropdown && (
@@ -183,14 +190,17 @@ const Sidebar = ({ closeDrawer }) => {
           </div>
         ))}
       </div>
+
+      <div
+        onClick={handleLogout}
+        className="flex items-center justify-center w-full py-3 mt-4 text-white rounded-lg cursor-pointer bg-primary"
+      >
+        <FiLogOut className="text-xl" />
+        <p className="ml-2">Log out</p>
+      </div>
+
       <Link to="/sign-in">
-        <div className="bg-primary text-white w-full py-3 flex justify-center items-center cursor-pointer rounded-lg mt-4">
-          <FiLogOut className="text-xl" />
-          <p className="ml-2">Log out</p>
-        </div>
-      </Link>
-      <Link to="/sign-in">
-        <div className="bg-primary text-white w-full py-3 flex justify-center items-center cursor-pointer rounded-lg mt-4">
+        <div className="flex items-center justify-center w-full py-3 mt-4 text-white rounded-lg cursor-pointer bg-primary">
           <FiLogOut className="text-xl" />
           <p className="ml-2">Log out</p>
         </div>
