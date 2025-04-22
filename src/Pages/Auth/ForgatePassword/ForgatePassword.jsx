@@ -1,26 +1,38 @@
 import React, { useState } from 'react';
 import { Form, Input, message } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { useForgotPasswordMutation } from '../../../redux/features/auth/authApi';
 
 const ForgatePassword = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
+    const [fotgotPassword,{isLoadoing,isError,error}] = useForgotPasswordMutation()
 
-    const onFinish = (values) => {
+    const onFinish = async (values) => {
         setLoading(true);
         // Simulate sending reset email
-        setTimeout(() => {
+        // setTimeout(() => {
+        //     message.success('Reset instructions sent to your email!');
+        //     setLoading(false);
+        //     navigate('/verify-otp');
+        // }, 1000);
+        try {
+            // Send the forgot password request
+            const response = await forgotPassword({ email: values.email }).unwrap();
             message.success('Reset instructions sent to your email!');
             setLoading(false);
             navigate('/verify-otp');
-        }, 1000);
+        } catch (err) {
+            message.error('Failed to send reset instructions. Please try again.');
+            setLoading(false);
+        }
     };
 
     return (
-        <div className="flex justify-center items-center min-h-screen bg-gray-100">
-            <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-                <h2 className="text-2xl font-bold text-center mb-6">Forgot Password</h2>
-                <p className="text-gray-600 text-center mb-8">
+        <div className="flex items-center justify-center min-h-screen bg-gray-100">
+            <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md">
+                <h2 className="mb-6 text-2xl font-bold text-center">Forgot Password</h2>
+                <p className="mb-8 text-center text-gray-600">
                     Enter your email address to receive password reset instructions
                 </p>
 
@@ -45,7 +57,7 @@ const ForgatePassword = () => {
                     <Form.Item>
                         <button
                             type="submit"
-                            className="w-full bg-primary text-white py-2 rounded-lg"
+                            className="w-full py-2 text-white rounded-lg bg-primary"
                             disabled={loading}
                         >
                             {loading ? 'Sending...' : 'Send Reset Instructions'}

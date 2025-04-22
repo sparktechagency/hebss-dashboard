@@ -9,33 +9,29 @@ const SignIn = () => {
   const [showpassword, setShowpassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const [login, { isLoading, isError, error }] = useLoginMutation(); // Use the mutation hook
-
-
+  const [login, { isLoading, isError, error }] = useLoginMutation();
 
   const togglePasswordVisibility = () => {
     setShowpassword(!showpassword);
   };
-
   const onFinish = async (values) => {
     setLoading(true);
-    // Simulating login without actual API call
-    // setTimeout(() => {
-    //   setLoading(false);
-    //   navigate("/dashboard");
-    // }, 1500);
     try {
       const response = await login({
         email: values.email,
         password: values.password,
       }).unwrap();
-      
+
+      console.log(response);
+
       // If login is successful, redirect to dashboard
-      navigate('/dashboard');
-      message.success('Login successful');
+      localStorage.setItem("user", JSON.stringify(response.user));
+      navigate("/dashboard");
+      message.success("Login successful");
+      // console.log("Login successful")
     } catch (err) {
       // Handle error if login fails
-      message.error('Login failed. Please check your credentials');
+      message.error("Login failed. Please check your credentials");
     } finally {
       setLoading(false);
     }
@@ -56,12 +52,10 @@ const SignIn = () => {
               >
                 <div className="mb-4 text-center">
                   <h2 className="mb-6 text-2xl font-bold text-center md:text-3xl">
-                    {" "}
                     Login to Account{" "}
                   </h2>
                   <Typography.Text className="text-base text-center text-black ">
-                    {" "}
-                    Please enter your email and password to continue{" "}
+                    Please enter your email and password to continue
                   </Typography.Text>
                 </div>
                 <Form.Item
@@ -99,8 +93,7 @@ const SignIn = () => {
                 <div className="flex items-center justify-between my-2">
                   <Form.Item name="remember" valuePropName="checked" noStyle>
                     <Checkbox className="text-black text-md hover:text-black">
-                      {" "}
-                      Remember Password{" "}
+                      Remember Password
                     </Checkbox>
                   </Form.Item>
                   <Link to="/forgate-password" className="">
