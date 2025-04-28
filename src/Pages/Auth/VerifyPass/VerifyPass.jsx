@@ -1,19 +1,40 @@
 import React, { useState } from "react";
 import { Form, Input, message } from "antd";
 import { useNavigate } from "react-router-dom";
+import { useVerifyOtpMutation } from "../../../redux/features/auth/authApi";
+import { useSelector } from "react-redux";
 
 const VerifyPass = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+    // ✅ Get email from Redux
+    const email = useSelector((state) => state.auth.verificationEmail);
+  
+  const [verifyOtp] = useVerifyOtpMutation(); // ✅ API mutation hook
 
-  const onFinish = (values) => {
+
+  const onFinish = async (values) => {
+    if (!email) {
+      message.error("Email is missing for verification!");
+      return;
+    }
+
     setLoading(true);
-    // Simulate verification
-    setTimeout(() => {
+    try {
+      const res = await verifyOtp({
+        email: email,
+        code: values.otp,
+      }).unwrap();
+
+      console.log(res); // ✅ check response
       message.success("OTP verified successfully!");
+      navigate("/new-password"); // ✅ redirect to reset password page
+    } catch (error) {
+      console.error(error);
+      message.error(error?.data?.message || "OTP verification failed!");
+    } finally {
       setLoading(false);
-      navigate("/new-password");
-    }, 1000);
+    }
   };
 
   return (
@@ -29,13 +50,13 @@ const VerifyPass = () => {
             name="otp"
             rules={[
               { required: true, message: "Please input your OTP!" },
-              { len: 6, message: "OTP must be exactly 6 digits!" },
+              { len: 4, message: "OTP must be exactly 6 digits!" },
             ]}
           >
             <Input
-              placeholder="Enter 6-digit OTP"
+              placeholder="Enter 4-digit OTP"
               className="py-2"
-              maxLength={6}
+              maxLength={4}
             />
           </Form.Item>
 
@@ -55,7 +76,8 @@ const VerifyPass = () => {
               type="button"
               className="text-primary hover:underline"
               onClick={() => {
-                message.info("New OTP sent to your email");
+                message.info("New OTP sent to your email"); 
+                // In real app, call resend API here
               }}
             >
               Resend

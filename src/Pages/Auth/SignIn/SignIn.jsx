@@ -3,34 +3,45 @@ import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { FaRegEye, FaRegEyeSlash } from "react-icons/fa";
 import { useLoginMutation } from "../../../redux/features/auth/authApi";
+import { useDispatch } from "react-redux";
+import { setCredentials } from "../../../redux/features/auth/authSlice"; // ✅ Make sure you import it
 
 const SignIn = () => {
   const navigate = useNavigate();
-  const [showpassword, setShowpassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch();
 
-  const [login, { isLoading, isError, error }] = useLoginMutation();
+  const [login] = useLoginMutation();
 
   const togglePasswordVisibility = () => {
-    setShowpassword(!showpassword);
+    setShowPassword(!showPassword);
   };
+
   const onFinish = async (values) => {
     setLoading(true);
     try {
       const response = await login({
+        name:values.fullName,
         email: values.email,
         password: values.password,
       }).unwrap();
 
-      console.log(response);
+      // console.log(response); // ✅ Check full API response
 
-      // If login is successful, redirect to dashboard
-      localStorage.setItem("user", JSON.stringify(response.user));
-      navigate("/dashboard");
+      // Save full user info to localStorage
+      localStorage.setItem("user", JSON.stringify(response?.data));
+
+      // Save to Redux Global State
+      dispatch(setCredentials({ 
+        user: response?.data, 
+        token: response?.data?.accessToken
+      }));
+
       message.success("Login successful");
-      // console.log("Login successful")
+      navigate("/dashboard"); // ✅ Navigate after successful login
     } catch (err) {
-      // Handle error if login fails
+      console.error(err);
       message.error("Login failed. Please check your credentials");
     } finally {
       setLoading(false);
@@ -42,7 +53,7 @@ const SignIn = () => {
       <div className="container mx-auto">
         <div className="flex flex-col items-center justify-between w-full gap-2 mx-auto md:max-w-screen-md md:flex-row md:gap-20">
           <div className="w-full md:w-[50%] order-2 md:order-1">
-            <div className="md:h-[100vh] w-full flex items-center justify-center ">
+            <div className="md:h-[100vh] w-full flex items-center justify-center">
               <Form
                 name="login"
                 initialValues={{ remember: true }}
@@ -52,75 +63,79 @@ const SignIn = () => {
               >
                 <div className="mb-4 text-center">
                   <h2 className="mb-6 text-2xl font-bold text-center md:text-3xl">
-                    Login to Account{" "}
+                    Login to Account
                   </h2>
-                  <Typography.Text className="text-base text-center text-black ">
+                  <Typography.Text className="text-base text-center text-black">
                     Please enter your email and password to continue
                   </Typography.Text>
                 </div>
+
                 <Form.Item
                   name="email"
-                  label={<p className=" text-md">Email</p>}
+                  label={<p className="text-md">Email</p>}
+                  rules={[{ required: true, message: "Please input your Email!" }]}
                 >
                   <Input
-                    // required
-                    className=" text-md"
+                    className="text-md"
                     placeholder="Your Email"
                   />
                 </Form.Item>
+
                 <Form.Item
                   name="password"
-                  label={<p className=" text-md">Password</p>}
+                  label={<p className="text-md">Password</p>}
+                  rules={[{ required: true, message: "Please input your Password!" }]}
                 >
                   <div className="relative flex items-center justify-center">
                     <Input
-                      // required
-                      className=" text-md"
-                      type={showpassword ? "password" : "text"}
+                      className="text-md"
+                      type={showPassword ? "text" : "password"}
                       placeholder="Password"
                     />
                     <div className="absolute right-0 flex justify-center px-3">
                       <button onClick={togglePasswordVisibility} type="button">
-                        {showpassword ? (
-                          <FaRegEyeSlash className="" />
+                        {showPassword ? (
+                          <FaRegEyeSlash />
                         ) : (
-                          <FaRegEye className="" />
+                          <FaRegEye />
                         )}
                       </button>
                     </div>
                   </div>
                 </Form.Item>
+
                 <div className="flex items-center justify-between my-2">
                   <Form.Item name="remember" valuePropName="checked" noStyle>
                     <Checkbox className="text-black text-md hover:text-black">
                       Remember Password
                     </Checkbox>
                   </Form.Item>
-                  <Link to="/forgate-password" className="">
-                    <p className="text-red-600 hover:text-red-600 text-md ">
-                      Forgate Password
+                  <Link to="/forgate-password">
+                    <p className="text-red-600 hover:text-red-600 text-md">
+                      Forgot Password
                     </p>
                   </Link>
                 </div>
+
                 <Form.Item className="my-10 text-center">
                   <button
-                    className="w-full p-2 px-10 py-2 font-semibold text-center text-white shadow-lg bg-primary rounded-2xl"
+                    className="w-full p-2 font-semibold text-white shadow-lg bg-primary rounded-2xl"
                     type="submit"
                     disabled={loading}
                   >
-                    Login
+                    {loading ? "Logging in..." : "Login"}
                   </button>
                 </Form.Item>
               </Form>
             </div>
           </div>
+
           <div className="w-full md:w-[50%] px-3 flex flex-col justify-center items-center order-1 md:order-2 mt-10">
-            <h1 className="mb-5 text-2xl font-bold md:text-3xl md:mb-16 ">
+            <h1 className="mb-5 text-2xl font-bold md:text-3xl md:mb-16">
               Welcome Back
             </h1>
-            <p className="text-lg text-center text-neutral-500 ">
-              Please Sign in into your account with the given details to
-              continue
+            <p className="text-lg text-center text-neutral-500">
+              Please sign into your account with the given details to continue
             </p>
           </div>
         </div>

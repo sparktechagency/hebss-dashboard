@@ -20,9 +20,16 @@ const authApi = createApi({
         body: data,
       }),
     }),
-    
+    verifyOtp: builder.mutation({
+      query: ({ email, code }) => ({
+        url: "/admin/auth/verify-otp", 
+        method: "POST",
+        body: { email, code },
+      }),
+    }),
   }),
 });
 
-export const { useLoginMutation,useForgotPasswordMutation } = authApi;
+export const { useLoginMutation,useForgotPasswordMutation,useVerifyOtpMutation } = authApi;
 export default authApi;
+

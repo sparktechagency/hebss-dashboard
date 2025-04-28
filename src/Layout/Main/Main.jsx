@@ -6,17 +6,24 @@ import { RxHamburgerMenu } from "react-icons/rx";
 import { IoMdClose } from "react-icons/io";
 import { FaRegUser } from "react-icons/fa";
 import brandlogo from "../../assets/image/Logo.png";
+import { useSelector } from "react-redux";
 
 const MainLayout = () => {
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Mock admin profile data for design
+  // ✅ Get user data from Redux authSlice
+  const user = useSelector((state) => state.auth.user);
+  // const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
+
+  console.log(user)
+
+  // ✅ Now build adminProfile based on logged-in user
   const adminProfile = {
-    name: "Fahad Hossain",
-    email: "fahadhossain0503@gmail.com",
-    role: "admin",
+    name: user?.fullName ,
+    email: user?.email ,
+    role: "admin", // If you store role in user, replace "admin" with user.role
   };
 
   const showDrawer = () => {
@@ -27,12 +34,13 @@ const MainLayout = () => {
     setOpen(false);
   };
 
+  // Auth pages where layout is hidden
   const isAuthPage =
-    location.pathname === "/signin" ||
+    location.pathname === "/sign-in" ||
     location.pathname === "/forgate-password" ||
     location.pathname === "/verify-otp" ||
     location.pathname === "/new-password";
-console.log(isAuthPage)
+
   if (isAuthPage) {
     return <Outlet />;
   }
@@ -40,8 +48,8 @@ console.log(isAuthPage)
   return (
     <div className="min-h-screen bg-[#F4F7FE] flex flex-col">
       {/* Header */}
-      <header className="w-full bg-white shadow-sm fixed top-0 left-0 z-10">
-        <div className="flex justify-between items-center py-3 px-4 md:pl-20">
+      <header className="fixed top-0 left-0 z-10 w-full bg-white shadow-sm">
+        <div className="flex items-center justify-between px-4 py-3 md:pl-20">
           <div>
             <img src={brandlogo} alt="logo" className="w-32" />
           </div>
@@ -49,11 +57,11 @@ console.log(isAuthPage)
             className="flex items-center gap-4 cursor-pointer md:mr-8"
             onClick={() => navigate("/admin-profile")}
           >
-            <div className="hidden md:block text-right">
+            <div className="hidden text-right md:block">
               <h3 className="text-lg font-semibold">{adminProfile.name}</h3>
               <p className="text-sm text-gray-500">{adminProfile.email}</p>
             </div>
-            <div className="hidden md:flex items-center justify-center w-10 h-10 rounded-full bg-gray-100">
+            <div className="items-center justify-center hidden w-10 h-10 bg-gray-100 rounded-full md:flex">
               <FaRegUser className="text-xl text-gray-600" />
             </div>
             <button className="block lg:hidden" onClick={showDrawer}>
@@ -63,9 +71,10 @@ console.log(isAuthPage)
         </div>
       </header>
 
+      {/* Layout */}
       <div className="flex pt-16">
         {/* Sidebar for large screens */}
-        <div className="hidden lg:block fixed top-16 left-0 w-64 h-full bg-white shadow-md">
+        <div className="fixed left-0 hidden w-64 h-full bg-white shadow-md lg:block top-16">
           <Sidebar adminProfile={adminProfile} />
         </div>
 
@@ -90,7 +99,7 @@ console.log(isAuthPage)
           </Drawer>
         </ConfigProvider>
 
-        {/* Main Content - Adjusted for Sidebar */}
+        {/* Main Content */}
         <div className="flex-1 lg:ml-72 overflow-y-auto h-[calc(100vh-64px)]">
           <Outlet />
         </div>

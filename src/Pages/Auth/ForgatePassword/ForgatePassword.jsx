@@ -2,28 +2,25 @@ import React, { useState } from 'react';
 import { Form, Input, message } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useForgotPasswordMutation } from '../../../redux/features/auth/authApi';
+import { useDispatch } from 'react-redux';
+import { setVerificationEmail } from '../../../redux/features/auth/authSlice';
 
-const ForgatePassword = () => {
+const ForgotPassword = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
-    const [fotgotPassword,{isLoadoing,isError,error}] = useForgotPasswordMutation()
+    const [forgotPassword, { isLoading, isError, error }] = useForgotPasswordMutation();
+    const dispatch = useDispatch()
 
     const onFinish = async (values) => {
         setLoading(true);
-        // Simulate sending reset email
-        // setTimeout(() => {
-        //     message.success('Reset instructions sent to your email!');
-        //     setLoading(false);
-        //     navigate('/verify-otp');
-        // }, 1000);
         try {
-            // Send the forgot password request
-            const response = await forgotPassword({ email: values.email }).unwrap();
+            await forgotPassword({ email: values.email }).unwrap();
             message.success('Reset instructions sent to your email!');
-            setLoading(false);
-            navigate('/verify-otp');
+            dispatch(setVerificationEmail(values.email));
+            navigate('/varification');
         } catch (err) {
             message.error('Failed to send reset instructions. Please try again.');
+        } finally {
             setLoading(false);
         }
     };
@@ -69,7 +66,7 @@ const ForgatePassword = () => {
                         <button
                             type="button"
                             className="text-primary hover:underline"
-                            onClick={() => navigate('/signin')}
+                            onClick={() => navigate('/sign-in')}
                         >
                             Sign In
                         </button>
@@ -80,4 +77,4 @@ const ForgatePassword = () => {
     );
 };
 
-export default ForgatePassword;
+export default ForgotPassword;
