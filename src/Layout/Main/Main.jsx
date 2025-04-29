@@ -17,7 +17,7 @@ const MainLayout = () => {
   const user = useSelector((state) => state.auth.user);
   // const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
 
-  console.log(user)
+  // console.log(user)
 
   // ✅ Now build adminProfile based on logged-in user
   const adminProfile = {

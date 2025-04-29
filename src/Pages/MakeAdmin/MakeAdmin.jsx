@@ -85,12 +85,12 @@ const MakeAdmin = () => {
 
     return (
         <div className="container mx-auto">
-            <div className="bg-white rounded-lg p-6 md:p-10 mt-5">
-                <div className="flex justify-between items-center mb-6">
+            <div className="p-6 mt-5 bg-white rounded-lg md:p-10">
+                <div className="flex items-center justify-between mb-6">
                     <h2 className="text-2xl font-bold">All Admin</h2>
                     <button
                         onClick={showModal}
-                        className="bg-primary text-white px-4 py-2 rounded-lg"
+                        className="px-4 py-2 text-white rounded-lg bg-primary"
                     >
                         Add Admin
                     </button>
@@ -158,7 +158,7 @@ const MakeAdmin = () => {
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                                    className="absolute transform -translate-y-1/2 right-2 top-1/2"
                                 >
                                     {showPassword ? <FaRegEyeSlash /> : <FaRegEye />}
                                 </button>
@@ -169,13 +169,13 @@ const MakeAdmin = () => {
                             <Space>
                                 <button
                                     onClick={handleCancel}
-                                    className="bg-gray-100 text-gray-600 px-4 py-2 rounded-lg"
+                                    className="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="bg-primary text-white px-4 py-2 rounded-lg"
+                                    className="px-4 py-2 text-white rounded-lg bg-primary"
                                     disabled={loading}
                                 >
                                     Add Admin

@@ -27,6 +27,14 @@ const authApi = createApi({
         body: { email, code },
       }),
     }),
+     // New create admin endpoint
+    //  createAdmin: builder.mutation({
+    //   query: (data) => ({
+    //     url: "/admin/create", 
+    //     method: "POST",
+    //     body: data,
+    //   }),
+    // }),
   }),
 });
 
