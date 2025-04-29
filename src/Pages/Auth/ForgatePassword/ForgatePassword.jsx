@@ -9,7 +9,7 @@ const ForgotPassword = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [forgotPassword, { isLoading, isError, error }] = useForgotPasswordMutation();
-    const dispatch = useDispatch()
+    const dispatch = useDispatch();
 
     const onFinish = async (values) => {
         setLoading(true);

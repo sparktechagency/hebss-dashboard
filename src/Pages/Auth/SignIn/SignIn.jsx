@@ -17,7 +17,6 @@ const SignIn = () => {
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
-
   const onFinish = async (values) => {
     setLoading(true);
     try {
@@ -108,6 +107,7 @@ const SignIn = () => {
                   <Form.Item name="remember" valuePropName="checked" noStyle>
                     <Checkbox className="text-black text-md hover:text-black">
                       Remember Password
+                    
                     </Checkbox>
                   </Form.Item>
                   <Link to="/forgate-password">
