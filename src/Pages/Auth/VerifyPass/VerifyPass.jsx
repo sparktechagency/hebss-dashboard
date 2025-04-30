@@ -36,7 +36,8 @@ const VerifyPass = () => {
             console.log('Submitting OTP verification with email:', email, ' and OTP:', otp);
 
             // Construct the request body to ensure email and OTP are included
-            const requestBody = { email, code: otp };
+            const requestBody = { email,  otp };
+            
             console.log('Request body being sent:', requestBody);  // Log the request body for debugging
 
             // Trigger the API call to verify the OTP
@@ -82,7 +83,7 @@ const VerifyPass = () => {
                         name="otp"
                         rules={[
                             { required: true, message: 'Please input your OTP!' },
-                            { len: 4, message: 'OTP must be exactly 6 digits!' },
+                            { len: 4, message: 'OTP must be exactly 4 digits!' },
                         ]}
                     >
                         <Input

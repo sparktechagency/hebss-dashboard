@@ -21,10 +21,10 @@ const authApi = createApi({
       }),
     }),
     verifyOtp: builder.mutation({
-      query: ({ email, code }) => ({
+      query: (data) => ({
         url: "/admin/auth/verify-otp", 
         method: "POST",
-        body: { email, code },
+        body: data,
       }),
     }),
      // New create admin endpoint

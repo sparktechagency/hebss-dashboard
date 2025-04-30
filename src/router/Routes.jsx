@@ -40,7 +40,7 @@ export const router = createBrowserRouter([
     element: <ForgatePassword/>,
   },
   {
-    path: "/varification",
+    path: "/verification",
     element: <VerifyPass/>,
   },
 

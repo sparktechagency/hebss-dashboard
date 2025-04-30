@@ -17,7 +17,7 @@ const ForgotPassword = () => {
             await forgotPassword({ email: values.email }).unwrap();
             message.success('Reset instructions sent to your email!');
             dispatch(setVerificationEmail(values.email));
-            navigate('/varification');
+            navigate('/verification');
         } catch (err) {
             message.error('Failed to send reset instructions. Please try again.');
         } finally {
