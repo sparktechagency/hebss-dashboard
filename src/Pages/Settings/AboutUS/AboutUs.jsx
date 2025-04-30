@@ -18,8 +18,8 @@ const AboutUs = () => {
 
   return (
     <div className="container mx-auto">
-      <div className="bg-white rounded-lg p-6 md:p-10 mt-5">
-        <h2 className="text-2xl font-bold mb-6">About Us</h2>
+      <div className="p-6 mt-5 bg-white rounded-lg md:p-10">
+        <h2 className="mb-6 text-2xl font-bold">About Us</h2>
         <Form name="aboutUs" onFinish={onFinish} layout="vertical">
           {/* <Form.Item
             name="title"
@@ -45,7 +45,7 @@ const AboutUs = () => {
           <Form.Item className="mt-16">
             <button
               type="submit"
-              className="bg-primary text-white px-6 py-2 rounded-lg"
+              className="px-6 py-2 text-white rounded-lg bg-primary"
               disabled={loading}
             >
               {loading ? "Updating..." : "Update About Us"}

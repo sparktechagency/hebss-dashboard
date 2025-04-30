@@ -30,7 +30,7 @@ const authSlice = createSlice({
     },
     setVerificationEmail: (state, action) => {
       state.verificationEmail = action.payload;
-      localStorage.setItem("verificationEmail", action.payload); // ✅ store it
+      localStorage.setItem("verificationEmail", action.payload); 
     },
   },
 });

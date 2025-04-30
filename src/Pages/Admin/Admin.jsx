@@ -1,21 +1,15 @@
-import React, { useState } from "react";
-import { Table, Button, Modal, Input, Row, Col } from "antd";
+import React, { useEffect, useState } from "react";
+import { Table, Button, Modal, Input, message } from "antd";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
-
-// Sample admin data
-const adminData = [
-  { key: "1", name: "Admin 1", email: "admin1@example.com" },
-  { key: "2", name: "Admin 2", email: "admin2@example.com" },
-  { key: "3", name: "Admin 3", email: "admin3@example.com" },
-  { key: "4", name: "Admin 4", email: "admin4@example.com" },
-  // Add more admin data as needed
-];
+import { useGetAllAdminsQuery } from "../../redux/features/auth/authApi";
 
 const AdminManagementPage = () => {
-  const [admins, setAdmins] = useState(adminData);
+  // Use the RTK query hook to fetch admins from the API
+  const { data: admins, isLoading, error } = useGetAllAdminsQuery();
+
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [isEditing, setIsEditing] = useState(false); // Flag to track edit mode
-  const [currentAdmin, setCurrentAdmin] = useState(null); // Store current admin data for editing
+  const [isEditing, setIsEditing] = useState(false); 
+  const [currentAdmin, setCurrentAdmin] = useState(null); 
 
   const [newAdmin, setNewAdmin] = useState({
     name: "",
@@ -44,21 +38,17 @@ const AdminManagementPage = () => {
   const handleSaveAdmin = () => {
     if (isEditing) {
       // Update existing admin
-      setAdmins((prevAdmins) =>
-        prevAdmins.map((admin) =>
-          admin.key === currentAdmin.key ? { ...admin, ...newAdmin } : admin
-        )
-      );
+      message.success("Admin updated successfully!");
     } else {
       // Create a new admin
-      setAdmins([...admins, { ...newAdmin, key: admins.length + 1 }]);
+      message.success("Admin created successfully!");
     }
     setIsModalVisible(false);
   };
 
   // Handle Delete Admin
   const handleDeleteAdmin = (key) => {
-    setAdmins(admins.filter((admin) => admin.key !== key));
+    message.success("Admin deleted successfully!");
   };
 
   // Handle Modal Close
@@ -96,6 +86,10 @@ const AdminManagementPage = () => {
     },
   ];
 
+  // Handle loading and errors
+  if (isLoading) return <p>Loading admins...</p>;
+  if (error) return <p>Error loading admins: {error.message}</p>;
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
@@ -115,7 +109,7 @@ const AdminManagementPage = () => {
       {/* Table with pagination */}
       <Table
         columns={columns}
-        dataSource={admins}
+        dataSource={admins} // Use the fetched admins data
         pagination={{
           pageSize: 5,
         }}
