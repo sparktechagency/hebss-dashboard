@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Form, Input, message } from "antd";
 import { useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { useVerifyOtpMutation } from "../../../redux/features/auth/authApi";
-// import { setVerificationEmail } from "../../../redux/features/auth/authSlice";
 
 const VerifyPass = () => {
 //   const dispatch = useDispatch();

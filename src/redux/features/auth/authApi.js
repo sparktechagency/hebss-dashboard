@@ -27,34 +27,23 @@ const authApi = createApi({
         body: data,
       }),
     }),
-    changePassword: builder.mutation({
-      query: ({email,password}) => ({
-        url: "/admin/auth/change-password",
+    resetPassword: builder.mutation({
+      query: (data) => ({
+        url: "/admin/auth/reset-password",  
         method: "POST",
-        body:{email,password}
+        body: data, 
       }),
     }),
-    //  New create admin endpoint
-     createAdmin: builder.mutation({
+    changePassword: builder.mutation({
       query: (data) => ({
-        url: "/admin/create", 
+        url: "/admin/auth/change-password",  
         method: "POST",
         body: data,
       }),
     }),
-    // getAllAdmins: builder.query({
-    //   query: () => '/admin/retrieve/all',
-    // }),
-      // New get all admins endpoint
-      getAllAdmins: builder.query({
-        query: () => ({
-          url: "/admin/retrieve/all", 
-          method: "GET",
-        }),
-      }),
   }),
 });
 
-export const { useLoginMutation,useForgotPasswordMutation,useVerifyOtpMutation,useCreateAdminMutation, useChangePasswordMutation ,useGetAllAdminsQuery,useUpdateAdminMutation } = authApi;
+export const { useLoginMutation,useForgotPasswordMutation,useVerifyOtpMutation ,useGetAllAdminsQuery,useUpdateAdminMutation,useResetPasswordMutation,useChangePasswordMutation } = authApi;
 export default authApi;
 

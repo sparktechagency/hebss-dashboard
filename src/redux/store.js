@@ -4,6 +4,8 @@ import authReducer from "./features/auth/authSlice";
 import storage from "redux-persist/lib/storage";
 import persistReducer from "redux-persist/es/persistReducer";
 import persistStore from "redux-persist/es/persistStore";
+import adminApi from "./features/admin/adminApi";
+import aboutApi from "./features/about/aboutApi";
 
 const persistConfig = {
   key: "root",
@@ -12,6 +14,8 @@ const persistConfig = {
 
 const rootReducer = combineReducers({
   [authApi.reducerPath]: authApi.reducer,
+  [adminApi.reducerPath]:adminApi.reducer,
+  [aboutApi.reducerPath]:aboutApi.reducer,
   auth: authReducer,
 });
 
@@ -22,7 +26,7 @@ const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: false,
-    }).concat(authApi.middleware),
+    }).concat(authApi.middleware,adminApi.middleware,aboutApi.middleware),
 });
 
 export const persistor = persistStore(store); // for persisting

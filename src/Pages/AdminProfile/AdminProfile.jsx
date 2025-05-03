@@ -1,20 +1,34 @@
 import React, { useState } from "react";
 import { Tabs, Button, Input, Form, message, Typography, ConfigProvider } from "antd";
 import { FaRegEye, FaRegEyeSlash } from "react-icons/fa";
+import { useChangePasswordMutation } from "../../redux/features/auth/authApi";
+import { useSelector } from "react-redux";
 
 const { TabPane } = Tabs;
 
 const AdminProfile = () => {
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Mock admin data for design
-  const adminData = {
-    name: "Admin User",
-    email: "admin@example.com",
-  };
+  // Use the change password mutation
+  const [changePassword] = useChangePasswordMutation();  
+
+
+
+    // ✅ Get user data from Redux authSlice
+    const user = useSelector((state) => state.auth.user);
+   
+  
+
+  
+    // ✅adminProfile based on logged-in user
+    const adminProfile = {
+      name: user?.fullName ,
+      email: user?.email ,
+      role: "admin", // If you store role in user, replace "admin" with user.role
+    };
+  
 
   const onFinish = (values) => {
     setLoading(true);
@@ -24,69 +38,65 @@ const AdminProfile = () => {
     }, 1000);
   };
 
-  const onPasswordChange = (values) => {
+  // Handle password change form submission
+  const onPasswordChange = async (values) => {
+    if (values.newPassword === "") {
+      message.error("New password can not be empty!");
+      return;
+    }
+
     setLoading(true);
-    setTimeout(() => {
+
+    // Prepare the data to send to the backend
+    const data = {
+      email: values.email, 
+      oldPassword: values.oldPassword,
+      newPassword: values.newPassword,
+    };
+
+    try {
+      // Call the API to change the password
+      const response = await changePassword(data).unwrap();  // Using .unwrap() to get the response directly
       message.success("Password changed successfully!");
       setLoading(false);
-    }, 1000);
+    } catch (error) {
+      console.error("Error changing password:", error);
+      message.error("Failed to change password. Please try again.");
+      setLoading(false);
+    }
   };
 
   return (
     <div className="container min-h-screen py-10 mx-auto bg-gray-50">
       <div className="max-w-screen-lg p-8 mx-auto bg-white rounded-lg shadow-lg">
-        {/* Tabs for Profile and Password */}
         <Tabs defaultActiveKey="1" size="large" className="space-y-6">
           {/* Profile Tab */}
           <TabPane tab="Update Profile" key="1">
             <Typography.Title level={3} className="mb-6 text-center">Update Profile</Typography.Title>
+
             <Form
               name="updateProfile"
               onFinish={onFinish}
-              initialValues={adminData}
+              initialValues={adminProfile}
               layout="vertical"
               className="space-y-4"
             >
-              <div className="grid grid-cols-1 gap-4">
-                <ConfigProvider>
-                  <Form.Item
-                    label="Full Name"
-                    name="name"
-                    className="mb-4"
-                  >
-                    <Input
-                      placeholder="Enter your name"
-                      className="border-red-500 rounded-md focus:border-red-500 focus:ring focus:ring-red-500 focus:ring-opacity-50"
-                    />
-                  </Form.Item>
-                </ConfigProvider>
-                <ConfigProvider>
-                  <Form.Item
-                    label="Email"
-                    name="email"
-                    className="mb-4"
-                  >
-                    <Input
-                      placeholder="Enter your email"
-                      className="border-red-500 rounded-md focus:border-red-500 focus:ring focus:ring-red-500 focus:ring-opacity-50"
-                    />
-                  </Form.Item>
-                </ConfigProvider>
-              </div>
+              <Form.Item label="Full Name" name="name">
+                <Input placeholder="Enter your name" />
+              </Form.Item>
+              <Form.Item label="Email" name="email">
+                <Input placeholder="Enter your email" />
+              </Form.Item>
               <div className="flex justify-end">
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  loading={loading}
-                  className="px-6 py-2 text-white bg-red-500 rounded-md shadow-md hover:bg-red-600"
-                >
+                <Button type="primary" htmlType="submit" loading={loading}>
                   Update Profile
                 </Button>
               </div>
             </Form>
+
           </TabPane>
 
-          {/* Password Change Tab */}
+          {/* Change Password Tab */}
           <TabPane tab="Change Password" key="2">
             <Typography.Title level={3} className="mb-6 text-center">Change Password</Typography.Title>
             <Form
@@ -95,86 +105,50 @@ const AdminProfile = () => {
               layout="vertical"
               className="space-y-4"
             >
-              <div className="grid grid-cols-1 gap-4">
-                <div className="relative">
-                  <Form.Item
-                    label="Old Password"
-                    name="oldPassword"
-                    className="mb-4"
-                  >
-                    <div className="relative">
-                      <Input
-                        type={showOldPassword ? "text" : "password"}
-                        placeholder="Enter old password"
-                        className="pr-10 border-red-500 rounded-md focus:border-red-500 focus:ring focus:ring-red-500 focus:ring-opacity-50"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowOldPassword(!showOldPassword)}
-                        className="absolute transform -translate-y-1/2 right-2 top-1/2"
-                      >
-                        {showOldPassword ? <FaRegEyeSlash /> : <FaRegEye />}
-                      </button>
-                    </div>
-                  </Form.Item>
-                </div>
+              {/* Email Field */}
+              <Form.Item label="Email" name="email" required>
+                <Input
+                  type="email"
+                  placeholder="Enter your email"
+                />
+              </Form.Item>
 
+              {/* Old Password Field */}
+              <Form.Item label="Old Password" name="oldPassword" required>
                 <div className="relative">
-                  <Form.Item
-                    label="New Password"
-                    name="newPassword"
-                    className="mb-4"
+                  <Input
+                    type={showOldPassword ? "text" : "password"}
+                    placeholder="Enter old password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowOldPassword(!showOldPassword)}
+                    className="absolute transform -translate-y-1/2 right-2 top-1/2"
                   >
-                    <div className="relative">
-                      <Input
-                        type={showNewPassword ? "text" : "password"}
-                        placeholder="Enter new password"
-                        className="pr-10 border-red-500 rounded-md focus:border-red-500 focus:ring focus:ring-red-500 focus:ring-opacity-50"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowNewPassword(!showNewPassword)}
-                        className="absolute transform -translate-y-1/2 right-2 top-1/2"
-                      >
-                        {showNewPassword ? <FaRegEyeSlash /> : <FaRegEye />}
-                      </button>
-                    </div>
-                  </Form.Item>
+                    {showOldPassword ? <FaRegEyeSlash /> : <FaRegEye />}
+                  </button>
                 </div>
+              </Form.Item>
 
+              {/* New Password Field */}
+              <Form.Item label="New Password" name="newPassword" required>
                 <div className="relative">
-                  <Form.Item
-                    label="Confirm Password"
-                    name="confirmPassword"
-                    className="mb-4"
+                  <Input
+                    type={showNewPassword ? "text" : "password"}
+                    placeholder="Enter new password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute transform -translate-y-1/2 right-2 top-1/2"
                   >
-                    <div className="relative">
-                      <Input
-                        type={showConfirmPassword ? "text" : "password"}
-                        placeholder="Confirm new password"
-                        className="pr-10 border-red-500 rounded-md focus:border-red-500 focus:ring focus:ring-red-500 focus:ring-opacity-50"
-                      />
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setShowConfirmPassword(!showConfirmPassword)
-                        }
-                        className="absolute transform -translate-y-1/2 right-2 top-1/2"
-                      >
-                        {showConfirmPassword ? <FaRegEyeSlash /> : <FaRegEye />}
-                      </button>
-                    </div>
-                  </Form.Item>
+                    {showNewPassword ? <FaRegEyeSlash /> : <FaRegEye />}
+                  </button>
                 </div>
-              </div>
+              </Form.Item>
 
               <div className="flex justify-end">
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  loading={loading}
-                  className="px-6 py-2 text-white bg-red-500 rounded-md shadow-md hover:bg-red-600"
-                >
+                <Button type="primary" htmlType="submit" loading={loading}>
                   Change Password
                 </Button>
               </div>
