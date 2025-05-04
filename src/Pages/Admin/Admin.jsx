@@ -1,44 +1,57 @@
 import React, { useState } from "react";
 import { Table, Button, Modal, Input, message } from "antd"; // Ant Design components
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
-import { useCreateAdminMutation, useDeleteAdminMutation, useGetAllAdminsQuery, useUpdateAdminMutation } from "../../redux/features/admin/adminApi"; // Import the mutation and query hooks
+import {
+  useCreateAdminMutation,
+  useDeleteAdminMutation,
+  useGetAllAdminsQuery,
+  useUpdateAdminMutation,
+} from "../../redux/features/admin/adminApi"; // Import the mutation and query hooks
+import { data } from "autoprefixer";
 
 const AdminManagementPage = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [newAdmin, setNewAdmin] = useState({ fullName: "", email: "", password: "" });
+  const [newAdmin, setNewAdmin] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+  });
   const [isEditing, setIsEditing] = useState(false); // Track whether we're editing or creating an admin
   const [currentAdminId, setCurrentAdminId] = useState(null); // Store the ID of the admin being edited
 
-  const { data: response, error, isLoading: isLoadingAdmins } = useGetAllAdminsQuery();  // Fetch admins data
-  const admins = response?.data || [];  // Safely extract admins as an array
+  const { data: alladmin, error, isLoading: isLoadingAdmins} = useGetAllAdminsQuery(); // Fetch admins data
+  console.log(alladmin)
+  const admins = alladmin?.data || []; // Safely extract admins as an array
   const [createAdmin, { isLoading: isCreatingAdmin }] = useCreateAdminMutation();
-  const [deleteAdmin, { isLoading: isDeletingAdmin }] = useDeleteAdminMutation(); 
-  const [updateAdmin, { isLoading: isUpdatingAdmin }] = useUpdateAdminMutation();  // Mutation for update
+  const [deleteAdmin, { isLoading: isDeletingAdmin }] = useDeleteAdminMutation();
+  const [updateAdmin, { isLoading: isUpdatingAdmin }] = useUpdateAdminMutation();
 
   // Handle Create Admin
   const handleCreateAdmin = () => {
     setIsModalVisible(true);
     setNewAdmin({ fullName: "", email: "", password: "" });
     setIsEditing(false); // Set to create mode
+    
   };
 
   // Handle Edit Admin
   const handleEditAdmin = (admin) => {
     setIsModalVisible(true);
-    setNewAdmin({ fullName: admin.fullName, email: admin.email, password: "" });  // Pre-fill the form with existing data
-    setCurrentAdminId(admin._id);  // Store the ID of the admin being edited
-    setIsEditing(true);  // Set to editing mode
+    setNewAdmin({ fullName: admin.fullName, email: admin.email, password: "" }); // Pre-fill the form with existing data
+    setCurrentAdminId(admin._id); // Store the ID of the admin being edited
+    setIsEditing(true); // Set to editing mode
   };
 
   const handleSaveAdmin = async () => {
     try {
-      const adminData = isEditing
-        ? { fullName: newAdmin.fullName }  
-        : newAdmin; 
-  
+      const adminData = isEditing ? { fullName: newAdmin.fullName } : newAdmin;
+
       if (isEditing) {
         // console.log("Updating admin with ID:", currentAdminId);
-        const response = await updateAdmin({ id: currentAdminId, data: adminData }).unwrap();
+        const response = await updateAdmin({
+          id: currentAdminId,
+          data: adminData,
+        }).unwrap();
         console.log("Admin updated successfully:", response);
         message.success("Admin updated successfully!");
       } else {
@@ -48,14 +61,13 @@ const AdminManagementPage = () => {
         // console.log("Admin created successfully:", response);
         message.success("Admin created successfully!");
       }
-  
+
       setIsModalVisible(false);
     } catch (error) {
-      console.error("Error saving admin:", error);  
+      console.error("Error saving admin:", error);
       message.error("Failed to save admin. Please try again.");
     }
   };
-  
 
   // Handle Delete Admin
   const handleDeleteAdmin = async (id) => {
@@ -94,7 +106,7 @@ const AdminManagementPage = () => {
           <Button
             icon={<DeleteOutlined />}
             style={{ color: "red" }}
-            onClick={() => handleDeleteAdmin(record._id)}  // Delete admin
+            onClick={() => handleDeleteAdmin(record._id)} // Delete admin
           />
         </div>
       ),
@@ -104,7 +116,9 @@ const AdminManagementPage = () => {
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="mb-4 text-2xl font-semibold">Administrator management</h3>
+        <h3 className="mb-4 text-2xl font-semibold">
+          Administrator management
+        </h3>
         <Button
           type="primary"
           onClick={handleCreateAdmin}
@@ -117,9 +131,9 @@ const AdminManagementPage = () => {
       {/* Table with pagination */}
       <Table
         columns={columns}
-        dataSource={admins}  // Display admins fetched from the backend
+        dataSource={admins} // Display admins fetched from the backend
         pagination={{ pageSize: 5 }}
-        rowKey="_id"  // Assuming `_id` is the unique identifier for each admin
+        rowKey="_id" // Assuming `_id` is the unique identifier for each admin
         loading={isLoadingAdmins}
       />
 
@@ -129,8 +143,17 @@ const AdminManagementPage = () => {
         visible={isModalVisible}
         onCancel={handleModalClose}
         footer={[
-          <Button key="cancel" onClick={handleModalClose}>Cancel</Button>,
-          <Button key="save" type="primary" onClick={handleSaveAdmin} loading={isUpdatingAdmin || isCreatingAdmin}>Save</Button>,
+          <Button key="cancel" onClick={handleModalClose}>
+            Cancel
+          </Button>,
+          <Button
+            key="save"
+            type="primary"
+            onClick={handleSaveAdmin}
+            loading={isUpdatingAdmin || isCreatingAdmin}
+          >
+            Save
+          </Button>,
         ]}
       >
         <div>

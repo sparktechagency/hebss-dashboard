@@ -4,6 +4,13 @@ const aboutApi = createApi({
   reducerPath: "aboutApi",
   baseQuery: fetchBaseQuery({
     baseUrl: `http://10.0.60.55:5003/v1`,
+    prepareHeaders: (headers) => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        headers.set('Authorization', `Bearer ${token}`);
+      }
+      return headers;
+    },
   }),
   endpoints: (builder) => ({
     createOrUpdateAboutUs: builder.mutation({
@@ -13,8 +20,22 @@ const aboutApi = createApi({
         body: data,  
       }),
     }),
+    createOrUpdatePrivacyPolicy: builder.mutation({
+      query: (data) => ({
+        url: "/privacy-policy/create-or-update",  
+        method: "POST",  
+        body: data, 
+      }),
+    }),
+    createOrUpdateTrems:builder.mutation({
+      query:(data)=>({
+        url:"/terms-condition/create-or-update",
+        method:"POST",
+        body:data,
+      })
+    })
   }),
 });
 
-export const { useCreateOrUpdateAboutUsMutation } = aboutApi;
+export const { useCreateOrUpdateAboutUsMutation,useCreateOrUpdatePrivacyPolicyMutation,useCreateOrUpdateTremsMutation } = aboutApi;
 export default aboutApi;

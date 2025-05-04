@@ -1,45 +1,32 @@
-import React, { useState } from "react";
-import { Card, Button, Modal, Input, Select, Row, Col, Upload } from "antd";
+import React, { useState, useEffect } from "react";
+import {
+  Card,
+  Button,
+  Modal,
+  Input,
+  Select,
+  Row,
+  Col,
+  Upload,
+  message,
+} from "antd";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import { AllImages } from "../../assets/image/AllImages";
-
-// Sample blog data
-const blogData = [
-  {
-    key: "1",
-    category: "Tech",
-    title: "The Future of AI",
-    description:
-      "Exploring the advancements and impact of Artificial Intelligence.",
-    image: "image1.jpg",
-  },
-  {
-    key: "2",
-    category: "Health",
-    title: "10 Tips for Healthy Living",
-    description: "Practical advice for a healthier lifestyle.",
-    image: "image2.jpg",
-  },
-  {
-    key: "3",
-    category: "Business",
-    title: "Effective Leadership Skills",
-    description: "How to develop strong leadership skills in business.",
-    image: "image3.jpg",
-  },
-  // Add more blog data as needed
-];
+import {
+  useCreateBlogMutation,
+  useDeleteBlogMutation,
+  useEditBlogMutation,
+  useGetAllBlogsQuery,
+} from "../../redux/features/blog/blogApi";
 
 const primaryColor = "#F37975";
-
 const { Option } = Select;
 
 const BlogPage = () => {
-  const [blogs, setBlogs] = useState(blogData);
+  const [categories, setCategories] = useState([]); 
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [isEditing, setIsEditing] = useState(false); // Flag to track if it's edit mode
-  const [currentBlog, setCurrentBlog] = useState(null); // Store current blog data for editing
-
+  const [isEditing, setIsEditing] = useState(false); 
+  const [currentBlog, setCurrentBlog] = useState(null); 
   const [newBlog, setNewBlog] = useState({
     category: "",
     title: "",
@@ -47,11 +34,52 @@ const BlogPage = () => {
     image: null,
   });
 
+  // Use the createBlog mutation from Redux Toolkit
+  const [createBlog, { isLoading }] = useCreateBlogMutation();
+  const [editBlog] = useEditBlogMutation();
+  const [deleteBlog] = useDeleteBlogMutation();
+
+  // Fetch blogs using the Redux Toolkit Query
+  const {
+    data: blogs = [],
+    error,
+    isLoading: blogsLoading,
+  } = useGetAllBlogsQuery();
+
+  // Log the fetched blogs to check the structure
+  useEffect(() => {
+    console.log("Blogs Data:", blogs); // Log the data to inspect its structure
+  }, [blogs]);
+
+  console.log(blogs.data);
+
+  // Fetch categories when the component loads
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(
+          "http://10.0.60.55:5003/v1/category/retrieve"
+        ); // Update with your category endpoint
+        const data = await response.json();
+        if (data.status === "success") {
+          setCategories(data.data); // Set categories state
+        } else {
+          message.error("Failed to fetch categories");
+        }
+      } catch (error) {
+        // console.error("Error fetching categories:", error);
+        message.error("Error fetching categories");
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
   // Handle Create Blog
   const handleCreateBlog = () => {
-    setIsEditing(false); // Reset to create mode
+    setIsEditing(false); 
     setNewBlog({
-      category: "",
+      category: "", 
       title: "",
       description: "",
       image: null,
@@ -72,32 +100,43 @@ const BlogPage = () => {
     setIsModalVisible(true);
   };
 
-  // Handle Save Blog (Create or Edit)
-  const handleSaveBlog = () => {
-    if (isEditing) {
-      // Update existing blog
-      setBlogs((prevBlogs) =>
-        prevBlogs.map((blog) =>
-          blog.key === currentBlog.key ? { ...blog, ...newBlog } : blog
-        )
-      );
-    } else {
-      // Create a new blog
-      setBlogs([
-        ...blogs,
-        {
-          ...newBlog,
-          key: blogs.length + 1,
-          image: newBlog.image || "default.jpg", // Image fallback
-        },
-      ]);
+
+  const handleSaveBlog = async () => {
+    try {
+      const blogData = {
+        category: newBlog.category,
+        title: newBlog.title,
+        description: newBlog.description,
+        image: newBlog.image,
+      };
+
+      if (isEditing) {
+        // Edit the blog
+        await editBlog({ id: currentBlog._id, data: blogData }).unwrap();
+        message.success("Blog updated successfully!");
+      } else {
+        // Create new blog
+        await createBlog(blogData).unwrap();
+        message.success("Blog created successfully!");
+      }
+
+      setIsModalVisible(false);
+    } catch (error) {
+      message.error("An error occurred while saving the blog.");
     }
-    setIsModalVisible(false);
   };
 
   // Handle Delete Blog
-  const handleDeleteBlog = (key) => {
-    setBlogs(blogs.filter((blog) => blog.key !== key));
+  // const handleDeleteBlog = (key) => {
+  //   setBlogs(blogList.filter((blog) => blog.key !== key));
+  // };
+  const handleDeleteBlog = async (_id) => {
+    try {
+      await deleteBlog(_id).unwrap();
+      message.success("Blog deleted successfully!");
+    } catch (error) {
+      message.error("An error occurred while deleting the blog.");
+    }
   };
 
   // Handle Modal Close
@@ -121,10 +160,14 @@ const BlogPage = () => {
     return false; // Prevent upload to the server
   };
 
+  // Check if blogs are still loading or if there's an error
+  if (blogsLoading) return <p>Loading blogs...</p>;
+  if (error) return <p>Error loading blogs: {error.message}</p>;
+
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center">
-        <h3 className="text-2xl font-semibold mb-4">Blog</h3>
+      <div className="flex items-center justify-between">
+        <h3 className="mb-4 text-2xl font-semibold">Blog</h3>
         <Button
           type="primary"
           onClick={handleCreateBlog}
@@ -135,24 +178,29 @@ const BlogPage = () => {
       </div>
 
       <Row gutter={[16, 16]}>
-        {blogs.map((blog) => (
-          <Col key={blog.key} span={8}>
-            <Card
-              title={blog.title}
-              cover={<img alt={blog.title} src={AllImages.blog} />}
-              actions={[
-                <EditOutlined onClick={() => handleEditBlog(blog)} />,
-                <DeleteOutlined
-                  onClick={() => handleDeleteBlog(blog.key)}
-                  style={{ color: "red" }}
-                />,
-              ]}
-            >
-              <p>{blog.description}</p>
-            </Card>
-          </Col>
-        ))}
+        {blogs.data && blogs.data.length > 0 ? (
+          blogs.data.map((blog) => (
+            <Col key={blog.key} span={8}>
+              <Card
+                title={blog.title}
+                cover={<img alt={blog.title} src={AllImages.blog} />}
+                actions={[
+                  <EditOutlined onClick={() => handleEditBlog(blog)} />,
+                  <DeleteOutlined
+                    onClick={() => handleDeleteBlog(blog._id)}
+                    style={{ color: "red" }}
+                  />,
+                ]}
+              >
+                <p>{blog.description}</p>
+              </Card>
+            </Col>
+          ))
+        ) : (
+          <p>No blogs found.</p>
+        )}
       </Row>
+
 
       {/* Modal for creating or editing blog */}
       <Modal
@@ -163,7 +211,12 @@ const BlogPage = () => {
           <Button key="cancel" onClick={handleModalClose}>
             Cancel
           </Button>,
-          <Button key="save" type="primary" onClick={handleSaveBlog}>
+          <Button
+            key="save"
+            type="primary"
+            onClick={handleSaveBlog}
+            loading={isLoading}
+          >
             Save
           </Button>,
         ]}
@@ -175,10 +228,11 @@ const BlogPage = () => {
             onChange={handleCategoryChange}
             style={{ width: "100%", marginBottom: "10px" }}
           >
-            <Option value="Tech">Tech</Option>
-            <Option value="Health">Health</Option>
-            <Option value="Business">Business</Option>
-            <Option value="Lifestyle">Lifestyle</Option>
+            {categories.map((category) => (
+              <Option key={category._id} value={category._id}>
+                {category.title} ({category.ageGroup})
+              </Option>
+            ))}
           </Select>
 
           <label>Title</label>

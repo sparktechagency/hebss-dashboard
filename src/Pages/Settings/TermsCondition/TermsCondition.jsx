@@ -1,57 +1,51 @@
 import React, { useState } from "react";
-import { Form, Input, message } from "antd";
+import { Form, message } from "antd";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
+import { useCreateOrUpdateTremsMutation } from "../../../redux/features/about/aboutApi";
 
 const TermsCondition = () => {
   const [loading, setLoading] = useState(false);
   const [content, setContent] = useState("");
 
-  const onFinish = (values) => {
+  // Use the mutation hook for creating/updating the "Terms & Conditions" section
+  const [createOrUpdateTerms, { isLoading }] = useCreateOrUpdateTremsMutation();
+
+  const handleSubmit = async () => {
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      message.success("About Us updated successfully!");
+    try {
+      // Create or update Terms & Conditions content
+      await createOrUpdateTerms({ description: content }).unwrap();
+
+      message.success("Terms & Conditions updated successfully!");
+    } catch (error) {
+      message.error("Failed to update Terms & Conditions. Please try again.");
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (
     <div className="container mx-auto">
-      <div className="bg-white rounded-lg p-6 md:p-10 mt-5">
-        <h2 className="text-2xl font-bold mb-6">Terms & Conditions</h2>
-        <Form name="aboutUs" onFinish={onFinish} layout="vertical">
-          {/* <Form.Item
-            name="title"
-            label="Title"
-            rules={[{ required: true, message: "Please input title!" }]}
-          >
-            <Input placeholder="Enter title" />
-          </Form.Item> */}
+      <div className="p-6 mt-5 bg-white rounded-lg md:p-10">
+        <h2 className="mb-6 text-2xl font-bold">Terms & Conditions</h2>
 
-          <Form.Item
-            name="content"
-            label="Content"
-            rules={[{ required: true, message: "Please input content!" }]}
-          >
-            <ReactQuill
-              theme="snow"
-              value={content}
-              onChange={setContent}
-              className="h-[200px] mb-12"
-            />
-          </Form.Item>
+        {/* ReactQuill Editor */}
+        <ReactQuill
+          theme="snow"
+          value={content}
+          onChange={setContent} // Update state with Quill editor content
+          className="h-[200px] mb-12"
+        />
 
-          <Form.Item className="mt-16">
-            <button
-              type="submit"
-              className="bg-primary text-white px-6 py-2 rounded-lg"
-              disabled={loading}
-            >
-              {loading ? "Updating..." : "Update About Us"}
-            </button>
-          </Form.Item>
-        </Form>
+        {/* Submit Button */}
+        <button
+          onClick={handleSubmit}
+          className="px-6 py-2 mt-16 text-white rounded-lg bg-primary"
+          disabled={loading || isLoading}
+        >
+          {loading || isLoading ? "Updating..." : "Update Terms & Conditions"}
+        </button>
       </div>
     </div>
   );

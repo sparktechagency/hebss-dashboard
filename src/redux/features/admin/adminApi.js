@@ -29,9 +29,9 @@ const adminApi = createApi({
     // Edit admin
     updateAdmin: builder.mutation({
       query: ({ id, data }) => ({
-        url: `/admin/update/${id}`, // Assuming your backend follows this route
+        url: `/admin/update/${id}`, 
         method: "PATCH",
-        body: data, // The updated data for the admin
+        body: data, 
       }),
     }),
   }),

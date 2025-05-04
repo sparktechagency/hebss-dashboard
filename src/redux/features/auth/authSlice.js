@@ -6,7 +6,6 @@ const initialState = {
   isAuthenticated: false,
   verificationEmail: localStorage.getItem("verificationEmail") || null, 
 };
-
 const authSlice = createSlice({
   name: "auth",
   initialState,
