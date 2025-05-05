@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Button, Card, Modal, Input, Form, message, Row, Col, Upload, Avatar } from "antd";
 import { EditOutlined, DeleteOutlined, UploadOutlined } from "@ant-design/icons";
-import { AllImages } from "../../../assets/image/AllImages";
+import { useCreateTeamMemberMutation } from "../../../redux/features/team/teamApi";
 
 const TeamPage = () => {
   const [teamMembers, setTeamMembers] = useState([
@@ -11,7 +11,7 @@ const TeamPage = () => {
       email: "fahadhossain0503@gmail.com",
       position: "Software Engineer",
       description: "Founder of the company",
-      image: "https://via.placeholder.com/150", // Replace with actual uploaded image
+      image: "https://via.placeholder.com/150", 
     },
     {
       key: "2",
@@ -19,7 +19,7 @@ const TeamPage = () => {
       email: "eanara_ghouleh@gmail.com",
       position: "Founders",
       description: "Founder of the company",
-      image: "https://via.placeholder.com/150", // Replace with actual uploaded image
+      image: "https://via.placeholder.com/150", 
     },
     {
       key: "3",
@@ -27,7 +27,7 @@ const TeamPage = () => {
       email: "khade_zahdank@gmail.com",
       position: "CEO",
       description: "Chief Executive Officer",
-      image: "https://via.placeholder.com/150", // Replace with actual uploaded image
+      image: "https://via.placeholder.com/150", 
     },
     {
       key: "4",
@@ -35,7 +35,7 @@ const TeamPage = () => {
       email: "heba_morad@kunde.us",
       position: "Chief Operating Officer",
       description: "Chief Operating Officer",
-      image: "https://via.placeholder.com/150", // Replace with actual uploaded image
+      image: "https://via.placeholder.com/150", 
     },
     {
       key: "5",
@@ -43,7 +43,7 @@ const TeamPage = () => {
       email: "nadean_ghouleh@cremin.us",
       position: "Social Media and Logistics Coordinator",
       description: "Coordinator at Cremin",
-      image: "https://via.placeholder.com/150", // Replace with actual uploaded image
+      image: "https://via.placeholder.com/150", 
     },
   ]);
 
@@ -51,7 +51,8 @@ const TeamPage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [currentMember, setCurrentMember] = useState(null);
   const [form] = Form.useForm();
-  const [imagePreview, setImagePreview] = useState(null); // For preview
+  const [imagePreview, setImagePreview] = useState(null); 
+  const [createTeamMember, { isLoading }] = useCreateTeamMemberMutation();  
 
   const handleAddMember = () => {
     setIsEditing(false);
@@ -71,20 +72,27 @@ const TeamPage = () => {
     message.success("Team member deleted successfully");
   };
 
-  const handleFormSubmit = (values) => {
-    if (isEditing) {
-      setTeamMembers(
-        teamMembers.map((member) =>
-          member.key === currentMember.key ? { ...member, ...values } : member
-        )
-      );
-      message.success("Team member updated successfully");
-    } else {
-      const newMember = { key: teamMembers.length + 1, ...values };
-      setTeamMembers([...teamMembers, newMember]);
-      message.success("Team member added successfully");
+  const handleFormSubmit = async (values) => {
+    const image = imagePreview || values.image; 
+
+    // Prepare the data for the API
+    const teamData = { ...values, image };
+
+    try {
+      if (isEditing) {
+        // If editing, send an update to the backend (you should define an API update endpoint)
+        message.success("Team member updated successfully");
+      } else {
+        // Add new member via API
+        await createTeamMember(teamData).unwrap();  // Call the API mutation
+        message.success("Team member added successfully");
+      }
+      
+      // Close the modal and reset form
+      setIsModalVisible(false);
+    } catch (error) {
+      message.error("Error creating/updating team member");
     }
-    setIsModalVisible(false);
   };
 
   const handleImageChange = (info) => {
@@ -97,15 +105,15 @@ const TeamPage = () => {
 
   const handleBeforeUpload = (file) => {
     const reader = new FileReader();
-    reader.onload = (e) => setImagePreview(e.target.result); // Set the preview image
+    reader.onload = (e) => setImagePreview(e.target.result); 
     reader.readAsDataURL(file);
-    return false; // Prevents upload action from happening immediately
+    return false; 
   };
 
   return (
     <div className="container mx-auto mt-10">
       <div className="">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-gray-700">Team Management</h2>
           <Button
             type="primary"
@@ -125,27 +133,20 @@ const TeamPage = () => {
                 cover={
                   <Avatar
                     size={100}
-                    src={AllImages.user}
+                    src={member.image}  
                     style={{
-                      borderRadius: "50%", // Ensures the image is circular
-                      border: "5px solid #fff", // Adds white border around the image
-                      boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)", // Shadow effect for depth
+                      borderRadius: "50%", 
+                      border: "5px solid #fff", 
+                      boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
                     }}
                     className="mx-auto mt-4"
                   />
                 }
                 actions={[
-                  <EditOutlined
-                    key="edit"
-                    onClick={() => handleEditMember(member)}
-                  />,
-                  <DeleteOutlined
-                    key="delete"
-                    onClick={() => handleDeleteMember(member.key)}
-                    style={{ color: "red" }}
-                  />,
+                  <EditOutlined key="edit" onClick={() => handleEditMember(member)} />,
+                  <DeleteOutlined key="delete" onClick={() => handleDeleteMember(member.key)} style={{ color: "red" }} />,
                 ]}
-                className="shadow-lg rounded-lg"
+                className="rounded-lg shadow-lg"
               >
                 <Card.Meta
                   title={member.name}
@@ -171,7 +172,7 @@ const TeamPage = () => {
             <Button key="cancel" onClick={() => setIsModalVisible(false)}>
               Cancel
             </Button>,
-            <Button key="submit" type="primary" onClick={() => form.submit()}>
+            <Button key="submit" type="primary" onClick={() => form.submit()} loading={isLoading}>
               Save
             </Button>,
           ]}

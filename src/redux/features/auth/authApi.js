@@ -15,7 +15,7 @@ const authApi = createApi({
     }),
     forgotPassword: builder.mutation({
       query: (data) => ({
-        url: "admin/auth/forget-password/send-otp",
+        url: "/admin/auth/forget-password/send-otp",
         method: "POST",
         body: data,
       }),

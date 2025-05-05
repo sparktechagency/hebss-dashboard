@@ -32,16 +32,16 @@ import SubscribersPage from "../Pages/Subscription/Subscribers";
 export const router = createBrowserRouter([
   {
     path: "/sign-in",
-    element: <SignIn/>,
+    element: <SignIn />,
   },
 
   {
     path: "/forgate-password",
-    element: <ForgatePassword/>,
+    element: <ForgatePassword />,
   },
   {
     path: "/verification",
-    element: <VerifyPass/>,
+    element: <VerifyPass />,
   },
 
   {

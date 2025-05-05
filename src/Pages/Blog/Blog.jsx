@@ -23,10 +23,10 @@ const primaryColor = "#F37975";
 const { Option } = Select;
 
 const BlogPage = () => {
-  const [categories, setCategories] = useState([]); 
+  const [categories, setCategories] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [isEditing, setIsEditing] = useState(false); 
-  const [currentBlog, setCurrentBlog] = useState(null); 
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentBlog, setCurrentBlog] = useState(null);
   const [newBlog, setNewBlog] = useState({
     category: "",
     title: "",
@@ -77,9 +77,9 @@ const BlogPage = () => {
 
   // Handle Create Blog
   const handleCreateBlog = () => {
-    setIsEditing(false); 
+    setIsEditing(false);
     setNewBlog({
-      category: "", 
+      category: "",
       title: "",
       description: "",
       image: null,
@@ -99,7 +99,6 @@ const BlogPage = () => {
     });
     setIsModalVisible(true);
   };
-
 
   const handleSaveBlog = async () => {
     try {
@@ -200,7 +199,6 @@ const BlogPage = () => {
           <p>No blogs found.</p>
         )}
       </Row>
-
 
       {/* Modal for creating or editing blog */}
       <Modal

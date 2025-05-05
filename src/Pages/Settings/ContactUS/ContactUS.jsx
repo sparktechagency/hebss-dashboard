@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Form, Input, Button, message, Card } from "antd";
-import { CloseOutlined } from "@ant-design/icons"; // Import Close Icon
+import { CloseOutlined } from "@ant-design/icons"; 
 
 const ContactUS = () => {
   const [email, setEmail] = useState(""); // Email state
@@ -27,9 +27,9 @@ const ContactUS = () => {
   };
 
   return (
-    <div className="container mx-auto max-w-4xl mt-10">
-      <div className="bg-white rounded-lg p-6 shadow-lg">
-        <div className="flex justify-between items-center mb-6">
+    <div className="container max-w-4xl mx-auto mt-10">
+      <div className="p-6 bg-white rounded-lg shadow-lg">
+        <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-gray-700">
             Contact Email Configuration
           </h2>
@@ -38,10 +38,10 @@ const ContactUS = () => {
         {/* Email Configuration Card */}
         <Card
           //   title="Email Configuration"
-          className="mt-5 p-6 rounded-xl shadow-md border-2"
+          className="p-6 mt-5 border-2 shadow-md rounded-xl"
           style={{ backgroundColor: "#f9fafb" }}
         >
-          <h3 className="font-semibold mb-4 text-gray-600">
+          <h3 className="mb-4 font-semibold text-gray-600">
             Admin Contact Email
           </h3>
           <p className="text-lg">{email || "No email configured yet!"}</p>
@@ -63,7 +63,7 @@ const ContactUS = () => {
 
         {/* Form to Add or Edit Email */}
         {isEditing && (
-          <div className="mt-8 relative">
+          <div className="relative mt-8">
             <CloseOutlined
               onClick={handleCloseForm}
               style={{
@@ -80,10 +80,10 @@ const ContactUS = () => {
               initialValues={{ email }}
               onFinish={handleSubmit}
               layout="vertical"
-              className=" bg-white py-10 md:py-20 px-6 md:px-10 rounded-2xl border-2 shadow-xl"
+              className="px-6 py-10 bg-white border-2 shadow-xl  md:py-20 md:px-10 rounded-2xl"
             >
               <div className="mb-4 text-center">
-                <h2 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800">
+                <h2 className="mb-6 text-2xl font-bold text-gray-800 md:text-3xl">
                   {email ? "Edit Email" : "Add New Email"}
                 </h2>
               </div>
@@ -91,7 +91,7 @@ const ContactUS = () => {
               <Form.Item
                 name="email"
                 label={
-                  <p className="text-md font-semibold text-gray-700">Email :</p>
+                  <p className="font-semibold text-gray-700 text-md">Email :</p>
                 }
                 rules={[{ required: true, message: "Please input an email!" }]}
               >
@@ -109,10 +109,10 @@ const ContactUS = () => {
                 />
               </Form.Item>
 
-              <Form.Item className="text-center mt-8">
+              <Form.Item className="mt-8 text-center">
                 <Button
                   type="submit"
-                  className="bg-primary w-full p-3 text-white font-semibold rounded-lg shadow-lg"
+                  className="w-full p-3 font-semibold text-white rounded-lg shadow-lg bg-primary"
                   loading={loading}
                   style={{ backgroundColor: "#FF4D4F", color: "white" }}
                 >
