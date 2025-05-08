@@ -72,28 +72,76 @@ const TeamPage = () => {
     message.success("Team member deleted successfully");
   };
 
-  const handleFormSubmit = async (values) => {
-    const image = imagePreview || values.image; 
+  // const handleFormSubmit = async (values) => {
+  //   const image = imagePreview || values.image; 
 
-    // Prepare the data for the API
-    const teamData = { ...values, image };
+  //   const teamData = { ...values, image };
 
-    try {
-      if (isEditing) {
-        // If editing, send an update to the backend (you should define an API update endpoint)
-        message.success("Team member updated successfully");
-      } else {
-        // Add new member via API
-        await createTeamMember(teamData).unwrap();  // Call the API mutation
-        message.success("Team member added successfully");
-      }
+  //   try {
+  //     if (isEditing) {
+  //       message.success("Team member updated successfully");
+  //     } else {
       
-      // Close the modal and reset form
-      setIsModalVisible(false);
-    } catch (error) {
-      message.error("Error creating/updating team member");
+  //       await createTeamMember(teamData).unwrap();  
+  //       message.success("Team member added successfully");
+  //     }
+      
+ 
+  //     setIsModalVisible(false);
+  //   } catch (error) {
+  //     message.error("Error creating/updating team member");
+  //   }
+  // };
+
+  const handleFormSubmit = async (values) => {
+  const formData = new FormData();
+
+  // Append form fields to FormData
+  formData.append('name', values.name);
+  formData.append('email', values.email);
+  formData.append('position', values.position);
+  formData.append('description', values.description);
+
+  // Append image file or base64 string
+  if (imagePreview) {
+    const imageFile = dataURItoBlob(imagePreview);
+    formData.append('image', imageFile);
+  } else if (values.image) {
+    formData.append('image', values.image);
+  }
+
+  try {
+    if (isEditing) {
+      // Handle edit if needed, for example:
+      // await updateTeamMember(formData);
+      message.success('Team member updated successfully');
+    } else {
+      // Send FormData to the API
+      await createTeamMember(formData).unwrap(); // Using FormData in the API call
+      message.success('Team member added successfully');
     }
-  };
+
+    // Close modal after success
+    setIsModalVisible(false);
+  } catch (error) {
+    console.error('Error:', error);
+    message.error('Error creating/updating team member');
+  }
+};
+
+// Helper function to convert Base64 image to Blob
+const dataURItoBlob = (dataURI) => {
+  const byteString = atob(dataURI.split(',')[1]);
+  const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+  const ab = new ArrayBuffer(byteString.length);
+  const ia = new Uint8Array(ab);
+  for (let i = 0; i < byteString.length; i++) {
+    ia[i] = byteString.charCodeAt(i);
+  }
+  return new Blob([ab], { type: mimeString });
+};
+  
+
 
   const handleImageChange = (info) => {
     if (info.file.status === "done") {

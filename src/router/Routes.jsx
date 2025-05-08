@@ -125,7 +125,7 @@ export const router = createBrowserRouter([
           },
           {
             path: "/settings/team",
-            element: <TeamPage />,
+            element: <TeamPage/>,
           },
           // {
           //     path: "/user-management/doctor",

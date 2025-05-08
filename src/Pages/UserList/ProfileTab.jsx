@@ -2,8 +2,7 @@ import React, { useState } from "react";
 import { Row, Col, Input, Button, Card } from "antd";
 import { EditOutlined } from "@ant-design/icons";
 
-// Define the primary color
-const primaryColor = "#FF4D4F"; // Assuming the provided primary color is red (adjust if different)
+const primaryColor = "#FF4D4F"; 
 
 // Reusable Input Component
 const CustomInput = ({ value, onChange, disabled }) => (
@@ -12,20 +11,20 @@ const CustomInput = ({ value, onChange, disabled }) => (
     onChange={onChange}
     disabled={disabled}
     style={{
-      backgroundColor: "#f1f1f1", // Gray background for inputs
-      border: "none", // Removed border
+      backgroundColor: "#f1f1f1", 
+      border: "none", 
       borderRadius: "8px",
       padding: "10px",
       fontSize: "16px",
-      boxShadow: disabled ? "none" : "0 0 5px rgba(0, 0, 0, 0.1)", // Light shadow for active inputs
+      boxShadow: disabled ? "none" : "0 0 5px rgba(0, 0, 0, 0.1)", 
     }}
   />
 );
 
 const ProfileTab = () => {
-  const [isEditMode, setIsEditMode] = useState(false); // Manage Edit Mode
+  const [isEditMode, setIsEditMode] = useState(false); 
+  
 
-  // User and card info
   const user = {
     firstName: "Christine",
     lastName: "Brooks",
@@ -38,7 +37,7 @@ const ProfileTab = () => {
 
   const cardInfo = {
     cardName: "MasterCard",
-    cardNumber: "6512 ******** 1625",
+    cardNumber: "6512********1625",
     expiryDate: "12/23",
   };
 
@@ -53,7 +52,7 @@ const ProfileTab = () => {
   };
 
   return (
-    <Card className="p-6 shadow-md rounded-lg" style={{ maxWidth: "900px", margin: "auto" }}>
+    <Card className="p-6 rounded-lg shadow-md" style={{ maxWidth: "900px", margin: "auto" }}>
       {/* Edit Button */}
       {!isEditMode && (
         <div className="flex justify-end mb-4">
@@ -75,37 +74,37 @@ const ProfileTab = () => {
       {/* Profile Info */}
       <Row gutter={24} className="mb-4">
         <Col span={12}>
-          <label className="text-gray-700 font-semibold">First Name</label>
+          <label className="font-semibold text-gray-700">First Name</label>
           <CustomInput value={user.firstName} disabled={!isEditMode} />
         </Col>
         <Col span={12}>
-          <label className="text-gray-700 font-semibold">Last Name</label>
+          <label className="font-semibold text-gray-700">Last Name</label>
           <CustomInput value={user.lastName} disabled={!isEditMode} />
         </Col>
       </Row>
       <Row gutter={24} className="mb-4">
         <Col span={12}>
-          <label className="text-gray-700 font-semibold">Email</label>
+          <label className="font-semibold text-gray-700">Email</label>
           <CustomInput value={user.email} disabled={!isEditMode} />
         </Col>
         <Col span={12}>
-          <label className="text-gray-700 font-semibold">Phone Number</label>
+          <label className="font-semibold text-gray-700">Phone Number</label>
           <CustomInput value={user.phone} disabled={!isEditMode} />
         </Col>
       </Row>
       <Row gutter={24} className="mb-4">
         <Col span={12}>
-          <label className="text-gray-700 font-semibold">Date of Birth</label>
+          <label className="font-semibold text-gray-700">Date of Birth</label>
           <CustomInput value={user.dob} disabled={!isEditMode} />
         </Col>
         <Col span={12}>
-          <label className="text-gray-700 font-semibold">Gender</label>
+          <label className="font-semibold text-gray-700">Gender</label>
           <CustomInput value={user.gender} disabled={!isEditMode} />
         </Col>
       </Row>
       <Row gutter={24} className="mb-4">
         <Col span={24}>
-          <label className="text-gray-700 font-semibold">Address</label>
+          <label className="font-semibold text-gray-700">Address</label>
           <CustomInput value={user.address} disabled={!isEditMode} />
         </Col>
       </Row>
@@ -136,7 +135,7 @@ const ProfileTab = () => {
         <div className="flex justify-end mt-4">
           <Button
             style={{
-              backgroundColor: "#FF4D4F", // Primary color for the cancel button
+              backgroundColor: "#FF4D4F", 
               color: "white",
               border: "none",
               padding: "8px 16px",
