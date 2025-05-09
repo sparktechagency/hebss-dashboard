@@ -88,7 +88,7 @@ export const router = createBrowserRouter([
             element: <SubscriptionPage />,
           },
           {
-            path: "/subscription/subscribers",
+            path: "/subscription/subscribers/:subscriptionId",
             element: <SubscribersPage />,
           },
           {

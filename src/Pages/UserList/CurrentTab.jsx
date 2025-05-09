@@ -21,16 +21,16 @@ const CurrentBoxTab = () => {
 
   return (
     <div>
-      <h3 className="text-xl font-semibold mb-4">Assigned Box</h3>
+      <h3 className="mb-4 text-xl font-semibold">Assigned Box</h3>
       <Card
         key={box.id}
-        className="shadow-lg w-1/4 rounded-lg bg-white p-4 text-center flex flex-col items-center"
+        className="flex flex-col items-center w-1/4 p-4 text-center bg-white rounded-lg shadow-lg"
       >
         <div className="flex flex-col items-center">
           <img
             src={AllImages.boxes}
             alt={box.name}
-            className="w-24 h-24 object-cover rounded-full mb-4 mx-auto"
+            className="object-cover w-24 h-24 mx-auto mb-4 rounded-full"
           />
           <h3 className="text-lg font-semibold">{box.name}</h3>
           <p className="text-sm text-gray-600">{box.price}</p>
