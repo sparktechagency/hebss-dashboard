@@ -101,19 +101,6 @@ const ReviewsPage = () => {
           onCancel={handleModalClose}
           footer={null}
         >
-          {/* <p>
-            <strong>User:</strong> {selectedReview.user}
-          </p>
-          <p>
-            <strong>Feedback Date:</strong> {selectedReview.feedbackDate}
-          </p>
-          <p>
-            <strong>Comments:</strong> {selectedReview.comments}
-          </p>
-          <p>
-            <strong>Review:</strong> {selectedReview.review}
-          </p> */}
-
            <p>
             <strong>User:</strong> {selectedReview.user}
           </p>

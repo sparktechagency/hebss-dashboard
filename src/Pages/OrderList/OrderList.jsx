@@ -1,4 +1,4 @@
-import  { useState } from "react";
+import { useState } from "react";
 import {
   Table,
   Input,
@@ -10,6 +10,7 @@ import {
   Row,
   Col,
   Divider,
+  Spin,
 } from "antd";
 import { EyeOutlined, EditOutlined } from "@ant-design/icons";
 import { AllImages } from "../../assets/image/AllImages";
@@ -25,14 +26,22 @@ const OrderList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [currentOrder, setCurrentOrder] = useState(null);
-
+  const [orders, setOrders] = useState([]);  // Local state to store orders
+  
   // Fetch orders from the API
   const { data: response = {}, isLoading, error } = useGetAllOrdersQuery();
-  const orders = response?.data || [];
+  const fetchedOrders = response?.data || [];
 
   // Use the update order status mutation
+ 
   const [updateOrderStatus, { isLoading: isUpdating, error: updateError }] = useUpdateOrderStatusMutation();
-  
+
+
+  // Update orders after fetching from API
+  if (fetchedOrders.length > 0 && orders.length === 0) {
+    setOrders(fetchedOrders);
+  }
+
   const pageSize = 5;
 
   const getStatusColor = (status) => {
@@ -116,16 +125,46 @@ const OrderList = () => {
     setIsModalVisible(false);
   };
 
-  // Handler for updating the order status
   const updateOrderStatusHandler = async (order, newStatus) => {
-    try {
-      const orderId = order.orderId;
-      await updateOrderStatus({ orderId, status: newStatus }).unwrap();
-      console.log("Order status updated successfully!");
-    } catch (err) {
-      console.error("Error updating order status:", err);
-    }
-  };
+  const orderId = order.orderId;  // This should be a string like 'ORD-00001'
+  console.log("Sending payload:", { orderId, status: newStatus });
+
+  try {
+    await updateOrderStatus({ orderId, status: newStatus }).unwrap();
+    
+    // Update the local orders state to reflect the status change
+    const updatedOrders = orders.map((o) =>
+      o.orderId === orderId ? { ...o, status: newStatus } : o
+    );
+
+    setOrders(updatedOrders);
+    console.log("Order status updated successfully!");
+  } catch (err) {
+    console.error("Error updating order status:", err);
+    console.error("Error details:", err.response?.data);
+  }
+};
+
+  // Handler for updating the order status
+  // const updateOrderStatusHandler = async (order, newStatus) => {
+  //   try {
+  //     const orderId = order.orderId;
+  //     // Update the status via API
+  //     await updateOrderStatus({ orderId, status: newStatus }).unwrap();
+      
+  //     // Update the local orders state to reflect the status change
+  //     const updatedOrders = orders.map((o) =>
+  //       o.orderId === orderId ? { ...o, status: newStatus } : o
+  //     );
+
+  //     // Update the orders in the table (trigger a state update)
+  //     setOrders(updatedOrders);
+
+  //     console.log("Order status updated successfully!");
+  //   } catch (err) {
+  //     console.error("Error updating order status:", err);
+  //   }
+  // };
 
   const modalContent = currentOrder ? (
     <div>
@@ -200,7 +239,7 @@ const OrderList = () => {
   ) : null;
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <Spin size="large" />;
   }
 
   if (error) {
