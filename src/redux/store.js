@@ -12,6 +12,8 @@ import contactApi from "./features/contact/contactApi";
 import userApi from "./features/user/userApi";
 import faqApi from "./features/faq/faqApi";
 import subscriptionApi from "./features/subscription/subscriptionApi";
+import orderApi from "./features/order/orderApi";
+import reviewsApi from "./features/reviews/reviewsApi";
 
 const persistConfig = {
   key: "root",
@@ -28,6 +30,8 @@ const rootReducer = combineReducers({
   [userApi.reducerPath]:userApi.reducer,
   [faqApi.reducerPath]:faqApi.reducer,
   [subscriptionApi.reducerPath]:subscriptionApi.reducer,
+  [orderApi.reducerPath]:orderApi.reducer,
+  [reviewsApi.reducerPath]:reviewsApi.reducer,
   auth: authReducer,
 });
 
@@ -38,7 +42,7 @@ const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: false,
-    }).concat(authApi.middleware,adminApi.middleware,aboutApi.middleware,blogApi.middleware,teamApi.middleware,contactApi.middleware,userApi.middleware,faqApi.middleware,subscriptionApi.middleware),
+    }).concat(authApi.middleware,adminApi.middleware,aboutApi.middleware,blogApi.middleware,teamApi.middleware,contactApi.middleware,userApi.middleware,faqApi.middleware,subscriptionApi.middleware,orderApi.middleware,reviewsApi.middleware),
 });
 
 export const persistor = persistStore(store); 
