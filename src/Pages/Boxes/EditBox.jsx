@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { Card, Table, Button, Select, Pagination, Input, Checkbox } from "antd";
+import { Card, Table, Button, Select, Pagination, Input, Checkbox, Spin } from "antd";
 import { Grid, List } from "lucide-react";
 import { SearchOutlined } from "@ant-design/icons";
 import { AllImages } from "../../assets/image/AllImages";
+import { useNavigate } from "react-router-dom";
+import { useUpdateBoxMutation } from "../../redux/features/box/boxApi";
 
 const initialBooks = Array.from({ length: 30 }, (_, i) => ({
   key: i,
@@ -19,16 +21,18 @@ const initialBooks = Array.from({ length: 30 }, (_, i) => ({
 }));
 
 const EditBoxPage = () => {
+  const navigate = useNavigate();
   const [books, setBooks] = useState(initialBooks);
   const [view, setView] = useState("grid");
   const [currentPage, setCurrentPage] = useState(1);
+  const [updateBox, { isLoading, isSuccess, isError, error }] = useUpdateBoxMutation(); 
+
   const pageSize = 8;
-  const paginatedBooks = books.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const paginatedBooks = books.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   const primaryColor = "#F37975";
 
+  // Handle book selection changes
   const handleCheckboxChange = (key) => {
     setBooks((prevBooks) =>
       prevBooks.map((book) =>
@@ -37,18 +41,38 @@ const EditBoxPage = () => {
     );
   };
 
-  const handleSaveChanges = () => {
-    console.log(
-      "Updated book selections:",
-      books.filter((book) => book.isChecked)
-    );
+  // Save the selected books changes to the box
+  const handleSaveChanges = async () => {
+    const selectedBooks = books.filter((book) => book.isChecked);
+    console.log("Updated book selections:", selectedBooks);
+
+    // Assuming you have a box ID to update, for example:
+    const boxId = "yourBoxId"; // You should get this from your route or props
+    const updatedData = {
+      _id: boxId, // Box ID to update
+      books: selectedBooks, // Updated books data
+    };
+
+    try {
+      await updateBox(updatedData); // Call the updateBox mutation
+    } catch (err) {
+      console.error("Error updating box:", err);
+    }
   };
 
+  if (isLoading) {
+    return <Spin size="large" className="p-10" />;
+  }
+
+  if (isError) {
+    return <div>Error: {error?.message}</div>;
+  }
+
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+    <div className="min-h-screen p-6 bg-gray-100">
+      <div className="flex flex-col items-center justify-between gap-4 mb-6 md:flex-row">
         <h1 className="text-3xl font-bold">Edit Box</h1>
-        <div className="flex flex-wrap gap-4 items-center">
+        <div className="flex flex-wrap items-center gap-4">
           <Input
             placeholder="Search books..."
             prefix={<SearchOutlined className="text-gray-500" />}
@@ -61,7 +85,7 @@ const EditBoxPage = () => {
         </div>
       </div>
 
-      <div className="flex justify-end items-center mb-4 gap-4">
+      <div className="flex items-center justify-end gap-4 mb-4">
         <div className="flex gap-4">
           <Button
             onClick={() => setView("grid")}
@@ -89,12 +113,9 @@ const EditBoxPage = () => {
       </div>
 
       {view === "grid" ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {paginatedBooks.map((book) => (
-            <Card
-              key={book.key}
-              className="shadow-lg p-4 rounded-lg bg-white relative"
-            >
+            <Card key={book.key} className="relative p-4 bg-white rounded-lg shadow-lg">
               <Checkbox
                 checked={book.isChecked}
                 onChange={() => handleCheckboxChange(book.key)}
@@ -103,7 +124,7 @@ const EditBoxPage = () => {
               <img
                 src={book.image}
                 alt="Book"
-                className="w-full h-48 object-cover rounded-md mb-4"
+                className="object-cover w-full h-48 mb-4 rounded-md"
               />
               <h3 className="text-lg font-semibold">{book.name}</h3>
               <p className="text-sm text-gray-600">{book.readerAge}</p>
@@ -116,7 +137,7 @@ const EditBoxPage = () => {
         <Table
           dataSource={paginatedBooks}
           pagination={false}
-          className="shadow-md bg-white rounded-lg overflow-hidden"
+          className="overflow-hidden bg-white rounded-lg shadow-md"
           columns={[
             {
               title: "Select",
@@ -132,16 +153,12 @@ const EditBoxPage = () => {
             { title: "Price", dataIndex: "price", key: "price" },
             { title: "Reader Age", dataIndex: "readerAge", key: "readerAge" },
             { title: "Reader Grade", dataIndex: "grade", key: "grade" },
-            {
-              title: "Collections",
-              dataIndex: "collection",
-              key: "collection",
-            },
+            { title: "Collections", dataIndex: "collection", key: "collection" },
           ]}
         />
       )}
 
-      <div className="mt-6 flex justify-center">
+      <div className="flex justify-center mt-6">
         <Pagination
           current={currentPage}
           pageSize={pageSize}

@@ -126,8 +126,10 @@ const OrderList = () => {
   };
 
   const updateOrderStatusHandler = async (order, newStatus) => {
-  const orderId = order.orderId;  // This should be a string like 'ORD-00001'
-  console.log("Sending payload:", { orderId, status: newStatus });
+       // This should be a string like 'ORD-00001'
+  const orderId = order.orderId; 
+   // This should be a string like 'ORD-00001'
+  
 
   try {
     await updateOrderStatus({ orderId, status: newStatus }).unwrap();
