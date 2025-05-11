@@ -1,59 +1,72 @@
 import { useState } from "react";
-import { Card, Table, Button, Select, Pagination, Input, Modal } from "antd";
+import { Card, Table, Button, Select, Pagination, Input, Spin } from "antd";
 import { Grid, List, Edit, Trash2 } from "lucide-react";
 import { PlusOutlined, SearchOutlined } from "@ant-design/icons";
 import { AllImages } from "../../assets/image/AllImages";
 import AddBookPopup from "./BookCreatePopup";
 import EditBookPopup from "./BookEdit";
-
-const initialBooks = Array.from({ length: 30 }, (_, i) => ({
-  key: i,
-  name: `Allah Made All of Me (${225 + i})`,
-  price: "$120.00",
-  readerAge: "Tiny Mu'mins (0-3) age",
-  grade: "1st",
-  quantity: 279,
-  collection: "Arabic Books",
-  author: "Unknown",
-  language: "English",
-  level: "Beginner",
-  image: AllImages.book,
-}));
+import { useCreateBookMutation, useGetAllBooksQuery, useUpdateBookMutation } from "../../redux/features/products/productsApi";
 
 const BookList = () => {
-  const [books, setBooks] = useState(initialBooks);
   const [view, setView] = useState("grid");
   const [currentPage, setCurrentPage] = useState(1);
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [editingBook, setEditingBook] = useState(null);
+
+  // Fetch books using the Redux API hook
+  const { data, isLoading, isError } = useGetAllBooksQuery();
+  const [updateBook] = useUpdateBookMutation();
+  const [createBook] = useCreateBookMutation();  
+  
   const pageSize = 8;
-  const paginatedBooks = books.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const books = data?.data || []; // Access books from the API response using data.data
+
+  // Safeguard to ensure `books` is an array before calling `.slice()`
+  const paginatedBooks = Array.isArray(books) ? books.slice((currentPage - 1) * pageSize, currentPage * pageSize) : [];
+  
   const primaryColor = "#F37975";
 
-  const handleAddBook = (newBook) => {
-    setBooks([...books, { ...newBook, key: books.length }]);
-    setIsAddModalVisible(false);
+  // Handle adding a new book
+  const handleAddBook = async (newBook) => {
+    try {
+      await createBook(newBook);  // Use API mutation to create the book
+      setIsAddModalVisible(false);
+    } catch (error) {
+      console.error("Error creating book:", error);
+    }
   };
 
-  const handleEditBook = (updatedBook) => {
-    setBooks(books.map((book) => (book.key === updatedBook.key ? updatedBook : book)));
-    setIsEditModalVisible(false);
+  // Handle editing a book
+  const handleEditBook = async (updatedBook) => {
+    try {
+      await updateBook(updatedBook);  // Use API mutation to update the book
+      setIsEditModalVisible(false);
+    } catch (error) {
+      console.error("Error updating book:", error);
+    }
   };
 
+  // Open the edit modal with the selected book's details
   const openEditModal = (book) => {
     setEditingBook(book);
     setIsEditModalVisible(true);
   };
 
+  // Display loading and error states
+  if (isLoading) {
+    return <Spin size="large" className="p-10" />;
+  }
+
+  if (isError) {
+    return <div>Error loading books.</div>;
+  }
+
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+    <div className="min-h-screen p-6 bg-gray-100">
+      <div className="flex flex-col items-center justify-between gap-4 mb-6 md:flex-row">
         <h1 className="text-3xl font-bold">Products</h1>
-        <div className="flex flex-wrap gap-4 items-center">
+        <div className="flex flex-wrap items-center gap-4">
           <Input
             placeholder="Search products..."
             prefix={<SearchOutlined className="text-gray-500" />}
@@ -94,14 +107,14 @@ const BookList = () => {
       </div>
 
       {view === "grid" ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {paginatedBooks.map((book) => (
-            <Card key={book.key} className="shadow-lg p-4 rounded-lg bg-white relative">
-              <img src={book.image} alt="Book" className="w-full h-48 object-cover rounded-md mb-4" />
+            <Card key={book._id} className="relative p-4 bg-white rounded-lg shadow-lg">
+              <img src={book.coverImage || AllImages.book} alt="Book" className="object-cover w-full h-48 mb-4 rounded-md" />
               <h3 className="text-lg font-semibold">{book.name}</h3>
-              <p className="text-sm text-gray-600">{book.readerAge}</p>
-              <p className="text-sm text-gray-600">{book.collection}</p>
-              <p className="text-lg font-bold text-red-500">{book.price}</p>
+              <p className="text-sm text-gray-600">{book.bookLanguage}</p>
+              <p className="text-sm text-gray-600">{book.bookCollection}</p>
+              <p className="text-lg font-bold text-red-500">{book.price.amount} {book.price.currency}</p>
               <div className="flex justify-between mt-2">
                 <Edit className="text-gray-600 cursor-pointer hover:text-[#F37975]" onClick={() => openEditModal(book)} />
                 <Trash2 className="text-gray-600 cursor-pointer hover:text-red-500" />
@@ -113,13 +126,13 @@ const BookList = () => {
         <Table
           dataSource={paginatedBooks}
           pagination={false}
-          className="shadow-md bg-white rounded-lg overflow-hidden"
+          className="overflow-hidden bg-white rounded-lg shadow-md"
           columns={[
             { title: "Book Name", dataIndex: "name", key: "name" },
-            { title: "Price", dataIndex: "price", key: "price" },
-            { title: "Reader Age", dataIndex: "readerAge", key: "readerAge" },
-            { title: "Reader Grade", dataIndex: "grade", key: "grade" },
-            { title: "Collections", dataIndex: "collection", key: "collection" },
+            { title: "Price", dataIndex: "price.amount", key: "price" },
+            { title: "Reader Age", dataIndex: "bookLanguage", key: "bookLanguage" },
+            { title: "Grade", dataIndex: "level", key: "level" },
+            { title: "Collections", dataIndex: "bookCollection", key: "bookCollection" },
             {
               title: "Actions",
               key: "actions",
@@ -134,7 +147,7 @@ const BookList = () => {
         />
       )}
 
-      <div className="mt-6 flex justify-center">
+      <div className="flex justify-center mt-6">
         <Pagination
           current={currentPage}
           pageSize={pageSize}
@@ -144,6 +157,7 @@ const BookList = () => {
         />
       </div>
 
+      {/* Add and Edit Book Modals */}
       <AddBookPopup visible={isAddModalVisible} onClose={() => setIsAddModalVisible(false)} onSave={handleAddBook} />
       <EditBookPopup visible={isEditModalVisible} onClose={() => setIsEditModalVisible(false)} book={editingBook} onSave={handleEditBook} />
     </div>
