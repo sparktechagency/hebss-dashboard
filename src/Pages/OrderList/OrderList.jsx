@@ -26,24 +26,22 @@ const OrderList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [currentOrder, setCurrentOrder] = useState(null);
-  const [orders, setOrders] = useState([]);  // Local state to store orders
-  
+  const [orders, setOrders] = useState([]); // Local state to store orders
+
   // Fetch orders from the API
   const { data: response = {}, isLoading, error } = useGetAllOrdersQuery();
   const fetchedOrders = response?.data || [];
 
+  // console.log(response);
   // Use the update order status mutation
- 
-  const [updateOrderStatus, { isLoading: isUpdating, error: updateError }] = useUpdateOrderStatusMutation();
 
-
+  const [updateOrderStatus, { isLoading: isUpdating, error: updateError }] =
+    useUpdateOrderStatusMutation();
   // Update orders after fetching from API
   if (fetchedOrders.length > 0 && orders.length === 0) {
     setOrders(fetchedOrders);
   }
-
   const pageSize = 5;
-
   const getStatusColor = (status) => {
     switch (status) {
       case "Ordered":
@@ -56,7 +54,6 @@ const OrderList = () => {
         return "gray";
     }
   };
-
   const columns = [
     { title: "ID", dataIndex: "orderId", key: "orderId", responsive: ["sm"] },
     { title: "Name", dataIndex: ["user", "name"], key: "name" },
@@ -101,7 +98,6 @@ const OrderList = () => {
       ),
     },
   ];
-
   // Ensure `orders` is an array before calling filter()
   const filteredData = Array.isArray(orders)
     ? orders.filter((item) =>
@@ -125,18 +121,16 @@ const OrderList = () => {
     setIsModalVisible(false);
   };
 
-  const updateOrderStatusHandler = async (order, newStatus) => {
-       // This should be a string like 'ORD-00001'
-  const orderId = order.orderId; 
-   // This should be a string like 'ORD-00001'
-  
+const updateOrderStatusHandler = async (order, newStatus) => {
+  const orderId = order._id;  // Use the default MongoDB `_id` (not `orderId`)
 
   try {
+    // Send the correct `_id` (ObjectId) to the backend via API mutation
     await updateOrderStatus({ orderId, status: newStatus }).unwrap();
     
     // Update the local orders state to reflect the status change
     const updatedOrders = orders.map((o) =>
-      o.orderId === orderId ? { ...o, status: newStatus } : o
+      o._id === orderId ? { ...o, status: newStatus } : o
     );
 
     setOrders(updatedOrders);
@@ -147,13 +141,14 @@ const OrderList = () => {
   }
 };
 
+
   // Handler for updating the order status
   // const updateOrderStatusHandler = async (order, newStatus) => {
   //   try {
   //     const orderId = order.orderId;
   //     // Update the status via API
   //     await updateOrderStatus({ orderId, status: newStatus }).unwrap();
-      
+
   //     // Update the local orders state to reflect the status change
   //     const updatedOrders = orders.map((o) =>
   //       o.orderId === orderId ? { ...o, status: newStatus } : o

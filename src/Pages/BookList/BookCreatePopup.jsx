@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Modal, Input, Select, Button, Upload, Switch, Radio } from "antd";
+import { Modal, Input, Select, Button, Upload, Switch, Radio, message } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
+import { useCreateBookMutation } from "../../redux/features/products/productsApi"; // Import the mutation hook
 
-const AddBookPopup = ({ visible, onClose, onSave }) => {
+const AddBookPopup = ({ visible, onClose }) => {
   const [bookData, setBookData] = useState({
     name: "",
     price: "",
@@ -12,13 +13,16 @@ const AddBookPopup = ({ visible, onClose, onSave }) => {
     collections: "",
     author: "",
     language: "",
-    level: "Beginner", // Default level is Beginner
+    level: "", // Default level is Beginner
     cover: null,
     summary: "",
     discountAvailable: false, // New field for discount toggle
-    discountType: "percentage", // Default discount type (percentage)
+    discountType: "", // Default discount type (percentage)
     discountPrice: "", // Field for discount price
   });
+
+  // Use the createBook mutation hook
+  const [createBook, { isLoading, error }] = useCreateBookMutation();
 
   const handleInputChange = (e) => {
     setBookData({ ...bookData, [e.target.name]: e.target.value });
@@ -40,6 +44,87 @@ const AddBookPopup = ({ visible, onClose, onSave }) => {
     setBookData({ ...bookData, discountType: e.target.value });
   };
 
+  // const handleSave = async () => {
+  //   try {
+  //     // Prepare the book data to match the API's expected format
+  //     const newBook = {
+  //       name: bookData.name,
+  //       price: {
+  //         amount: parseFloat(bookData.price),
+  //         currency: "USD", // Assuming USD for now
+  //       },
+  //       readerAge: bookData.readerAge,
+  //       grade: bookData.grade,
+  //       collections: bookData.collections,
+  //       author: bookData.author,
+  //       language: bookData.language,
+  //       level: bookData.level,
+  //       coverImage: bookData.cover, // Assuming the cover is a file object or a URL
+  //       summary: bookData.summary,
+  //       discountAvailable: bookData.discountAvailable,
+  //       discountType: bookData.discountType,
+  //       discountPrice: parseFloat(bookData.discountPrice),
+  //     };
+
+  //     // Call the API to create the book
+  //     await createBook(newBook).unwrap();
+
+  //     // Show success message
+  //     message.success("Book created successfully!");
+
+  //     // Optionally close the modal after saving
+  //     onClose();
+  //   } catch (err) {
+  //     // If error, show error message
+  //     message.error("Failed to create book. Please try again.");
+  //     console.error("Error details:", err);
+  //   }
+  // };
+
+const handleSave = async () => {
+  const formData = new FormData();
+
+  // Append text data (make sure fields match what API expects)
+  formData.append("category", bookData.category);
+  formData.append("grade", bookData.grade);
+  formData.append("bookCollection", bookData.bookCollection);
+  formData.append("name", bookData.name);
+  formData.append("author", bookData.author);
+  formData.append("description", bookData.description);
+  formData.append("priceAmount", bookData.priceAmount); // Ensure it's numeric
+  formData.append("quantity", bookData.quantity); // Ensure it's numeric
+  formData.append("bookLanguage", bookData.bookLanguage);
+  formData.append("level", bookData.level);
+  formData.append("weight", bookData.weight); // Ensure it's numeric
+  formData.append("isDiscount", bookData.isDiscount); // Ensure it's true/false string
+  formData.append("discountType", bookData.discountType);
+  formData.append("discountAmount", bookData.discountAmount); // Ensure it's numeric
+  formData.append("summary", bookData.summary);
+
+  // Append file data
+  if (bookData.coverImage) {
+    formData.append("coverImage", bookData.coverImage); // Make sure this is a file
+  }
+
+  // Log FormData for inspection
+  for (let pair of formData.entries()) {
+    console.log(pair[0] + ": " + pair[1]); // Log the keys and values
+  }
+
+  // Call the mutation to create the book
+  try {
+    await createBook(formData).unwrap();
+    message.success("Book created successfully!");
+    onClose();  // Close the modal
+  } catch (err) {
+    message.error("Failed to create book. Please try again.");
+    console.error("Error details:", err);
+  }
+};
+
+
+
+
   return (
     <Modal
       title="Add New Product"
@@ -57,11 +142,11 @@ const AddBookPopup = ({ visible, onClose, onSave }) => {
           <img
             src={URL.createObjectURL(bookData.cover)}
             alt="Cover Preview"
-            className="w-full h-40 object-cover"
+            className="object-cover w-full h-40"
           />
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
             <label className="block text-sm font-medium">Product Name</label>
             <Input
@@ -173,8 +258,7 @@ const AddBookPopup = ({ visible, onClose, onSave }) => {
 
           {/* If discount is available, show discount type and price */}
           {bookData.discountAvailable && (
-            <div className="col-span-2 flex gap-4">
-              {/* Discount Type (Radio Buttons) */}
+            <div className="flex col-span-2 gap-4">
               <div className="w-1/2">
                 <label className="block text-sm font-medium">
                   Discount Type
@@ -189,7 +273,6 @@ const AddBookPopup = ({ visible, onClose, onSave }) => {
                 </Radio.Group>
               </div>
 
-              {/* Discount Price */}
               <div className="w-1/2">
                 <label className="block text-sm font-medium">
                   Discount Price
@@ -209,7 +292,8 @@ const AddBookPopup = ({ visible, onClose, onSave }) => {
           type="primary"
           block
           className="mt-4 bg-[#F37975] border-none"
-          onClick={() => onSave(bookData)}
+          onClick={handleSave}  // Calling the save handler
+          loading={isLoading}  // Show loading state when mutation is in progress
         >
           Save Book
         </Button>

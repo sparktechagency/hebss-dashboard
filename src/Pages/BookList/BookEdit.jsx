@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
-import { Modal, Input, Select, Button, Upload, Switch, Radio } from "antd";
+import { Modal, Input, Select, Button, Upload, Switch, Radio, message } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
+import { useUpdateBookMutation } from "../../redux/features/products/productsApi";
 
 const EditBookPopup = ({ visible, onClose, book, onSave }) => {
   const [bookData, setBookData] = useState({
     ...book,
   });
+  const [updateBook, { isLoading, isError, isSuccess, error }] = useUpdateBookMutation();  // Using the hook
 
   useEffect(() => {
     if (book) {
@@ -33,6 +35,20 @@ const EditBookPopup = ({ visible, onClose, book, onSave }) => {
     setBookData({ ...bookData, discountType: e.target.value });
   };
 
+  const handleSave = async () => {
+    try {
+      // Trigger the mutation to update the book
+      const updatedBook = await updateBook({ bookId: book._id, updatedBook: bookData }).unwrap();
+     
+      // If successful, show success message
+      message.success("Book updated successfully!");
+      onClose();  // Close the modal after saving
+    } catch (err) {
+      // If error, show error message
+      message.error("Failed to update book. Please try again.");
+    }
+  };
+
   return (
     <Modal
       title="Edit Product"
@@ -50,11 +66,11 @@ const EditBookPopup = ({ visible, onClose, book, onSave }) => {
           <img
             src={URL.createObjectURL(bookData.cover)}
             alt="Cover Preview"
-            className="w-full h-40 object-cover"
+            className="object-cover w-full h-40"
           />
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
             <label className="block text-sm font-medium">Product Name</label>
             <Input
@@ -170,7 +186,7 @@ const EditBookPopup = ({ visible, onClose, book, onSave }) => {
 
           {/* Discount Type and Discount Price */}
           {bookData.discountAvailable && (
-            <div className="col-span-2 flex gap-4">
+            <div className="flex col-span-2 gap-4">
               {/* Discount Type (Radio Buttons) */}
               <div className="w-1/2">
                 <label className="block text-sm font-medium">Discount Type</label>
@@ -202,7 +218,8 @@ const EditBookPopup = ({ visible, onClose, book, onSave }) => {
           type="primary"
           block
           className="mt-4 bg-[#F37975] border-none"
-          onClick={() => onSave(bookData)}
+          onClick={handleSave}  // Calling the save handler
+          loading={isLoading}  // Show loading state when mutation is in progress
         >
           Save Changes
         </Button>

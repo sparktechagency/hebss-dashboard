@@ -16,7 +16,6 @@ const orderApi = createApi({
     getAllOrders: builder.query({
       query: () => "/order/retrieve",
     }),
-    // Update the status of a specific order
     updateOrderStatus: builder.mutation({
       query: ({ orderId, status }) => ({
         url: `/order/update/${orderId}`,

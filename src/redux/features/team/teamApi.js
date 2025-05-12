@@ -29,7 +29,7 @@ const teamApi = createApi({
 
         // Add image or any other fields
         if (data.image) {
-          formData.append("image", data.image); 
+          formData.append("image", data.image);
         }
 
         return {
