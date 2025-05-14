@@ -13,12 +13,12 @@ const AddBookPopup = ({ visible, onClose }) => {
     collections: "",
     author: "",
     language: "",
-    level: "", // Default level is Beginner
+    level: "",
     cover: null,
     summary: "",
-    discountAvailable: false, // New field for discount toggle
-    discountType: "", // Default discount type (percentage)
-    discountPrice: "", // Field for discount price
+    discountAvailable: false, 
+    discountType: "", 
+    discountPrice: "", 
   });
 
   // Use the createBook mutation hook

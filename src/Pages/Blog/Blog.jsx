@@ -58,7 +58,7 @@ const BlogPage = () => {
     const fetchCategories = async () => {
       try {
         const response = await fetch(
-          "http://10.0.60.55:5003/v1/category/retrieve"
+          "http://13.48.93.57:5003/v1/category/retrieve"
         ); // Update with your category endpoint
         const data = await response.json();
         if (data.status === "success") {

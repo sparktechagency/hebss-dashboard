@@ -9,7 +9,8 @@ const AboutUs = () => {
   const [loading, setLoading] = useState(false);
 
   // Use the mutation hook for creating/updating the "About Us" section
-  const [createOrUpdateAboutUs, { isLoading }] = useCreateOrUpdateAboutUsMutation();
+  const [createOrUpdateAboutUs, { isLoading }] =
+    useCreateOrUpdateAboutUsMutation();
 
   // Submit handler for the form
   const handleSubmit = async () => {
@@ -22,7 +23,7 @@ const AboutUs = () => {
       message.success("About Us updated successfully!");
     } catch (error) {
       message.error("Failed to update About Us. Please try again.");
-      console.log(error)
+      console.log(error);
     } finally {
       setLoading(false);
     }
