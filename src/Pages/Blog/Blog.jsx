@@ -38,42 +38,57 @@ const BlogPage = () => {
   const [createBlog, { isLoading }] = useCreateBlogMutation();
   const [editBlog] = useEditBlogMutation();
   const [deleteBlog] = useDeleteBlogMutation();
-
   // Fetch blogs using the Redux Toolkit Query
   const {
     data: blogs = [],
     error,
     isLoading: blogsLoading,
   } = useGetAllBlogsQuery();
-
   // Log the fetched blogs to check the structure
   useEffect(() => {
-    console.log("Blogs Data:", blogs); // Log the data to inspect its structure
+    // console.log("Blogs Data:", blogs); // Log the data to inspect its structure
   }, [blogs]);
 
-  console.log(blogs.data);
+  // console.log(blogs.data);
 
-  // Fetch categories when the component loads
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await fetch(
-          "http://13.48.93.57:5003/v1/category/retrieve"
-        ); // Update with your category endpoint
-        const data = await response.json();
-        if (data.status === "success") {
-          setCategories(data.data); // Set categories state
-        } else {
-          message.error("Failed to fetch categories");
-        }
-      } catch (error) {
-        // console.error("Error fetching categories:", error);
-        message.error("Error fetching categories");
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/category/retrieve`);
+      const data = await response.json();
+      if (data.status === "success") {
+        setCategories(data.data); // Set categories state
+      } else {
+        message.error("Failed to fetch categories");
       }
-    };
+    } catch (error) {
+      message.error("Error fetching categories");
+    }
+  };
 
-    fetchCategories();
-  }, []);
+  fetchCategories();
+}, []);
+
+  
+  // useEffect(() => {
+  //   const fetchCategories = async () => {
+  //     try {
+  //       const response = await fetch(
+  //         "http://13.48.93.57:5003/v1/category/retrieve"
+  //       ); 
+  //       if (data.status === "success") {
+  //         setCategories(data.data); 
+  //       } else {
+  //         message.error("Failed to fetch categories");
+  //       }
+  //     } catch (error) {
+       
+  //       message.error("Error fetching categories");
+  //     }
+  //   };
+
+  //   fetchCategories();
+  // }, []);
 
   // Handle Create Blog
   const handleCreateBlog = () => {
@@ -124,11 +139,6 @@ const BlogPage = () => {
       message.error("An error occurred while saving the blog.");
     }
   };
-
-  // Handle Delete Blog
-  // const handleDeleteBlog = (key) => {
-  //   setBlogs(blogList.filter((blog) => blog.key !== key));
-  // };
   const handleDeleteBlog = async (_id) => {
     try {
       await deleteBlog(_id).unwrap();

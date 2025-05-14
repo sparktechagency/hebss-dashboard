@@ -14,7 +14,7 @@ const productsApi = createApi({
   endpoints: (builder) => ({
     getAllBooks: builder.query({
       query: () => "/book/retrieve",
-      providesTags: ['Books'], // Tag the 'Books' for invalidation
+      providesTags: ['Books'],
     }),
     createBook: builder.mutation({
       query: (newBook) => ({
@@ -22,8 +22,7 @@ const productsApi = createApi({
         method: "POST",
         body: newBook,
       }),
-      // Invalidate the Books cache after creating a new book
-      invalidatesTags: ['Books'], // This will invalidate the cache for Books
+      invalidatesTags: ['Books'],
     }),
     updateBook: builder.mutation({
       query: ({ bookId, updatedBook }) => ({
@@ -31,12 +30,24 @@ const productsApi = createApi({
         method: "PATCH",
         body: updatedBook,
       }),
-      // Invalidate the Books cache after updating a book
-      invalidatesTags: ['Books'], // This will invalidate the cache for Books
+      invalidatesTags: ['Books'],
+    }),
+    // Add deleteBook mutation
+    deleteBook: builder.mutation({
+      query: (bookId) => ({
+        url: `/book/delete/${bookId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ['Books'],
     }),
   }),
 });
 
-export const { useGetAllBooksQuery, useCreateBookMutation, useUpdateBookMutation } = productsApi;
+export const { 
+  useGetAllBooksQuery, 
+  useCreateBookMutation, 
+  useUpdateBookMutation, 
+  useDeleteBookMutation 
+} = productsApi;
 
 export default productsApi;

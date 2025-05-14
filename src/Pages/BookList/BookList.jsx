@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Card, Table, Button, Select, Pagination, Input, Spin } from "antd";
+import { Card, Table, Button, Select, Pagination, Input, Spin, message } from "antd";
 import { Grid, List, Edit, Trash2 } from "lucide-react";
 import { PlusOutlined, SearchOutlined } from "@ant-design/icons";
 import { AllImages } from "../../assets/image/AllImages";
@@ -9,6 +9,7 @@ import {
   useCreateBookMutation,
   useGetAllBooksQuery,
   useUpdateBookMutation,
+  useDeleteBookMutation, 
 } from "../../redux/features/products/productsApi";
 
 const BookList = () => {
@@ -22,11 +23,11 @@ const BookList = () => {
   const { data, isLoading, isError } = useGetAllBooksQuery();
   const [updateBook] = useUpdateBookMutation();
   const [createBook] = useCreateBookMutation();
+  const [deleteBook] = useDeleteBookMutation(); 
 
   const pageSize = 8;
-  const books = data?.data || []; // Access books from the API response using data.data
+  const books = data?.data || []; 
 
-  // Safeguard to ensure `books` is an array before calling `.slice()`
   const paginatedBooks = Array.isArray(books)
     ? books.slice((currentPage - 1) * pageSize, currentPage * pageSize)
     : [];
@@ -50,6 +51,17 @@ const BookList = () => {
       setIsEditModalVisible(false);
     } catch (error) {
       console.error("Error updating book:", error);
+    }
+  };
+
+  // Handle deleting a book
+  const handleDeleteBook = async (bookId) => {
+    try {
+      await deleteBook(bookId).unwrap(); // Call the delete mutation with the bookId
+      message.success("Book deleted successfully!");
+    } catch (error) {
+      message.error("Failed to delete book.");
+      console.error("Error deleting book:", error);
     }
   };
 
@@ -135,7 +147,10 @@ const BookList = () => {
                   className="text-gray-600 cursor-pointer hover:text-[#F37975]"
                   onClick={() => openEditModal(book)}
                 />
-                <Trash2 className="text-gray-600 cursor-pointer hover:text-red-500" />
+                <Trash2
+                  className="text-gray-600 cursor-pointer hover:text-red-500"
+                  onClick={() => handleDeleteBook(book._id)} // Call delete function
+                />
               </div>
             </Card>
           ))}
@@ -168,7 +183,10 @@ const BookList = () => {
                     className="text-gray-600 cursor-pointer hover:text-[#F37975]"
                     onClick={() => openEditModal(record)}
                   />
-                  <Trash2 className="text-gray-600 cursor-pointer hover:text-red-500" />
+                  <Trash2
+                    className="text-gray-600 cursor-pointer hover:text-red-500"
+                    onClick={() => handleDeleteBook(record._id)} 
+                  />
                 </div>
               ),
             },

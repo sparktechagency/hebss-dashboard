@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Modal, Input, Select, Button, Upload, Switch, Radio, message } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
-import { useCreateBookMutation } from "../../redux/features/products/productsApi"; // Import the mutation hook
+import { useCreateBookMutation } from "../../redux/features/products/productsApi";
 
 const AddBookPopup = ({ visible, onClose }) => {
   const [bookData, setBookData] = useState({
@@ -44,66 +44,30 @@ const AddBookPopup = ({ visible, onClose }) => {
     setBookData({ ...bookData, discountType: e.target.value });
   };
 
-  // const handleSave = async () => {
-  //   try {
-  //     // Prepare the book data to match the API's expected format
-  //     const newBook = {
-  //       name: bookData.name,
-  //       price: {
-  //         amount: parseFloat(bookData.price),
-  //         currency: "USD", // Assuming USD for now
-  //       },
-  //       readerAge: bookData.readerAge,
-  //       grade: bookData.grade,
-  //       collections: bookData.collections,
-  //       author: bookData.author,
-  //       language: bookData.language,
-  //       level: bookData.level,
-  //       coverImage: bookData.cover, // Assuming the cover is a file object or a URL
-  //       summary: bookData.summary,
-  //       discountAvailable: bookData.discountAvailable,
-  //       discountType: bookData.discountType,
-  //       discountPrice: parseFloat(bookData.discountPrice),
-  //     };
-
-  //     // Call the API to create the book
-  //     await createBook(newBook).unwrap();
-
-  //     // Show success message
-  //     message.success("Book created successfully!");
-
-  //     // Optionally close the modal after saving
-  //     onClose();
-  //   } catch (err) {
-  //     // If error, show error message
-  //     message.error("Failed to create book. Please try again.");
-  //     console.error("Error details:", err);
-  //   }
-  // };
-
 const handleSave = async () => {
   const formData = new FormData();
 
-  // Append text data (make sure fields match what API expects)
+  console.log(bookData);
+
   formData.append("category", bookData.category);
   formData.append("grade", bookData.grade);
-  formData.append("bookCollection", bookData.bookCollection);
+  formData.append("bookCollection", bookData.collections);
   formData.append("name", bookData.name);
   formData.append("author", bookData.author);
-  formData.append("description", bookData.description);
-  formData.append("priceAmount", bookData.priceAmount); // Ensure it's numeric
-  formData.append("quantity", bookData.quantity); // Ensure it's numeric
-  formData.append("bookLanguage", bookData.bookLanguage);
+  formData.append("description", bookData.summary); 
+  formData.append("priceAmount", bookData.price); 
+  formData.append("quantity", bookData.quantity); 
+  formData.append("bookLanguage", bookData.language);
   formData.append("level", bookData.level);
-  formData.append("weight", bookData.weight); // Ensure it's numeric
-  formData.append("isDiscount", bookData.isDiscount); // Ensure it's true/false string
+  formData.append("weight", bookData.weight); 
+  formData.append("isDiscount", bookData.discountAvailable ? "true" : "false"); 
   formData.append("discountType", bookData.discountType);
-  formData.append("discountAmount", bookData.discountAmount); // Ensure it's numeric
+  formData.append("discountAmount", bookData.discountPrice); 
   formData.append("summary", bookData.summary);
 
-  // Append file data
-  if (bookData.coverImage) {
-    formData.append("coverImage", bookData.coverImage); // Make sure this is a file
+  // Append file data for cover image
+  if (bookData.cover) {
+    formData.append("coverImage", bookData.cover); 
   }
 
   // Log FormData for inspection
@@ -113,7 +77,8 @@ const handleSave = async () => {
 
   // Call the mutation to create the book
   try {
-    await createBook(formData).unwrap();
+    const response =  await createBook(formData).unwrap(); // Unwrap for handling errors
+    console.log(response)
     message.success("Book created successfully!");
     onClose();  // Close the modal
   } catch (err) {

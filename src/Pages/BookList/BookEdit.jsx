@@ -1,5 +1,14 @@
 import { useState, useEffect } from "react";
-import { Modal, Input, Select, Button, Upload, Switch, Radio, message } from "antd";
+import {
+  Modal,
+  Input,
+  Select,
+  Button,
+  Upload,
+  Switch,
+  Radio,
+  message,
+} from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { useUpdateBookMutation } from "../../redux/features/products/productsApi";
 
@@ -7,7 +16,8 @@ const EditBookPopup = ({ visible, onClose, book, onSave }) => {
   const [bookData, setBookData] = useState({
     ...book,
   });
-  const [updateBook, { isLoading, isError, isSuccess, error }] = useUpdateBookMutation();  // Using the hook
+  const [updateBook, { isLoading, isError, isSuccess, error }] =
+    useUpdateBookMutation(); 
 
   useEffect(() => {
     if (book) {
@@ -35,19 +45,53 @@ const EditBookPopup = ({ visible, onClose, book, onSave }) => {
     setBookData({ ...bookData, discountType: e.target.value });
   };
 
+  // const handleSave = async () => {
+  //   try {
+  //     const updatedBook = await updateBook({
+  //       bookId: book._id,
+  //       updatedBook: bookData,
+  //     }).unwrap();
+  //     message.success("Book updated successfully!");
+  //     onClose(); 
+  //   } catch (err) {
+  //     message.error("Failed to update book. Please try again.");
+  //   }
+  // };
+
   const handleSave = async () => {
-    try {
-      // Trigger the mutation to update the book
-      const updatedBook = await updateBook({ bookId: book._id, updatedBook: bookData }).unwrap();
-     
-      // If successful, show success message
-      message.success("Book updated successfully!");
-      onClose();  // Close the modal after saving
-    } catch (err) {
-      // If error, show error message
-      message.error("Failed to update book. Please try again.");
-    }
+  const updatedBook = {
+    name: bookData.name,
+    author: bookData.author,
+    price: {
+      amount: parseFloat(bookData.price),
+      currency: "USD"
+    },
+    readerAge: bookData.readerAge,
+    grade: bookData.grade,
+    bookCollection: bookData.collection,
+    bookLanguage: bookData.language,
+    level: bookData.level,
+    summary: bookData.summary,
+    discountAvailable: bookData.discountAvailable,
+    discountType: bookData.discountType,
+    discountAmount: parseFloat(bookData.discountPrice),
+    quantity: parseInt(bookData.quantity),
+    // coverImage: If you want to allow cover image update, handle file upload separately
   };
+
+  try {
+    await updateBook({
+      bookId: book._id,
+      updatedBook,
+    }).unwrap();
+    message.success("Book updated successfully!");
+    onClose();
+  } catch (err) {
+    message.error("Failed to update book.");
+    console.error("Update Error:", err);
+  }
+};
+
 
   return (
     <Modal
@@ -189,7 +233,9 @@ const EditBookPopup = ({ visible, onClose, book, onSave }) => {
             <div className="flex col-span-2 gap-4">
               {/* Discount Type (Radio Buttons) */}
               <div className="w-1/2">
-                <label className="block text-sm font-medium">Discount Type</label>
+                <label className="block text-sm font-medium">
+                  Discount Type
+                </label>
                 <Radio.Group
                   value={bookData.discountType}
                   onChange={handleDiscountTypeChange}
@@ -202,7 +248,9 @@ const EditBookPopup = ({ visible, onClose, book, onSave }) => {
 
               {/* Discount Price */}
               <div className="w-1/2">
-                <label className="block text-sm font-medium">Discount Price</label>
+                <label className="block text-sm font-medium">
+                  Discount Price
+                </label>
                 <Input
                   name="discountPrice"
                   value={bookData.discountPrice}
@@ -218,8 +266,8 @@ const EditBookPopup = ({ visible, onClose, book, onSave }) => {
           type="primary"
           block
           className="mt-4 bg-[#F37975] border-none"
-          onClick={handleSave}  // Calling the save handler
-          loading={isLoading}  // Show loading state when mutation is in progress
+          onClick={handleSave} 
+          loading={isLoading} 
         >
           Save Changes
         </Button>
