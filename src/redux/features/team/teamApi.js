@@ -17,13 +17,11 @@ const teamApi = createApi({
       query: (data) => {
         const formData = new FormData();
 
-        // Add other form data fields
         formData.append("name", data.name);
         formData.append("email", data.email);
         formData.append("position", data.position);
         formData.append("description", data.description);
 
-        // Add image or any other fields
         if (data.image) {
           formData.append("image", data.image);
         }
@@ -31,7 +29,7 @@ const teamApi = createApi({
         return {
           url: "/team/create",
           method: "POST",
-          body: formData, // Using FormData for file uploads
+          body: formData,
         };
       },
     }),
@@ -41,7 +39,6 @@ const teamApi = createApi({
   }),
 });
 
-export const { useCreateTeamMemberMutation, useGetAllTeamMembersQuery } =
-  teamApi;
+export const { useCreateTeamMemberMutation, useGetAllTeamMembersQuery } = teamApi;
 
 export default teamApi;

@@ -18,7 +18,6 @@ const EditBookPopup = ({ visible, onClose, book, onSave }) => {
   });
   const [updateBook, { isLoading, isError, isSuccess, error }] =
     useUpdateBookMutation(); 
-
   useEffect(() => {
     if (book) {
       setBookData({ ...book });

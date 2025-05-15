@@ -27,7 +27,6 @@ import AdminManagementPage from "../Pages/Admin/Admin";
 import FAQPage from "../Pages/Settings/FAQs/FAQs";
 import TeamPage from "../Pages/Settings/Team/Team";
 import SubscribersPage from "../Pages/Subscription/Subscribers";
-// import PrivateRoute from "./privateRoute";
 
 export const router = createBrowserRouter([
   {

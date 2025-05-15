@@ -1,7 +1,21 @@
 import { useState } from "react";
-import { Modal, Input, Select, Button, Upload, Switch, Radio, message } from "antd";
+import {
+  Modal,
+  Input,
+  Select,
+  Button,
+  Upload,
+  Switch,
+  Radio,
+  message,
+} from "antd";
 import { UploadOutlined } from "@ant-design/icons";
-import { useCreateBookMutation } from "../../redux/features/products/productsApi";
+import {
+  useCreateBookMutation,
+  useGetAllCategoryQuery,
+  useGetAllGradeQuery,
+  useGetAllCollectionQuery,
+} from "../../redux/features/products/productsApi";
 
 const AddBookPopup = ({ visible, onClose }) => {
   const [bookData, setBookData] = useState({
@@ -16,13 +30,38 @@ const AddBookPopup = ({ visible, onClose }) => {
     level: "",
     cover: null,
     summary: "",
-    discountAvailable: false, 
-    discountType: "", 
-    discountPrice: "", 
+    discountAvailable: false,
+    discountType: "",
+    discountPrice: "",
+    category: "",
+    weight: "",
   });
 
-  // Use the createBook mutation hook
-  const [createBook, { isLoading, error }] = useCreateBookMutation();
+  const {
+    data: categories,
+    isLoading: categoriesLoading,
+    error: categoriesError,
+  } = useGetAllCategoryQuery();
+
+  const {
+    data: grades,
+    isLoading: gradesLoading,
+    error: gradesError,
+  } = useGetAllGradeQuery();
+
+  const {
+    data: collections,
+    isLoading: collectionsLoading,
+    error: collectionsError,
+  } = useGetAllCollectionQuery();
+
+  const categoryList =
+    categories?.data || categories?.categories || categories || [];
+  const gradeList = grades?.data || grades?.grades || grades || [];
+  const collectionList =
+    collections?.data || collections?.collections || collections || [];
+
+  const [createBook, { isLoading }] = useCreateBookMutation();
 
   const handleInputChange = (e) => {
     setBookData({ ...bookData, [e.target.name]: e.target.value });
@@ -44,52 +83,110 @@ const AddBookPopup = ({ visible, onClose }) => {
     setBookData({ ...bookData, discountType: e.target.value });
   };
 
-const handleSave = async () => {
-  const formData = new FormData();
+  // const handleSave = async () => {
+  //   if (!bookData.category || !bookData.grade || !bookData.collections) {
+  //     message.error("Please select Category, Grade, and Collection");
+  //     return;
+  //   }
 
-  console.log(bookData);
+  //   const formData = new FormData();
 
-  formData.append("category", bookData.category);
-  formData.append("grade", bookData.grade);
-  formData.append("bookCollection", bookData.collections);
-  formData.append("name", bookData.name);
-  formData.append("author", bookData.author);
-  formData.append("description", bookData.summary); 
-  formData.append("priceAmount", bookData.price); 
-  formData.append("quantity", bookData.quantity); 
-  formData.append("bookLanguage", bookData.language);
-  formData.append("level", bookData.level);
-  formData.append("weight", bookData.weight); 
-  formData.append("isDiscount", bookData.discountAvailable ? "true" : "false"); 
-  formData.append("discountType", bookData.discountType);
-  formData.append("discountAmount", bookData.discountPrice); 
-  formData.append("summary", bookData.summary);
+  //   formData.append("category", bookData.category);
+  //   formData.append("grade", bookData.grade);
+  //   formData.append("bookCollection", bookData.collections);
+  //   formData.append("name", bookData.name);
+  //   formData.append("author", bookData.author);
+  //   formData.append("description", bookData.summary);
+  //   formData.append("quantity", String(bookData.quantity));
+  //   formData.append("format", "paper");
+  //   formData.append("status", "instock");
+  //   formData.append("isArabic", "false");
+  //   formData.append("bookLanguage", bookData.language);
+  //   formData.append("level", bookData.level);
+  //   formData.append("weight", String(parseFloat(bookData.weight) || 0));
 
-  // Append file data for cover image
-  if (bookData.cover) {
-    formData.append("coverImage", bookData.cover); 
-  }
+  //   formData.append(
+  //     "price",
+  //     JSON.stringify({ amount: Number(bookData.price), currency: "USD" })
+  //   );
 
-  // Log FormData for inspection
-  for (let pair of formData.entries()) {
-    console.log(pair[0] + ": " + pair[1]); // Log the keys and values
-  }
+  //   formData.append("isDiscount", bookData.discountAvailable ? "true" : "false");
 
-  // Call the mutation to create the book
-  try {
-    const response =  await createBook(formData).unwrap(); // Unwrap for handling errors
-    console.log(response)
-    message.success("Book created successfully!");
-    onClose();  // Close the modal
-  } catch (err) {
-    message.error("Failed to create book. Please try again.");
-    console.error("Error details:", err);
-  }
-};
+  //   if (bookData.discountAvailable) {
+  //     formData.append(
+  //       "discountPrice",
+  //       JSON.stringify({
+  //         type: bookData.discountType,
+  //         amount: Number(bookData.discountPrice),
+  //         currency: "USD",
+  //       })
+  //     );
+  //   }
 
+  //   if (bookData.cover) {
+  //     formData.append("coverImage", bookData.cover);
+  //   }
 
+  //   try {
+  //     await createBook(formData).unwrap();
+  //     message.success("Book created successfully!");
+  //     onClose();
+  //   } catch (err) {
+  //     message.error("Failed to create book. Please try again.");
+  //     console.error("Error details:", err);
+  //     if (err?.data) {
+  //       console.error("Backend response:", err.data);
+  //     }
+  //   }
+  // };
 
-
+  const handleSave = async () => {
+    const formData = new FormData();
+    formData.append("category", bookData.category);
+    formData.append("grade", bookData.grade);
+    formData.append("bookCollection", bookData.collections);
+    formData.append("name", bookData.name);
+    formData.append("author", bookData.author);
+    formData.append("description", bookData.summary);
+    formData.append("quantity", String(bookData.quantity));
+    formData.append("format", "paper");
+    formData.append("status", "instock");
+    formData.append("isArabic", "false");
+    formData.append("bookLanguage", bookData.language);
+    formData.append("level", bookData.level);
+    formData.append("weight", String(parseFloat(bookData.weight) || 0));
+    formData.append(
+      "price",
+      JSON.stringify({ amount: Number(bookData.price), currency: "USD" })
+    );
+    formData.append(
+      "isDiscount",
+      bookData.discountAvailable ? "true" : "false"
+    );
+    if (bookData.discountAvailable) {
+      formData.append(
+        "discountPrice",
+        JSON.stringify({
+          type: bookData.discountType,
+          amount: Number(bookData.discountPrice),
+          currency: "USD",
+        })
+      );
+    }
+    if (bookData.cover) {
+      formData.append("coverImage", bookData.cover);
+    }
+    try {
+      await createBook(formData).unwrap();
+      message.success("Book created successfully!");
+      onClose();
+    } catch (err) {
+      message.error("Failed to create book. Please try again.");
+      console.error("Full error object:", err);
+      if (err?.data) console.error("Backend response data:", err.data);
+      if (err?.error) console.error("Backend error message:", err.error);
+    }
+  };
   return (
     <Modal
       title="Add New Product"
@@ -113,6 +210,75 @@ const handleSave = async () => {
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
+            <label className="block text-sm font-medium">Category</label>
+            <Select
+              placeholder="Select Category"
+              onChange={(value) => handleSelectChange("category", value)}
+              loading={categoriesLoading}
+              allowClear
+              value={bookData.category || undefined}
+            >
+              {categoryList.map((cat) => (
+                <Select.Option
+                  key={cat._id || cat.id}
+                  value={cat._id || cat.id}
+                >
+                  {cat.title}
+                </Select.Option>
+              ))}
+            </Select>
+            {categoriesError && (
+              <p style={{ color: "red" }}>Failed to load categories</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium">Reader Grade</label>
+            <Select
+              placeholder="Select Grade"
+              onChange={(value) => handleSelectChange("grade", value)}
+              loading={gradesLoading}
+              allowClear
+              value={bookData.grade || undefined}
+            >
+              {gradeList.map((grade) => (
+                <Select.Option
+                  key={grade._id || grade.id}
+                  value={grade._id || grade.id}
+                >
+                  {grade.title}
+                </Select.Option>
+              ))}
+            </Select>
+            {gradesError && (
+              <p style={{ color: "red" }}>Failed to load grades</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium">Collections</label>
+            <Select
+              placeholder="Select Collection"
+              onChange={(value) => handleSelectChange("collections", value)}
+              loading={collectionsLoading}
+              allowClear
+              value={bookData.collections || undefined}
+            >
+              {collectionList.map((col) => (
+                <Select.Option
+                  key={col._id || col.id}
+                  value={col._id || col.id}
+                >
+                  {col.title}
+                </Select.Option>
+              ))}
+            </Select>
+            {collectionsError && (
+              <p style={{ color: "red" }}>Failed to load collections</p>
+            )}
+          </div>
+
+          <div>
             <label className="block text-sm font-medium">Product Name</label>
             <Input
               name="name"
@@ -121,47 +287,29 @@ const handleSave = async () => {
               placeholder="Enter product name"
             />
           </div>
+
           <div>
             <label className="block text-sm font-medium">Product Price</label>
             <Input
               name="price"
               value={bookData.price}
               onChange={handleInputChange}
-              placeholder="$0.00"
+              placeholder="120"
+              type="number"
             />
           </div>
+
           <div>
-            <label className="block text-sm font-medium">Reader Age</label>
-            <Select
-              placeholder="Select Age Group"
-              onChange={(value) => handleSelectChange("readerAge", value)}
-            >
-              <Select.Option value="0-3">0-3</Select.Option>
-              <Select.Option value="4-7">4-7</Select.Option>
-              <Select.Option value="8+">8+</Select.Option>
-            </Select>
+            <label className="block text-sm font-medium">Quantity</label>
+            <Input
+              name="quantity"
+              value={bookData.quantity}
+              onChange={handleInputChange}
+              placeholder="225"
+              type="number"
+            />
           </div>
-          <div>
-            <label className="block text-sm font-medium">Reader Grade</label>
-            <Select
-              placeholder="Select Grade"
-              onChange={(value) => handleSelectChange("grade", value)}
-            >
-              <Select.Option value="1st">1st</Select.Option>
-              <Select.Option value="2nd">2nd</Select.Option>
-              <Select.Option value="3rd">3rd</Select.Option>
-            </Select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium">Collections</label>
-            <Select
-              placeholder="Select Collection"
-              onChange={(value) => handleSelectChange("collections", value)}
-            >
-              <Select.Option value="Fiction">Fiction</Select.Option>
-              <Select.Option value="Non-Fiction">Non-Fiction</Select.Option>
-            </Select>
-          </div>
+
           <div>
             <label className="block text-sm font-medium">Author</label>
             <Input
@@ -171,19 +319,20 @@ const handleSave = async () => {
               placeholder="Enter author's name"
             />
           </div>
+
           <div>
             <label className="block text-sm font-medium">Language</label>
             <Select
               placeholder="Select Language"
               onChange={(value) => handleSelectChange("language", value)}
+              value={bookData.language || undefined}
             >
-              <Select.Option value="English">English</Select.Option>
-              <Select.Option value="Arabic">Arabic</Select.Option>
-              <Select.Option value="French">French</Select.Option>
+              <Select.Option value="arabic">Arabic</Select.Option>
+              <Select.Option value="english">English</Select.Option>
+              <Select.Option value="french">French</Select.Option>
             </Select>
           </div>
 
-          {/* Updated Level Field as Dropdown */}
           <div>
             <label className="block text-sm font-medium">Level</label>
             <Select
@@ -191,13 +340,24 @@ const handleSave = async () => {
               onChange={(value) => handleSelectChange("level", value)}
               placeholder="Select Level"
             >
-              <Select.Option value="Beginner">Beginner</Select.Option>
-              <Select.Option value="Intermediate">Intermediate</Select.Option>
-              <Select.Option value="Advanced">Advanced</Select.Option>
+              <Select.Option value="beginner">Beginner</Select.Option>
+              <Select.Option value="intermediate">Intermediate</Select.Option>
+              <Select.Option value="advanced">Advanced</Select.Option>
             </Select>
           </div>
 
-          {/* Updated Summary Field with full width */}
+          <div className="col-span-2">
+            <label className="block text-sm font-medium">Weight (kg)</label>
+            <Input
+              name="weight"
+              value={bookData.weight}
+              onChange={handleInputChange}
+              placeholder="0.32"
+              type="number"
+              step="0.01"
+            />
+          </div>
+
           <div className="col-span-2">
             <label className="block text-sm font-medium">Summary</label>
             <Input.TextArea
@@ -210,7 +370,6 @@ const handleSave = async () => {
             />
           </div>
 
-          {/* Discount Available Toggle */}
           <div className="col-span-2">
             <label className="block text-sm font-medium">
               Discount Available
@@ -221,7 +380,6 @@ const handleSave = async () => {
             />
           </div>
 
-          {/* If discount is available, show discount type and price */}
           {bookData.discountAvailable && (
             <div className="flex col-span-2 gap-4">
               <div className="w-1/2">
@@ -246,7 +404,8 @@ const handleSave = async () => {
                   name="discountPrice"
                   value={bookData.discountPrice}
                   onChange={handleInputChange}
-                  placeholder="$0.00"
+                  placeholder="10"
+                  type="number"
                 />
               </div>
             </div>
@@ -257,8 +416,8 @@ const handleSave = async () => {
           type="primary"
           block
           className="mt-4 bg-[#F37975] border-none"
-          onClick={handleSave}  // Calling the save handler
-          loading={isLoading}  // Show loading state when mutation is in progress
+          onClick={handleSave}
+          loading={isLoading}
         >
           Save Book
         </Button>

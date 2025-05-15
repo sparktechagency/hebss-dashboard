@@ -3,6 +3,7 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 const productsApi = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: import.meta.env.VITE_BACKEND_URL,
+
     prepareHeaders: (headers) => {
       const token = localStorage.getItem("token");
       if (token) {
@@ -11,10 +12,11 @@ const productsApi = createApi({
       return headers;
     },
   }),
+  tagTypes: ["Books", "Categories", "Grades", "Collections"],
   endpoints: (builder) => ({
     getAllBooks: builder.query({
       query: () => "/book/retrieve",
-      providesTags: ['Books'],
+      providesTags: ["Books"],
     }),
     createBook: builder.mutation({
       query: (newBook) => ({
@@ -22,7 +24,7 @@ const productsApi = createApi({
         method: "POST",
         body: newBook,
       }),
-      invalidatesTags: ['Books'],
+      invalidatesTags: ["Books"],
     }),
     updateBook: builder.mutation({
       query: ({ bookId, updatedBook }) => ({
@@ -30,7 +32,7 @@ const productsApi = createApi({
         method: "PATCH",
         body: updatedBook,
       }),
-      invalidatesTags: ['Books'],
+      invalidatesTags: ["Books"],
     }),
     // Add deleteBook mutation
     deleteBook: builder.mutation({
@@ -38,16 +40,31 @@ const productsApi = createApi({
         url: `/book/delete/${bookId}`,
         method: "DELETE",
       }),
-      invalidatesTags: ['Books'],
+      invalidatesTags: ["Books"],
+    }),
+    getAllCategory: builder.query({
+      query: () => "/category/retrieve",
+      providesTags: ["Categories"], // add this
+    }),
+    getAllGrade: builder.query({
+      query: () => "/grade/retrieve",
+      providesTags: ["Grades"], // add this
+    }),
+    getAllCollection: builder.query({
+      query: () => "/collection/retrieve",
+      providesTags: ["Collections"], // add this
     }),
   }),
 });
 
-export const { 
-  useGetAllBooksQuery, 
-  useCreateBookMutation, 
-  useUpdateBookMutation, 
-  useDeleteBookMutation 
+export const {
+  useGetAllBooksQuery,
+  useCreateBookMutation,
+  useUpdateBookMutation,
+  useDeleteBookMutation,
+  useGetAllCategoryQuery,
+  useGetAllCollectionQuery,
+  useGetAllGradeQuery,
 } = productsApi;
 
 export default productsApi;
