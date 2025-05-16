@@ -45,7 +45,7 @@ export const router = createBrowserRouter([
 
   {
     path: "/new-password",
-    element: <Newpass></Newpass>,
+    element: <Newpass/>,
   },
   {
     path: "/continue-page",

@@ -1,10 +1,9 @@
 import React from "react";
 import { Table, Button, Row, Col } from "antd";
-import { Link } from "react-router-dom"; // Import Link for routing
+import { Link } from "react-router-dom"; 
 import { PrinterOutlined, SendOutlined } from "@ant-design/icons";
 
-// Define the primary color
-const primaryColor = "#FF4D4F"; // Assuming the provided primary color is red (adjust if different)
+const primaryColor = "#FF4D4F"; 
 
 const InvoiceTab = () => {
   const invoiceData = [
@@ -24,12 +23,11 @@ const InvoiceTab = () => {
     { title: "Total Cost", dataIndex: "total", key: "total" },
   ];
 
-  const totalCost = invoiceData.reduce((total, item) => total + parseFloat(item.total.replace('$', '')), 0); // Calculate total cost
+  const totalCost = invoiceData.reduce((total, item) => total + parseFloat(item.total.replace('$', '')), 0); 
 
   return (
     <div className="p-6">
-      {/* Buttons: Invoice History and Add New - Positioned at the top */}
-      <div className="flex justify-end mb-4 gap-2">
+      <div className="flex justify-end gap-2 mb-4">
         <Link to="/invoice-history">
           <Button type="default" style={{ border: "none", backgroundColor: primaryColor, color: "white" }}>
             Invoice History

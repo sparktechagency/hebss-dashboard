@@ -12,16 +12,17 @@ const UserDetails = () => {
   const [activeTab, setActiveTab] = useState("profile");
   const [isEditMode, setIsEditMode] = useState(false);
 
+
   return (
-    <div className="p-6 min-h-screen bg-gray-100 flex">
-      <div className="w-full shadow-lg rounded-lg p-6 bg-white">
+    <div className="flex min-h-screen p-6 bg-gray-100">
+      <div className="w-full p-6 bg-white rounded-lg shadow-lg">
         <Tabs activeKey={activeTab} onChange={setActiveTab} centered>
           <TabPane tab="Profile" key="profile">
             <ProfileTab isEditMode={isEditMode} setIsEditMode={setIsEditMode} />
           </TabPane>
 
           <TabPane tab="Invoice" key="invoice">
-            <InvoiceTab />
+            <InvoiceTab/>
           </TabPane>
 
           <TabPane tab="Current Box" key="currentBox">
@@ -29,11 +30,11 @@ const UserDetails = () => {
           </TabPane>
 
           <TabPane tab="Subscription" key="subscription">
-            <SubscriptionTab />
+            <SubscriptionTab/>
           </TabPane>
 
           <TabPane tab="Send Mail" key="sendMail">
-            <SendMailTab />
+            <SendMailTab/>
           </TabPane>
         </Tabs>
       </div>

@@ -1,20 +1,38 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 const invoiceApi = createApi({
-    baseQuery:fetchBaseQuery({
-        baseUrl:import.meta.env.VITE_BACKEND_URL,
+  baseQuery: fetchBaseQuery({
+    baseUrl: import.meta.env.VITE_BACKEND_URL,
+  }),
+  endpoints: (builder) => ({
+    createInvoice: builder.mutation({
+      query: (data) => ({
+        url: "/invoice/create",
+        method: "POST",
+        body: data,
+      }),
     }),
-    endpoints:(builder)=>({
-        createInvoice:builder.mutation({
-            query:(data)=>({
-                url:"/invoice/create",
-                method:"POST",
-                body:data,
-            })
-        })
-    })
-})
+    getInvoiceHistoryById: builder.query({
+      query: (id) => `/invoice/retrieve/history/user/${id}`,
+    }),
+    getCurrentInvoiceByUserId: builder.query({
+      query: (userId) => `/invoice/current/retrieve/user/${userId}`,
+    }),
+    updateInvoiceByInvoiceId: builder.mutation({
+      query: ({ invoiceId, data }) => ({
+        url: `/invoice/update/${invoiceId}`,
+        method: "PATCH",
+        body: data,
+      }),
+    }),
+  }),
+});
 
-export const {useCreateInvoiceMutation} = invoiceApi
+export const {
+  useCreateInvoiceMutation,
+  useGetInvoiceHistoryByIdQuery,
+  useGetCurrentInvoiceByUserIdQuery,
+  useUpdateInvoiceByInvoiceIdMutation
+} = invoiceApi;
 
-export default invoiceApi
+export default invoiceApi;
