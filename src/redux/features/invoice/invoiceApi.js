@@ -3,6 +3,13 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 const invoiceApi = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: import.meta.env.VITE_BACKEND_URL,
+    prepareHeaders: (headers) => {
+      const token = localStorage.getItem("token"); 
+      if (token) {
+        headers.set("Authorization", `Bearer ${token}`);
+      }
+      return headers;
+    },
   }),
   endpoints: (builder) => ({
     createInvoice: builder.mutation({
@@ -25,6 +32,7 @@ const invoiceApi = createApi({
         body: data,
       }),
     }),
+
   }),
 });
 
@@ -32,7 +40,8 @@ export const {
   useCreateInvoiceMutation,
   useGetInvoiceHistoryByIdQuery,
   useGetCurrentInvoiceByUserIdQuery,
-  useUpdateInvoiceByInvoiceIdMutation
+  useUpdateInvoiceByInvoiceIdMutation,
+ 
 } = invoiceApi;
 
 export default invoiceApi;

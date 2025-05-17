@@ -12,6 +12,7 @@ const UserDetails = () => {
   const [activeTab, setActiveTab] = useState("profile");
   const [isEditMode, setIsEditMode] = useState(false);
 
+  const userId = "67c308af6f9bb7542aed1784"; // TODO: Replace with real user ID from your auth or store
 
   return (
     <div className="flex min-h-screen p-6 bg-gray-100">
@@ -22,19 +23,19 @@ const UserDetails = () => {
           </TabPane>
 
           <TabPane tab="Invoice" key="invoice">
-            <InvoiceTab/>
+            <InvoiceTab />
           </TabPane>
 
           <TabPane tab="Current Box" key="currentBox">
-            <CurrentBoxTab />
+            <CurrentBoxTab userId={userId} />
           </TabPane>
 
           <TabPane tab="Subscription" key="subscription">
-            <SubscriptionTab/>
+            <SubscriptionTab />
           </TabPane>
 
           <TabPane tab="Send Mail" key="sendMail">
-            <SendMailTab/>
+            <SendMailTab />
           </TabPane>
         </Tabs>
       </div>

@@ -22,18 +22,19 @@ const AddBookPopup = ({ visible, onClose }) => {
     name: "",
     price: "",
     readerAge: "",
-    grade: "",
+    grade: "",          // store only ID string
     quantity: "",
-    collections: "",
+    collections: "",    // store only ID string
     author: "",
     language: "",
     level: "",
     cover: null,
     summary: "",
+    description: "",
     discountAvailable: false,
     discountType: "",
     discountPrice: "",
-    category: "",
+    category: "",       // store only ID string
     weight: "",
   });
 
@@ -55,11 +56,30 @@ const AddBookPopup = ({ visible, onClose }) => {
     error: collectionsError,
   } = useGetAllCollectionQuery();
 
-  const categoryList =
-    categories?.data || categories?.categories || categories || [];
-  const gradeList = grades?.data || grades?.grades || grades || [];
-  const collectionList =
-    collections?.data || collections?.collections || collections || [];
+  // Safe extraction of lists (always arrays)
+  const categoryList = Array.isArray(categories?.data)
+    ? categories.data
+    : Array.isArray(categories?.categories)
+    ? categories.categories
+    : Array.isArray(categories)
+    ? categories
+    : [];
+
+  const gradeList = Array.isArray(grades?.data)
+    ? grades.data
+    : Array.isArray(grades?.grades)
+    ? grades.grades
+    : Array.isArray(grades)
+    ? grades
+    : [];
+
+  const collectionList = Array.isArray(collections?.data)
+    ? collections.data
+    : Array.isArray(collections?.collections)
+    ? collections.collections
+    : Array.isArray(collections)
+    ? collections
+    : [];
 
   const [createBook, { isLoading }] = useCreateBookMutation();
 
@@ -72,7 +92,7 @@ const AddBookPopup = ({ visible, onClose }) => {
   };
 
   const handleUpload = ({ file }) => {
-    setBookData({ ...bookData, cover: file });
+    setBookData({ ...bookData, cover: file.originFileObj || file });
   };
 
   const handleDiscountToggle = (checked) => {
@@ -83,99 +103,44 @@ const AddBookPopup = ({ visible, onClose }) => {
     setBookData({ ...bookData, discountType: e.target.value });
   };
 
-  // const handleSave = async () => {
-  //   if (!bookData.category || !bookData.grade || !bookData.collections) {
-  //     message.error("Please select Category, Grade, and Collection");
-  //     return;
-  //   }
-
-  //   const formData = new FormData();
-
-  //   formData.append("category", bookData.category);
-  //   formData.append("grade", bookData.grade);
-  //   formData.append("bookCollection", bookData.collections);
-  //   formData.append("name", bookData.name);
-  //   formData.append("author", bookData.author);
-  //   formData.append("description", bookData.summary);
-  //   formData.append("quantity", String(bookData.quantity));
-  //   formData.append("format", "paper");
-  //   formData.append("status", "instock");
-  //   formData.append("isArabic", "false");
-  //   formData.append("bookLanguage", bookData.language);
-  //   formData.append("level", bookData.level);
-  //   formData.append("weight", String(parseFloat(bookData.weight) || 0));
-
-  //   formData.append(
-  //     "price",
-  //     JSON.stringify({ amount: Number(bookData.price), currency: "USD" })
-  //   );
-
-  //   formData.append("isDiscount", bookData.discountAvailable ? "true" : "false");
-
-  //   if (bookData.discountAvailable) {
-  //     formData.append(
-  //       "discountPrice",
-  //       JSON.stringify({
-  //         type: bookData.discountType,
-  //         amount: Number(bookData.discountPrice),
-  //         currency: "USD",
-  //       })
-  //     );
-  //   }
-
-  //   if (bookData.cover) {
-  //     formData.append("coverImage", bookData.cover);
-  //   }
-
-  //   try {
-  //     await createBook(formData).unwrap();
-  //     message.success("Book created successfully!");
-  //     onClose();
-  //   } catch (err) {
-  //     message.error("Failed to create book. Please try again.");
-  //     console.error("Error details:", err);
-  //     if (err?.data) {
-  //       console.error("Backend response:", err.data);
-  //     }
-  //   }
-  // };
-
   const handleSave = async () => {
+    if (!bookData.category || !bookData.grade || !bookData.collections) {
+      message.error("Please select Category, Grade, and Collection");
+      return;
+    }
+    if (!bookData.summary) {
+      message.error("Please enter the summary (required)");
+      return;
+    }
+
     const formData = new FormData();
+
     formData.append("category", bookData.category);
     formData.append("grade", bookData.grade);
     formData.append("bookCollection", bookData.collections);
     formData.append("name", bookData.name);
     formData.append("author", bookData.author);
-    formData.append("description", bookData.summary);
-    formData.append("quantity", String(bookData.quantity));
+    formData.append("summary", bookData.summary);
+    formData.append("description", bookData.description);
+    formData.append("quantity", bookData.quantity ? String(bookData.quantity) : "0");
     formData.append("format", "paper");
     formData.append("status", "instock");
     formData.append("isArabic", "false");
     formData.append("bookLanguage", bookData.language);
     formData.append("level", bookData.level);
     formData.append("weight", String(parseFloat(bookData.weight) || 0));
-    formData.append(
-      "price",
-      JSON.stringify({ amount: Number(bookData.price), currency: "USD" })
-    );
-    formData.append(
-      "isDiscount",
-      bookData.discountAvailable ? "true" : "false"
-    );
+    formData.append("priceAmount", Number(bookData.price) || 0);
+    formData.append("isDiscount", bookData.discountAvailable ? "true" : "false");
+
     if (bookData.discountAvailable) {
-      formData.append(
-        "discountPrice",
-        JSON.stringify({
-          type: bookData.discountType,
-          amount: Number(bookData.discountPrice),
-          currency: "USD",
-        })
-      );
+      formData.append("discountType", bookData.discountType);
+      formData.append("discountAmount", Number(bookData.discountPrice) || 0);
     }
+
     if (bookData.cover) {
       formData.append("coverImage", bookData.cover);
     }
+
     try {
       await createBook(formData).unwrap();
       message.success("Book created successfully!");
@@ -187,6 +152,7 @@ const AddBookPopup = ({ visible, onClose }) => {
       if (err?.error) console.error("Backend error message:", err.error);
     }
   };
+
   return (
     <Modal
       title="Add New Product"
@@ -209,6 +175,8 @@ const AddBookPopup = ({ visible, onClose }) => {
         )}
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+
+          {/* Category Select */}
           <div>
             <label className="block text-sm font-medium">Category</label>
             <Select
@@ -217,12 +185,14 @@ const AddBookPopup = ({ visible, onClose }) => {
               loading={categoriesLoading}
               allowClear
               value={bookData.category || undefined}
+              showSearch
+              optionFilterProp="children"
+              filterOption={(input, option) =>
+                option.children.toLowerCase().includes(input.toLowerCase())
+              }
             >
               {categoryList.map((cat) => (
-                <Select.Option
-                  key={cat._id || cat.id}
-                  value={cat._id || cat.id}
-                >
+                <Select.Option key={cat._id || cat.id} value={cat._id || cat.id}>
                   {cat.title}
                 </Select.Option>
               ))}
@@ -232,6 +202,7 @@ const AddBookPopup = ({ visible, onClose }) => {
             )}
           </div>
 
+          {/* Grade Select */}
           <div>
             <label className="block text-sm font-medium">Reader Grade</label>
             <Select
@@ -240,21 +211,22 @@ const AddBookPopup = ({ visible, onClose }) => {
               loading={gradesLoading}
               allowClear
               value={bookData.grade || undefined}
+              showSearch
+              optionFilterProp="children"
+              filterOption={(input, option) =>
+                option.children.toLowerCase().includes(input.toLowerCase())
+              }
             >
               {gradeList.map((grade) => (
-                <Select.Option
-                  key={grade._id || grade.id}
-                  value={grade._id || grade.id}
-                >
+                <Select.Option key={grade._id || grade.id} value={grade._id || grade.id}>
                   {grade.title}
                 </Select.Option>
               ))}
             </Select>
-            {gradesError && (
-              <p style={{ color: "red" }}>Failed to load grades</p>
-            )}
+            {gradesError && <p style={{ color: "red" }}>Failed to load grades</p>}
           </div>
 
+          {/* Collections Select */}
           <div>
             <label className="block text-sm font-medium">Collections</label>
             <Select
@@ -263,12 +235,14 @@ const AddBookPopup = ({ visible, onClose }) => {
               loading={collectionsLoading}
               allowClear
               value={bookData.collections || undefined}
+              showSearch
+              optionFilterProp="children"
+              filterOption={(input, option) =>
+                option.children.toLowerCase().includes(input.toLowerCase())
+              }
             >
               {collectionList.map((col) => (
-                <Select.Option
-                  key={col._id || col.id}
-                  value={col._id || col.id}
-                >
+                <Select.Option key={col._id || col.id} value={col._id || col.id}>
                   {col.title}
                 </Select.Option>
               ))}
@@ -278,6 +252,7 @@ const AddBookPopup = ({ visible, onClose }) => {
             )}
           </div>
 
+          {/* Product Name */}
           <div>
             <label className="block text-sm font-medium">Product Name</label>
             <Input
@@ -288,6 +263,7 @@ const AddBookPopup = ({ visible, onClose }) => {
             />
           </div>
 
+          {/* Product Price */}
           <div>
             <label className="block text-sm font-medium">Product Price</label>
             <Input
@@ -299,6 +275,7 @@ const AddBookPopup = ({ visible, onClose }) => {
             />
           </div>
 
+          {/* Quantity */}
           <div>
             <label className="block text-sm font-medium">Quantity</label>
             <Input
@@ -310,6 +287,7 @@ const AddBookPopup = ({ visible, onClose }) => {
             />
           </div>
 
+          {/* Author */}
           <div>
             <label className="block text-sm font-medium">Author</label>
             <Input
@@ -320,6 +298,7 @@ const AddBookPopup = ({ visible, onClose }) => {
             />
           </div>
 
+          {/* Language */}
           <div>
             <label className="block text-sm font-medium">Language</label>
             <Select
@@ -333,6 +312,7 @@ const AddBookPopup = ({ visible, onClose }) => {
             </Select>
           </div>
 
+          {/* Level */}
           <div>
             <label className="block text-sm font-medium">Level</label>
             <Select
@@ -346,6 +326,7 @@ const AddBookPopup = ({ visible, onClose }) => {
             </Select>
           </div>
 
+          {/* Weight */}
           <div className="col-span-2">
             <label className="block text-sm font-medium">Weight (kg)</label>
             <Input
@@ -358,6 +339,7 @@ const AddBookPopup = ({ visible, onClose }) => {
             />
           </div>
 
+          {/* Summary */}
           <div className="col-span-2">
             <label className="block text-sm font-medium">Summary</label>
             <Input.TextArea
@@ -370,10 +352,22 @@ const AddBookPopup = ({ visible, onClose }) => {
             />
           </div>
 
+          {/* Description */}
           <div className="col-span-2">
-            <label className="block text-sm font-medium">
-              Discount Available
-            </label>
+            <label className="block text-sm font-medium">Description</label>
+            <Input.TextArea
+              name="description"
+              value={bookData.description}
+              onChange={handleInputChange}
+              placeholder="Enter detailed description of the book"
+              rows={6}
+              className="w-full"
+            />
+          </div>
+
+          {/* Discount Available */}
+          <div className="col-span-2">
+            <label className="block text-sm font-medium">Discount Available</label>
             <Switch
               checked={bookData.discountAvailable}
               onChange={handleDiscountToggle}
@@ -383,9 +377,7 @@ const AddBookPopup = ({ visible, onClose }) => {
           {bookData.discountAvailable && (
             <div className="flex col-span-2 gap-4">
               <div className="w-1/2">
-                <label className="block text-sm font-medium">
-                  Discount Type
-                </label>
+                <label className="block text-sm font-medium">Discount Type</label>
                 <Radio.Group
                   value={bookData.discountType}
                   onChange={handleDiscountTypeChange}
@@ -397,9 +389,7 @@ const AddBookPopup = ({ visible, onClose }) => {
               </div>
 
               <div className="w-1/2">
-                <label className="block text-sm font-medium">
-                  Discount Price
-                </label>
+                <label className="block text-sm font-medium">Discount Price</label>
                 <Input
                   name="discountPrice"
                   value={bookData.discountPrice}

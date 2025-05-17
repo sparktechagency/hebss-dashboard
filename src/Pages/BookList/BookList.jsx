@@ -9,7 +9,7 @@ import {
   useCreateBookMutation,
   useGetAllBooksQuery,
   useUpdateBookMutation,
-  useDeleteBookMutation, 
+  useDeleteBookMutation,
 } from "../../redux/features/products/productsApi";
 
 const BookList = () => {
@@ -23,10 +23,10 @@ const BookList = () => {
   const { data, isLoading, isError } = useGetAllBooksQuery();
   const [updateBook] = useUpdateBookMutation();
   const [createBook] = useCreateBookMutation();
-  const [deleteBook] = useDeleteBookMutation(); 
+  const [deleteBook] = useDeleteBookMutation();
 
   const pageSize = 8;
-  const books = data?.data || []; 
+  const books = data?.data || [];
 
   const paginatedBooks = Array.isArray(books)
     ? books.slice((currentPage - 1) * pageSize, currentPage * pageSize)
@@ -37,7 +37,7 @@ const BookList = () => {
   // Handle adding a new book
   const handleAddBook = async (newBook) => {
     try {
-      await createBook(newBook); // Use API mutation to create the book
+      await createBook(newBook);
       setIsAddModalVisible(false);
     } catch (error) {
       console.error("Error creating book:", error);
@@ -47,7 +47,7 @@ const BookList = () => {
   // Handle editing a book
   const handleEditBook = async (updatedBook) => {
     try {
-      await updateBook(updatedBook); // Use API mutation to update the book
+      await updateBook(updatedBook);
       setIsEditModalVisible(false);
     } catch (error) {
       console.error("Error updating book:", error);
@@ -57,7 +57,7 @@ const BookList = () => {
   // Handle deleting a book
   const handleDeleteBook = async (bookId) => {
     try {
-      await deleteBook(bookId).unwrap(); // Call the delete mutation with the bookId
+      await deleteBook(bookId).unwrap();
       message.success("Book deleted successfully!");
     } catch (error) {
       message.error("Failed to delete book.");
@@ -138,9 +138,9 @@ const BookList = () => {
               />
               <h3 className="text-lg font-semibold">{book.name}</h3>
               <p className="text-sm text-gray-600">{book.bookLanguage}</p>
-              <p className="text-sm text-gray-600">{book.bookCollection}</p>
+              <p className="text-sm text-gray-600">{book.bookCollection?.title || ""}</p>
               <p className="text-lg font-bold text-red-500">
-                {book.price.amount} {book.price.currency}
+                {book.price?.amount} {book.price?.currency}
               </p>
               <div className="flex justify-between mt-2">
                 <Edit
@@ -149,7 +149,7 @@ const BookList = () => {
                 />
                 <Trash2
                   className="text-gray-600 cursor-pointer hover:text-red-500"
-                  onClick={() => handleDeleteBook(book._id)} // Call delete function
+                  onClick={() => handleDeleteBook(book._id)}
                 />
               </div>
             </Card>
@@ -162,22 +162,23 @@ const BookList = () => {
           className="overflow-hidden bg-white rounded-lg shadow-md"
           columns={[
             { title: "Book Name", dataIndex: "name", key: "name" },
-            { title: "Price", dataIndex: "price.amount", key: "price" },
             {
-              title: "Reader Age",
-              dataIndex: "bookLanguage",
-              key: "bookLanguage",
+              title: "Price",
+              key: "price",
+              render: (_, record) =>
+                record.price ? `${record.price.amount} ${record.price.currency}` : "",
             },
+            { title: "Reader Age", dataIndex: "bookLanguage", key: "bookLanguage" },
             { title: "Grade", dataIndex: "level", key: "level" },
             {
               title: "Collections",
-              dataIndex: "bookCollection",
               key: "bookCollection",
+              render: (_, record) => record.bookCollection?.title || "",
             },
             {
               title: "Actions",
               key: "actions",
-              render: (text, record) => (
+              render: (_, record) => (
                 <div className="flex gap-2">
                   <Edit
                     className="text-gray-600 cursor-pointer hover:text-[#F37975]"
@@ -185,7 +186,7 @@ const BookList = () => {
                   />
                   <Trash2
                     className="text-gray-600 cursor-pointer hover:text-red-500"
-                    onClick={() => handleDeleteBook(record._id)} 
+                    onClick={() => handleDeleteBook(record._id)}
                   />
                 </div>
               ),

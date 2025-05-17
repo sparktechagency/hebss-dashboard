@@ -1,17 +1,36 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Table, Button, Row, Col, Input, Modal, Spin, Alert } from "antd";
 import { EyeOutlined } from "@ant-design/icons";
 import { useGetInvoiceHistoryByIdQuery } from "../../redux/features/invoice/invoiceApi";
-// import { useGetInvoiceHistoryByIdQuery } from "./path/to/invoiceApi"; 
 
 const InvoiceHistoryPage = () => {
-  const [searchText, setSearchText] = useState("");
+    const [searchText, setSearchText] = useState("");
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
-  const userId = "67c308af6f9bb7542aed1784"; // replace with real user ID
+  useEffect(() => {
+    if (!localStorage.getItem("userId")) {
+      localStorage.setItem("userId", "67c308af6f9bb7542aed1784");
+      console.log("Default userId set in localStorage");
+    }
+    if (!localStorage.getItem("token")) {
+      localStorage.setItem("token", "your-valid-jwt-token");
+      console.log("Default token set in localStorage");
+    }
+  }, []);
 
-  const { data: invoiceHistoryData = [], error, isLoading } = useGetInvoiceHistoryByIdQuery(userId);
+  // Get userId from localStorage
+  const userId = localStorage.getItem("userId") || "";
+
+  console.log("userId from localStorage:", userId);
+
+  // Skip API call if userId is empty
+  const { data, error, isLoading } = useGetInvoiceHistoryByIdQuery(userId, {
+    skip: !userId,
+  });
+
+  // Safely extract invoices array
+  const invoiceHistoryData = Array.isArray(data?.invoices) ? data.invoices : [];
 
   const handleView = (invoice) => {
     setSelectedInvoice(invoice);
@@ -44,7 +63,6 @@ const InvoiceHistoryPage = () => {
     },
   ];
 
-  // Filter based on search text
   const filteredData = invoiceHistoryData.filter(
     (invoice) =>
       invoice.name?.toLowerCase().includes(searchText.toLowerCase()) ||
@@ -67,10 +85,28 @@ const InvoiceHistoryPage = () => {
         </Col>
       </Row>
 
-      {isLoading && <Spin tip="Loading invoices..." />}
-      {error && <Alert message="Error loading invoices" type="error" />}
+      {!userId && (
+        <Alert
+          message="User ID not found. Please log in."
+          type="warning"
+          showIcon
+          className="mb-4"
+        />
+      )}
 
-      {!isLoading && !error && (
+      {isLoading && <Spin tip="Loading invoices..." />}
+
+      {error && (
+        <Alert
+          message="Error loading invoices"
+          description={error?.message || "Unknown error"}
+          type="error"
+          showIcon
+          className="mb-4"
+        />
+      )}
+
+      {!isLoading && !error && userId && (
         <Table
           columns={columns}
           dataSource={filteredData}

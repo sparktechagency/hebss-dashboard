@@ -38,57 +38,34 @@ const BlogPage = () => {
   const [createBlog, { isLoading }] = useCreateBlogMutation();
   const [editBlog] = useEditBlogMutation();
   const [deleteBlog] = useDeleteBlogMutation();
-  // Fetch blogs using the Redux Toolkit Query
   const {
     data: blogs = [],
     error,
     isLoading: blogsLoading,
   } = useGetAllBlogsQuery();
-  // Log the fetched blogs to check the structure
   useEffect(() => {
-    // console.log("Blogs Data:", blogs); // Log the data to inspect its structure
+    console.log("Blogs Data:", blogs); // Log the data to inspect its structure
   }, [blogs]);
 
-  // console.log(blogs.data);
-
   useEffect(() => {
-  const fetchCategories = async () => {
-    try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/category/retrieve`);
-      const data = await response.json();
-      if (data.status === "success") {
-        setCategories(data.data); // Set categories state
-      } else {
-        message.error("Failed to fetch categories");
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/category/retrieve`
+        );
+        const data = await response.json();
+        if (data.status === "success") {
+          setCategories(data.data); // Set categories state
+        } else {
+          message.error("Failed to fetch categories");
+        }
+      } catch (error) {
+        message.error("Error fetching categories");
       }
-    } catch (error) {
-      message.error("Error fetching categories");
-    }
-  };
+    };
 
-  fetchCategories();
-}, []);
-
-  
-  // useEffect(() => {
-  //   const fetchCategories = async () => {
-  //     try {
-  //       const response = await fetch(
-  //         "http://13.48.93.57:5003/v1/category/retrieve"
-  //       ); 
-  //       if (data.status === "success") {
-  //         setCategories(data.data); 
-  //       } else {
-  //         message.error("Failed to fetch categories");
-  //       }
-  //     } catch (error) {
-       
-  //       message.error("Error fetching categories");
-  //     }
-  //   };
-
-  //   fetchCategories();
-  // }, []);
+    fetchCategories();
+  }, []);
 
   // Handle Create Blog
   const handleCreateBlog = () => {
@@ -163,13 +140,20 @@ const BlogPage = () => {
     setNewBlog({ ...newBlog, category: value });
   };
 
-  // Handle image upload
+  // const handleImageUpload = (file) => {
+  //   setNewBlog({ ...newBlog, image: reader.result });
+  //   return false;
+  // };
+
   const handleImageUpload = (file) => {
-    setNewBlog({ ...newBlog, image: file.name });
-    return false; // Prevent upload to the server
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setNewBlog({ ...newBlog, image: reader.result }); // ✅ store base64
+    };
+    reader.readAsDataURL(file);
+    return false; // prevent actual upload
   };
 
-  // Check if blogs are still loading or if there's an error
   if (blogsLoading) return <p>Loading blogs...</p>;
   if (error) return <p>Error loading blogs: {error.message}</p>;
 
@@ -192,7 +176,10 @@ const BlogPage = () => {
             <Col key={blog.key} span={8}>
               <Card
                 title={blog.title}
-                cover={<img alt={blog.title} src={AllImages.blog} />}
+                // cover={<img alt={blog.title} src={AllImages.blog} />}
+                cover={
+                  <img alt={blog.title} src={blog.image || AllImages.blog} />
+                }
                 actions={[
                   <EditOutlined onClick={() => handleEditBlog(blog)} />,
                   <DeleteOutlined
@@ -259,10 +246,17 @@ const BlogPage = () => {
           />
 
           <label>Image</label>
-          <Upload
+          {/* <Upload
             beforeUpload={handleImageUpload}
             showUploadList={false}
             style={{ marginBottom: "10px" }}
+          >
+            <Button>Upload Image</Button>
+          </Upload> */}
+          <Upload
+            beforeUpload={() => false}
+            showUploadList={false}
+            onChange={({ file }) => handleImageUpload(file)}
           >
             <Button>Upload Image</Button>
           </Upload>
