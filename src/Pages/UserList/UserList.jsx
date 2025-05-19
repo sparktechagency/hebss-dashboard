@@ -10,22 +10,18 @@ const UserList = () => {
   const [searchText, setSearchText] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
-  const pageSize = 8; // As per the API limit
+  const pageSize = 8;
 
   // Fetch data using the API hook
   const { data, isLoading, error } = useGetAllUserQuery();
 
-  // Log the API response to check its structure
-  console.log("Fetched user data:", data);
-
   // Ensure data is correctly structured and has 'users' array
-  const users = data?.data || [];  // Corrected from 'data?.users' to 'data?.data'
-  const totalPage = data?.meta?.totalPage || 1;  // Using totalPage from the response
-  const totalUsers = data?.meta?.totalData || 0;  // Using totalData from the response
-  console.log("Users Array:", users); // Log users to verify structure
+  const users = data?.data || [];
+  const totalPage = data?.meta?.totalPage || 1;
+  const totalUsers = data?.meta?.totalData || 0;
 
   const columns = [
-    { title: "ID", dataIndex: "_id", key: "id", responsive: ["sm"] }, // Change dataIndex to "_id" to match API response
+    { title: "ID", dataIndex: "_id", key: "id", responsive: ["sm"] },
     { title: "Email", dataIndex: "email", key: "email" },
     { title: "Phone", dataIndex: "phone", key: "phone" },
     {
@@ -40,7 +36,7 @@ const UserList = () => {
       render: (_, record) => (
         <button
           className="px-2 py-1 text-white bg-red-500 rounded"
-          onClick={() => navigate(`/user-details/${record._id}`)} // Using _id as the key
+          onClick={() => navigate(`/user-details/${record._id}`)}
         >
           <EyeOutlined />
         </button>
@@ -55,16 +51,13 @@ const UserList = () => {
     )
   );
 
-  // Log filtered data to verify
-  console.log("Filtered Data:", filteredData);
 
-  // Paginate the filtered data
   const paginatedData = filteredData.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
 
-  console.log("Paginated Data:", paginatedData); // Log paginated data to verify
+  // console.log("Paginated Data:", paginatedData);
 
   return (
     <div className="min-h-screen p-6 bg-gray-100">
@@ -91,19 +84,19 @@ const UserList = () => {
           <>
             <Table
               columns={columns}
-              dataSource={paginatedData} // Use the paginated data
+              dataSource={paginatedData} 
               pagination={false}
-              rowKey="_id"  // Use _id as the rowKey
+              rowKey="_id" 
               scroll={{ x: "max-content" }}
             />
             <div className="flex justify-center mt-4">
               <Pagination
                 current={currentPage}
                 pageSize={pageSize}
-                total={totalUsers} // Use totalUsers from meta data
+                total={totalUsers} 
                 onChange={(page) => setCurrentPage(page)}
                 showSizeChanger={false}
-                pageSizeOptions={[pageSize]} // Optional: Only one page size option
+                pageSizeOptions={[pageSize]} 
               />
             </div>
           </>

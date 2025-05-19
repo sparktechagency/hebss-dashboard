@@ -1,7 +1,15 @@
-import { useState } from "react";
-import { Card, Modal } from "antd";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-import { Bell, Eye } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Card, Modal, Spin, Alert } from "antd";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import { Eye } from "lucide-react";
+import { useGetAllOrdersQuery } from "../../redux/features/order/orderApi";
 
 const salesData = Array.from({ length: 60 }, (_, i) => ({
   name: `${i * 1000}`,
@@ -9,24 +17,41 @@ const salesData = Array.from({ length: 60 }, (_, i) => ({
 }));
 
 const Dashboard = () => {
-  const [isModalVisible, setIsModalVisible] = useState(false); // Modal visibility state
-  const [activeOrder, setActiveOrder] = useState(null); // State for the selected order
+  const { data: response = {}, isLoading, error } = useGetAllOrdersQuery();
+  const fetchedOrders = response?.data || [];
+
+  const totalUsers = new Set(
+    fetchedOrders.map((order) => order.user?.userId || order.user?.id)
+  ).size;
+
+  const totalOrders = fetchedOrders.length;
+
+
+
+
+  const [orders, setOrders] = useState([]);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [activeOrder, setActiveOrder] = useState(null);
+
+  // Update orders state only when fetchedOrders changes
+  useEffect(() => {
+    setOrders(fetchedOrders);
+  }, [fetchedOrders]);
 
   const handleEyeClick = (order) => {
-    setActiveOrder(order); // Set the active order when the eye icon is clicked
-    setIsModalVisible(true); // Show the modal
+    setActiveOrder(order);
+    setIsModalVisible(true);
   };
 
   const handleModalClose = () => {
-    setIsModalVisible(false); // Hide the modal
-    setActiveOrder(null); // Reset active order
+    setIsModalVisible(false);
+    setActiveOrder(null);
   };
 
-  const orders = [
-    { id: "00001", name: "Christine Brooks", address: "089 Kutch Green Apt. 448", date: "04 Sep 2019", type: "Electric" },
-    { id: "00002", name: "Rosie Pearson", address: "979 Immanuel Ferry Suite 526", date: "28 May 2019", type: "Book" },
-    { id: "00003", name: "Darrell Caldwell", address: "8587 Frida Ports", date: "23 Nov 2019", type: "Medicine" },
-  ];
+    const latestOrders = [...orders]
+  .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+  .slice(0, 4);
+
 
   return (
     <div className="min-h-screen p-4 bg-gray-100 sm:p-6">
@@ -35,12 +60,20 @@ const Dashboard = () => {
       </div>
 
       {/* Stats Section */}
+
       <div className="grid grid-cols-1 gap-4 mb-6 sm:grid-cols-2 lg:grid-cols-4">
-        {["Total User", "Total Order", "Total Sales", "Total Pending"].map((title, i) => (
+        {[
+          { title: "Total User", value: totalUsers },
+          { title: "Total Order", value: totalOrders },
+          { title: "Total Sales", value: "$89,000" }, //  static Data
+          { title: "Total Pending", value: 2040 }, //  static Data
+        ].map(({ title, value }, i) => (
           <Card key={i} className="p-4 bg-white shadow-md">
             <h3 className="text-sm text-gray-600">{title}</h3>
-            <p className="text-xl font-bold sm:text-2xl">{[40689, 10293, "$89,000", 2040][i]}</p>
-            <span className="text-xs text-green-600">{["8.5% Up", "1.3% Up", "4.3% Down", "1.8% Up"][i]}</span>
+            <p className="text-xl font-bold sm:text-2xl">{value}</p>
+            <span className="text-xs text-green-600">
+              {["8.5% Up", "1.3% Up", "4.3% Down", "1.8% Up"][i]}
+            </span>
           </Card>
         ))}
       </div>
@@ -54,7 +87,13 @@ const Dashboard = () => {
               <XAxis dataKey="name" tick={{ fontSize: 12 }} />
               <YAxis tick={{ fontSize: 12 }} />
               <Tooltip />
-              <Line type="monotone" dataKey="value" stroke="#f87171" strokeWidth={2} fill="#fecaca" />
+              <Line
+                type="monotone"
+                dataKey="value"
+                stroke="#f87171"
+                strokeWidth={2}
+                fill="#fecaca"
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -63,32 +102,59 @@ const Dashboard = () => {
       {/* Recent Orders */}
       <div className="p-4 overflow-x-auto bg-white shadow-md sm:p-6 rounded-xl">
         <h2 className="mb-4 text-lg font-semibold">Recent Orders</h2>
-        <table className="w-full min-w-[600px] border-collapse">
-          <thead>
-            <tr className="border-b">
-              {["ID", "Name", "Address", "Date", "Type", "Details"].map((col, i) => (
-                <th key={i} className="p-2 text-sm text-left text-gray-600">{col}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {orders.map((order, i) => (
-              <tr key={i} className="border-b">
-                <td className="p-2 text-sm">{order.id}</td>
-                <td className="p-2 text-sm">{order.name}</td>
-                <td className="p-2 text-sm">{order.address}</td>
-                <td className="p-2 text-sm">{order.date}</td>
-                <td className="p-2 text-sm">{order.type}</td>
-                <td className="p-2 text-sm">
-                  <Eye
-                    className="w-5 h-5 text-gray-500 cursor-pointer"
-                    onClick={() => handleEyeClick(order)} // Open modal with order details
-                  />
-                </td>
+
+        {isLoading && <Spin tip="Loading orders..." />}
+        {error && <Alert message="Error loading orders" type="error" />}
+
+        {!isLoading && !error && (
+          <table className="w-full min-w-[600px] border-collapse">
+            <thead>
+              <tr className="border-b">
+                {["ID", "Name", "Address", "Date", "Type", "Details"].map(
+                  (col, i) => (
+                    <th key={i} className="p-2 text-sm text-left text-gray-600">
+                      {col}
+                    </th>
+                  )
+                )}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {latestOrders.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="p-4 text-center text-gray-500">
+                    No orders found.
+                  </td>
+                </tr>
+              ) : (
+                latestOrders.map((order, i) => (
+                  <tr key={order.id || i} className="border-b">
+                    <td className="p-2 text-sm">
+                      {order.orderId || order.orderId}
+                    </td>
+                    <td className="p-2 text-sm">
+                      {order.name || order.user?.name}
+                    </td>
+                    <td className="p-2 text-sm">
+                      {order.address || order.shippingAddress?.street}
+                    </td>
+                    <td className="p-2 text-sm">
+                      {order.date ||
+                        new Date(order.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="p-2 text-sm">{order.paymentInfo.type}</td>
+                    <td className="p-2 text-sm">
+                      <Eye
+                        className="w-5 h-5 text-gray-500 cursor-pointer"
+                        onClick={() => handleEyeClick(order)}
+                      />
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        )}
       </div>
 
       {/* Modal for Order Details */}
@@ -100,11 +166,27 @@ const Dashboard = () => {
       >
         {activeOrder && (
           <div>
-            <p><strong>Order ID:</strong> {activeOrder.id}</p>
-            <p><strong>Name:</strong> {activeOrder.name}</p>
-            <p><strong>Address:</strong> {activeOrder.address}</p>
-            <p><strong>Date:</strong> {activeOrder.date}</p>
-            <p><strong>Type:</strong> {activeOrder.type}</p>
+            <p>
+              <strong>Order ID:</strong>{" "}
+              {activeOrder.orderId || activeOrder.orderId}
+            </p>
+            <p>
+              <strong>Name:</strong>{" "}
+              {activeOrder.name || activeOrder.user?.name}
+            </p>
+            <p>
+              <strong>Address:</strong>{" "}
+              {activeOrder.address || activeOrder.shippingAddress?.street}
+            </p>
+            <p>
+              <strong>Date:</strong>{" "}
+              {activeOrder.date ||
+                new Date(activeOrder.createdAt).toLocaleDateString()}
+            </p>
+            <p>
+              <strong>Type:</strong>{" "}
+              {activeOrder.type || activeOrder.items?.[0]?.type || "N/A"}
+            </p>
           </div>
         )}
       </Modal>

@@ -22,7 +22,7 @@ const InvoiceHistoryPage = () => {
   // Get userId from localStorage
   const userId = localStorage.getItem("userId") || "";
 
-  console.log("userId from localStorage:", userId);
+  // console.log("userId from localStorage:", userId);
 
   // Skip API call if userId is empty
   const { data, error, isLoading } = useGetInvoiceHistoryByIdQuery(userId, {

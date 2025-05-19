@@ -125,7 +125,7 @@ const SubscriptionPage = () => {
         <h2 className="text-3xl font-bold">Subscriptions</h2>
         <Button
           type="primary"
-          className="border-none"
+          className="hidden border-none"
           style={{ backgroundColor: primaryColor }}
           icon={<PlusOutlined />}
           onClick={() => setIsAddModalVisible(true)}
