@@ -110,7 +110,7 @@ const Dashboard = () => {
           <table className="w-full min-w-[600px] border-collapse">
             <thead>
               <tr className="border-b">
-                {["ID", "Name", "Address", "Date", "Type", "Details"].map(
+                {["ID", "Name", "Address", "Date", "Payment Status", "Details"].map(
                   (col, i) => (
                     <th key={i} className="p-2 text-sm text-left text-gray-600">
                       {col}
@@ -142,7 +142,7 @@ const Dashboard = () => {
                       {order.date ||
                         new Date(order.createdAt).toLocaleDateString()}
                     </td>
-                    <td className="p-2 text-sm">{order.paymentInfo.type}</td>
+                    <td className="p-2 text-sm">{order.paymentInfo.status}</td>
                     <td className="p-2 text-sm">
                       <Eye
                         className="w-5 h-5 text-gray-500 cursor-pointer"

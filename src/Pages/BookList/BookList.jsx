@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, Table, Button, Select, Pagination, Input, Spin, message } from "antd";
 import { Grid, List, Edit, Trash2 } from "lucide-react";
 import { PlusOutlined, SearchOutlined } from "@ant-design/icons";
@@ -19,6 +19,12 @@ const BookList = () => {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [editingBook, setEditingBook] = useState(null);
 
+  // New states for sorting and filters
+  const [sortOrder, setSortOrder] = useState("none");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [priceFilter, setPriceFilter] = useState("");
+  const [shortPositionFilter, setShortPositionFilter] = useState("");
+
   // Fetch books using the Redux API hook
   const { data, isLoading, isError } = useGetAllBooksQuery();
   const [updateBook] = useUpdateBookMutation();
@@ -28,9 +34,38 @@ const BookList = () => {
   const pageSize = 8;
   const books = data?.data || [];
 
-  const paginatedBooks = Array.isArray(books)
-    ? books.slice((currentPage - 1) * pageSize, currentPage * pageSize)
-    : [];
+  // Filter books based on search, price, short position inputs
+  const filteredBooks = useMemo(() => {
+    if (!Array.isArray(books)) return [];
+
+    return books.filter((book) => {
+      const matchesSearch = book.name.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesPrice =
+        priceFilter === "" || 
+        (book.price?.amount && book.price.amount === Number(priceFilter));
+
+      const matchesShortPosition =
+        shortPositionFilter === "" ||
+        (book.shortPosition && book.shortPosition.toString().includes(shortPositionFilter));
+
+      return matchesSearch && matchesPrice && matchesShortPosition;
+    });
+  }, [books, searchTerm, priceFilter]);
+
+  // Sort the filtered books by price based on sortOrder
+  const sortedBooks = useMemo(() => {
+    if (sortOrder === "lowToHigh") {
+      return [...filteredBooks].sort((a, b) => (a.price?.amount || 0) - (b.price?.amount || 0));
+    } else if (sortOrder === "highToLow") {
+      return [...filteredBooks].sort((a, b) => (b.price?.amount || 0) - (a.price?.amount || 0));
+    } else {
+      return filteredBooks;
+    }
+  }, [filteredBooks, sortOrder]);
+
+  // Paginate the sorted books
+  const paginatedBooks = sortedBooks.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const primaryColor = "#F37975";
 
@@ -89,10 +124,35 @@ const BookList = () => {
             placeholder="Search products..."
             prefix={<SearchOutlined className="text-gray-500" />}
             className="w-72"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <Input
+            placeholder="Price"
+            type="number"
+            min={0}
+            className="w-32"
+            value={priceFilter}
+            onChange={(e) => setPriceFilter(e.target.value)}
+          />
+          <Input
+            placeholder="Short Position"
+            className="hidden w-32"
+            value={shortPositionFilter}
+            onChange={(e) => setShortPositionFilter(e.target.value)}
           />
           <Select defaultValue="Category" className="w-40">
             <Select.Option value="fiction">Fiction</Select.Option>
             <Select.Option value="non-fiction">Non-Fiction</Select.Option>
+          </Select>
+          <Select
+            defaultValue="none"
+            className="w-40"
+            onChange={(value) => setSortOrder(value)}
+          >
+            <Select.Option value="none">Sort by Price</Select.Option>
+            <Select.Option value="lowToHigh">Price: Low to High</Select.Option>
+            <Select.Option value="highToLow">Price: High to Low</Select.Option>
           </Select>
           <Button
             type="primary"
@@ -199,7 +259,7 @@ const BookList = () => {
         <Pagination
           current={currentPage}
           pageSize={pageSize}
-          total={books.length}
+          total={sortedBooks.length}
           onChange={(page) => setCurrentPage(page)}
           showSizeChanger={false}
         />

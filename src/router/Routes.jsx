@@ -27,6 +27,7 @@ import AdminManagementPage from "../Pages/Admin/Admin";
 import FAQPage from "../Pages/Settings/FAQs/FAQs";
 import TeamPage from "../Pages/Settings/Team/Team";
 import SubscribersPage from "../Pages/Subscription/Subscribers";
+import SendMailAll from "../Pages/SendMailAll/SendMailAll";
 
 export const router = createBrowserRouter([
   {
@@ -109,6 +110,10 @@ export const router = createBrowserRouter([
           {
             path: "/reviews",
             element: <ReviewsPage />,
+          },
+           {
+            path: "/send-mail-all",
+            element: <SendMailAll/>,
           },
           {
             path: "/blog",

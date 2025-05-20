@@ -1,10 +1,14 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-  user: "",
-  token: null,
-  isAuthenticated: false,
-  verificationEmail: localStorage.getItem("verificationEmail") || null, 
+  // user: "",
+  // token: null,
+  // isAuthenticated: false,
+  // verificationEmail: localStorage.getItem("verificationEmail") || null, 
+  user: JSON.parse(localStorage.getItem("user")) || null,  // <-- update this
+  token: localStorage.getItem("token") || null,
+  isAuthenticated: !!localStorage.getItem("token"),
+  verificationEmail: localStorage.getItem("verificationEmail") || null,
 };
 const authSlice = createSlice({
   name: "auth",
