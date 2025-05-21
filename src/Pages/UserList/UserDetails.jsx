@@ -1,5 +1,8 @@
 import React, { useState } from "react";
-import { Tabs } from "antd";
+import { Tabs, Spin, Alert } from "antd";
+import { useParams } from "react-router-dom";
+import { useGetSingleUserQuery } from "../../redux/features/user/userApi";
+
 import ProfileTab from "./ProfileTab";
 import InvoiceTab from "./InvoiceTab";
 import CurrentBoxTab from "./CurrentTab";
@@ -9,33 +12,53 @@ import SendMailTab from "./SendMail";
 const { TabPane } = Tabs;
 
 const UserDetails = () => {
+  const { userId } = useParams();
   const [activeTab, setActiveTab] = useState("profile");
   const [isEditMode, setIsEditMode] = useState(false);
 
-  const userId = "67c308af6f9bb7542aed1784"; // TODO: Replace with real user ID from your auth or store
+  // Fetch user data by ID
+  const { data: userData, error: userError, isLoading: userLoading } = useGetSingleUserQuery(userId);
+
+  if (userLoading) {
+    return (
+      <div className="flex justify-center p-10">
+        <Spin size="large" tip="Loading user details..." />
+      </div>
+    );
+  }
+
+  if (userError) {
+    return <Alert message="Error loading user" type="error" description={JSON.stringify(userError)} />;
+  }
+
+  const user = userData?.data;
+
+  if (!user) {
+    return <Alert message="User not found" type="warning" />;
+  }
 
   return (
     <div className="flex min-h-screen p-6 bg-gray-100">
       <div className="w-full p-6 bg-white rounded-lg shadow-lg">
         <Tabs activeKey={activeTab} onChange={setActiveTab} centered>
           <TabPane tab="Profile" key="profile">
-            <ProfileTab isEditMode={isEditMode} setIsEditMode={setIsEditMode} />
+            <ProfileTab user={user} isEditMode={isEditMode} setIsEditMode={setIsEditMode} />
           </TabPane>
 
           <TabPane tab="Invoice" key="invoice">
-            <InvoiceTab />
+            <InvoiceTab userId={user._id} />
           </TabPane>
 
           <TabPane tab="Current Box" key="currentBox">
-            <CurrentBoxTab userId={userId} />
+            <CurrentBoxTab userId={user._id} />
           </TabPane>
 
           <TabPane tab="Subscription" key="subscription">
-            <SubscriptionTab />
+            <SubscriptionTab userId={user._id} />
           </TabPane>
 
           <TabPane tab="Send Mail" key="sendMail">
-            <SendMailTab />
+            <SendMailTab userId={user._id} />
           </TabPane>
         </Tabs>
       </div>

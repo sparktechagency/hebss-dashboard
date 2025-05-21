@@ -26,7 +26,7 @@ const OrderList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [currentOrder, setCurrentOrder] = useState(null);
-  const [orders, setOrders] = useState([]); 
+  const [orders, setOrders] = useState([]);
 
   // Fetch orders from the API
   const { data: response = {}, isLoading, error } = useGetAllOrdersQuery();
@@ -121,24 +121,23 @@ const OrderList = () => {
     setIsModalVisible(false);
   };
 
-const updateOrderStatusHandler = async (order, newStatus) => {
-  const orderId = order._id;  // Use the default MongoDB `_id` (not `orderId`)
+  const updateOrderStatusHandler = async (order, newStatus) => {
+    const orderId = order._id;
 
-  try {
-    await updateOrderStatus({ orderId, status: newStatus }).unwrap();
-    
-    const updatedOrders = orders.map((o) =>
-      o._id === orderId ? { ...o, status: newStatus } : o
-    );
+    try {
+      await updateOrderStatus({ orderId, status: newStatus }).unwrap();
 
-    setOrders(updatedOrders);
-    console.log("Order status updated successfully!");
-  } catch (err) {
-    console.error("Error updating order status:", err);
-    console.error("Error details:", err.response?.data);
-  }
-};
+      const updatedOrders = orders.map((o) =>
+        o._id === orderId ? { ...o, status: newStatus } : o
+      );
 
+      setOrders(updatedOrders);
+      console.log("Order status updated successfully!");
+    } catch (err) {
+      console.error("Error updating order status:", err);
+      console.error("Error details:", err.response?.data);
+    }
+  };
 
   const modalContent = currentOrder ? (
     <div>

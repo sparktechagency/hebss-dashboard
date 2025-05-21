@@ -36,12 +36,7 @@ const ProfileTab = () => {
 
   const user = data?.data;
 
-  // ✅ Dummy card info
-  const cardInfo = {
-    cardName: "MasterCard",
-    cardNumber: "6512********1625",
-    expiryDate: "12/23",
-  };
+
 
   if (isLoading) {
     return (
@@ -123,27 +118,6 @@ const ProfileTab = () => {
           <CustomInput value={user.address || ""} disabled={!isEditMode} />
         </Col>
       </Row>
-
-      {/* Card Information (Fake / Static for now) */}
-      <div className="mt-6">
-        <h3 className="text-lg font-semibold text-gray-700">Card Information</h3>
-        <Row gutter={24} className="mb-4">
-          <Col span={12}>
-            <label className="text-gray-500">Card Name</label>
-            <CustomInput value={cardInfo.cardName} disabled />
-          </Col>
-          <Col span={12}>
-            <label className="text-gray-500">Card Number</label>
-            <CustomInput value={cardInfo.cardNumber} disabled />
-          </Col>
-        </Row>
-        <Row gutter={24}>
-          <Col span={12}>
-            <label className="text-gray-500">Expiry Date</label>
-            <CustomInput value={cardInfo.expiryDate} disabled />
-          </Col>
-        </Row>
-      </div>
 
       {/* Save / Cancel Buttons */}
       {isEditMode && (

@@ -51,7 +51,6 @@ const UserList = () => {
     )
   );
 
-
   const paginatedData = filteredData.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
@@ -84,19 +83,19 @@ const UserList = () => {
           <>
             <Table
               columns={columns}
-              dataSource={paginatedData} 
+              dataSource={paginatedData}
               pagination={false}
-              rowKey="_id" 
+              rowKey="_id"
               scroll={{ x: "max-content" }}
             />
             <div className="flex justify-center mt-4">
               <Pagination
                 current={currentPage}
                 pageSize={pageSize}
-                total={totalUsers} 
+                total={totalUsers}
                 onChange={(page) => setCurrentPage(page)}
                 showSizeChanger={false}
-                pageSizeOptions={[pageSize]} 
+                pageSizeOptions={[pageSize]}
               />
             </div>
           </>

@@ -45,6 +45,15 @@ const subscriptionApi = createApi({
         method: "DELETE",
       }),
     }),
+
+     getSubscriptionByUserId: builder.query({
+      query: (userId) => `/subscription-purchase/retrieve/user/${userId}`, // ✅ correct!
+    }),
+
+
+
+
+
   }),
 });
 
@@ -53,7 +62,8 @@ export const {
   useCreateSubscriptionMutation,
   useGetAllSubscriptionQuery,
   useDeleteSubscriptionMutation,
-  useEditSubscriptionMutation
+  useEditSubscriptionMutation,
+  useGetSubscriptionByUserIdQuery
 } = subscriptionApi;
 
 export default subscriptionApi;
