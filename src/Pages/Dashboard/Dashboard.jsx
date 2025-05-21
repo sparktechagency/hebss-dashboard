@@ -26,9 +26,6 @@ const Dashboard = () => {
 
   const totalOrders = fetchedOrders.length;
 
-
-
-
   const [orders, setOrders] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [activeOrder, setActiveOrder] = useState(null);
@@ -48,10 +45,9 @@ const Dashboard = () => {
     setActiveOrder(null);
   };
 
-    const latestOrders = [...orders]
-  .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-  .slice(0, 4);
-
+  const latestOrders = [...orders]
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, 4);
 
   return (
     <div className="min-h-screen p-4 bg-gray-100 sm:p-6">
@@ -110,13 +106,18 @@ const Dashboard = () => {
           <table className="w-full min-w-[600px] border-collapse">
             <thead>
               <tr className="border-b">
-                {["ID", "Name", "Address", "Date", "Payment Status", "Details"].map(
-                  (col, i) => (
-                    <th key={i} className="p-2 text-sm text-left text-gray-600">
-                      {col}
-                    </th>
-                  )
-                )}
+                {[
+                  "ID",
+                  "Name",
+                  "Address",
+                  "Date",
+                  "Payment Status",
+                  "Details",
+                ].map((col, i) => (
+                  <th key={i} className="p-2 text-sm text-left text-gray-600">
+                    {col}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
