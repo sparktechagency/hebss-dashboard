@@ -22,7 +22,6 @@ const SubscriptionTab = ({ userId }) => {
     setIsActive(checked);
     // TODO: Optionally call mutation to update isActive in backend
   };
-
   // Loading or error states
   if (!userId) return <Alert type="warning" message="User ID is missing" />;
   if (isLoading) return <Spin tip="Loading subscription..." />;

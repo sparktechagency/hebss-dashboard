@@ -4,7 +4,7 @@ import { EyeOutlined } from "@ant-design/icons";
 import { useGetInvoiceHistoryByIdQuery } from "../../redux/features/invoice/invoiceApi";
 
 const InvoiceHistoryPage = () => {
-    const [searchText, setSearchText] = useState("");
+  const [searchText, setSearchText] = useState("");
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
@@ -19,18 +19,28 @@ const InvoiceHistoryPage = () => {
     }
   }, []);
 
-  // Get userId from localStorage
   const userId = localStorage.getItem("userId") || "";
 
-  // console.log("userId from localStorage:", userId);
-
-  // Skip API call if userId is empty
   const { data, error, isLoading } = useGetInvoiceHistoryByIdQuery(userId, {
     skip: !userId,
   });
 
-  // Safely extract invoices array
-  const invoiceHistoryData = Array.isArray(data?.invoices) ? data.invoices : [];
+  // console.log("Invoice history data:", data);
+
+ 
+
+  // **Fix here:** invoice data is in `data` as an array, not `data.invoices`
+  const invoiceHistoryData = Array.isArray(data) ? data : [];
+
+
+//    {!isLoading && !error && invoiceHistoryData.length === 0 && (
+//   <Alert
+//     message="No invoices found for this user."
+//     type="info"
+//     showIcon
+//     className="mb-4"
+//   />
+// )}
 
   const handleView = (invoice) => {
     setSelectedInvoice(invoice);
@@ -42,12 +52,13 @@ const InvoiceHistoryPage = () => {
     setSelectedInvoice(null);
   };
 
+  // Update columns as per your invoice data structure:
   const columns = [
     { title: "Invoice ID", dataIndex: "invoiceId", key: "invoiceId" },
-    { title: "NAME", dataIndex: "name", key: "name" },
-    { title: "ADDRESS", dataIndex: "address", key: "address" },
-    { title: "DATE", dataIndex: "date", key: "date" },
-    { title: "Price", dataIndex: "price", key: "price" },
+    { title: "Name", dataIndex: "user", key: "user", render: user => user?.email || "N/A" },
+    { title: "Address", dataIndex: "user", key: "address", render: user => user?.address || "N/A" },
+    { title: "Date", dataIndex: "createdAt", key: "createdAt", render: date => new Date(date).toLocaleDateString() },
+    { title: "Price", dataIndex: "totalAmount", key: "totalAmount", render: amount => `$${amount}` },
     {
       title: "View",
       key: "view",
@@ -63,12 +74,18 @@ const InvoiceHistoryPage = () => {
     },
   ];
 
-  const filteredData = invoiceHistoryData.filter(
-    (invoice) =>
-      invoice.name?.toLowerCase().includes(searchText.toLowerCase()) ||
-      invoice.address?.toLowerCase().includes(searchText.toLowerCase()) ||
-      invoice.date?.toLowerCase().includes(searchText.toLowerCase())
-  );
+  // Adjust search filtering for relevant fields
+  const filteredData = invoiceHistoryData.filter((invoice) => {
+    const userEmail = invoice.user?.email?.toLowerCase() || "";
+    const address = invoice.user?.address?.toLowerCase() || "";
+    const createdAt = invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString().toLowerCase() : "";
+
+    return (
+      userEmail.includes(searchText.toLowerCase()) ||
+      address.includes(searchText.toLowerCase()) ||
+      createdAt.includes(searchText.toLowerCase())
+    );
+  });
 
   return (
     <div className="p-6">
@@ -80,18 +97,13 @@ const InvoiceHistoryPage = () => {
             placeholder="Search invoices..."
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            style={{ width: "300px" }}
+            style={{ width: 300 }}
           />
         </Col>
       </Row>
 
       {!userId && (
-        <Alert
-          message="User ID not found. Please log in."
-          type="warning"
-          showIcon
-          className="mb-4"
-        />
+        <Alert message="User ID not found. Please log in." type="warning" showIcon className="mb-4" />
       )}
 
       {isLoading && <Spin tip="Loading invoices..." />}
@@ -111,32 +123,17 @@ const InvoiceHistoryPage = () => {
           columns={columns}
           dataSource={filteredData}
           pagination={{ pageSize: 5 }}
-          rowKey={(record) => record.invoiceId || record.key}
+          rowKey={(record) => record._id || record.invoiceId}
         />
       )}
 
       {selectedInvoice && (
-        <Modal
-          title="Invoice Details"
-          visible={isModalVisible}
-          onCancel={handleCancel}
-          footer={null}
-        >
-          <p>
-            <strong>Invoice ID:</strong> {selectedInvoice.invoiceId}
-          </p>
-          <p>
-            <strong>Name:</strong> {selectedInvoice.name}
-          </p>
-          <p>
-            <strong>Address:</strong> {selectedInvoice.address}
-          </p>
-          <p>
-            <strong>Date:</strong> {selectedInvoice.date}
-          </p>
-          <p>
-            <strong>Price:</strong> {selectedInvoice.price}
-          </p>
+        <Modal title="Invoice Details" visible={isModalVisible} onCancel={handleCancel} footer={null}>
+          <p><strong>Invoice ID:</strong> {selectedInvoice.invoiceId}</p>
+          <p><strong>Name:</strong> {selectedInvoice.user?.email || "N/A"}</p>
+          <p><strong>Address:</strong> {selectedInvoice.user?.address || "N/A"}</p>
+          <p><strong>Date:</strong> {new Date(selectedInvoice.createdAt).toLocaleDateString()}</p>
+          <p><strong>Price:</strong> ${selectedInvoice.totalAmount}</p>
         </Modal>
       )}
     </div>

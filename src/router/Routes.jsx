@@ -100,10 +100,10 @@ export const router = createBrowserRouter([
             path: "/user-list",
             element: <UserList />,
           },
-          {
-            path: "/user-details/:id",
-            element: <UserDetails />,
-          },
+          // {
+          //   path: "/user-details/:id",
+          //   element: <UserDetails />,
+          // },
           {
             path: "/add-book-to-invoice",
             element: <EditBoxPage />,

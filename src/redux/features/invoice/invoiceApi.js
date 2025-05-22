@@ -23,7 +23,7 @@ const invoiceApi = createApi({
       query: (id) => `/invoice/retrieve/history/user/${id}`,
     }),
     getCurrentInvoiceByUserId: builder.query({
-      query: (userId) => `/box/retrieve/${userId}`,
+      query: (userId) => `/invoice/current/retrieve/user/${userId}`,
     }),
     updateInvoiceByInvoiceId: builder.mutation({
       query: ({ invoiceId, data }) => ({

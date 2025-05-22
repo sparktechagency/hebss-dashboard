@@ -49,11 +49,6 @@ const subscriptionApi = createApi({
      getSubscriptionByUserId: builder.query({
       query: (userId) => `/subscription-purchase/retrieve/user/${userId}`, // ✅ correct!
     }),
-
-
-
-
-
   }),
 });
 

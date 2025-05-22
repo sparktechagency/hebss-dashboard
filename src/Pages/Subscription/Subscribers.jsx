@@ -139,9 +139,14 @@ const SubscriptionPage = () => {
             key={sub._id}
             className="relative p-6 bg-white border border-gray-200 shadow-lg rounded-xl"
           >
-            <div className="absolute flex gap-2 top-4 right-4">
+
+
+      {/* subscribers  Edit Delete  */}
+      
+             <div className="absolute flex gap-2 top-4 right-4">
+              
               <UsergroupAddOutlined
-                className="text-gray-500 cursor-pointer hover:text-gray-700"
+                className="text-gray-500 cursor-pointer hover:text-gray-700 "  
                 onClick={() => handleSubscribersClick(sub._id)} // Navigate to subscribers page with subscription ID
               />
               <EditOutlined
@@ -153,6 +158,9 @@ const SubscriptionPage = () => {
                 onClick={() => handleDelete(sub._id)}
               />
             </div>
+
+
+       
             <h3 className="text-xl font-bold text-center text-gray-800">{sub.name}</h3>
             <p className="text-sm text-center text-gray-500">{sub.type}</p>
             <p className="my-4 text-3xl font-bold text-center text-gray-900">

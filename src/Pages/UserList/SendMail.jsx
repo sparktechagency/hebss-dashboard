@@ -1,18 +1,41 @@
 import React, { useState } from "react";
-import ReactQuill from "react-quill"; // Import React Quill
-import "react-quill/dist/quill.snow.css"; // Import styles
-import { Button, Modal } from "antd";
+import ReactQuill from "react-quill"; 
+import "react-quill/dist/quill.snow.css";
+import { Button, Modal, Alert } from "antd";
 import { CheckOutlined, CloseOutlined } from "@ant-design/icons";
+import { useSendMailindivisualMutation } from "../../redux/features/user/userApi";
 
-const SendMailTab = () => {
-  const [message, setMessage] = useState(""); // State to hold the email body
+const SendMailTab = ({ userId, userEmail }) => {
+  const [message, setMessage] = useState(""); 
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [errorMsg, setErrorMsg] = useState(null);
+  const [responseMsg, setResponseMsg] = useState("");  
 
-  const handleSend = () => {
-    // Simulate sending the email and show success message
-    setIsModalVisible(true);
-    console.log("Email sent to user with message:", message);
-    // In a real-world scenario, you would send the email using an API here.
+  const [sendMail, { isLoading }] = useSendMailindivisualMutation();
+
+  const handleSend = async () => {
+    setErrorMsg(null);
+    setResponseMsg("");
+    try {
+      const response = await sendMail({
+        userId,
+        email: userEmail,
+        subject: "Important Message from Admin",
+        text: message,
+      }).unwrap();
+
+      if (response?.status === "success") {
+        setResponseMsg(response.message || "Email sent successfully .");
+        setIsModalVisible(true);
+        setMessage(""); 
+        console.log(response.message)
+      } else {
+        setErrorMsg(response?.message || "Failed to send email.");
+      }
+    } catch (error) {
+      setErrorMsg(error?.data?.message || "Failed to send email.");
+      console.error("Send mail error:", error);
+    }
   };
 
   const handleModalClose = () => {
@@ -20,11 +43,11 @@ const SendMailTab = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
-      <h2 className="text-3xl font-bold mb-6">Send Email</h2>
+    <div className="min-h-screen p-6 bg-gray-100">
+      <h2 className="mb-6 text-3xl font-bold">Send Email</h2>
 
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h3 className="text-xl font-bold mb-4">Compose Your Email</h3>
+      <div className="p-6 bg-white rounded-lg shadow-md">
+        <h3 className="mb-4 text-xl font-bold">Compose Your Email</h3>
 
         <ReactQuill
           value={message}
@@ -33,30 +56,40 @@ const SendMailTab = () => {
           placeholder="Write your message here..."
           style={{
             height: "300px",
-            marginBottom: "20px", // Adding some space between the editor and button
+            marginBottom: "20px",
             borderRadius: "4px",
-            border: "1px solid #d9d9d9", // Ensuring borders are visible
+            border: "1px solid #d9d9d9",
           }}
         />
 
-        {/* Send Button below the message box, aligned to the right */}
+        {errorMsg && (
+          <Alert
+            type="error"
+            message={errorMsg}
+            style={{ marginBottom: 16 }}
+            closable
+            onClose={() => setErrorMsg(null)}
+          />
+        )}
+
         <Button
           type="primary"
           style={{
             backgroundColor: "#F37975",
             color: "white",
             padding: "8px 16px",
-            float: "right", // Aligning the button to the right
+            float: "right",
           }}
           onClick={handleSend}
+          loading={isLoading}
+          disabled={!message.trim() || isLoading}
         >
           Send
         </Button>
       </div>
 
-      {/* Modal after sending email */}
       <Modal
-        title="Email Sent"
+        title="Email Status"
         visible={isModalVisible}
         onCancel={handleModalClose}
         footer={[
@@ -73,7 +106,7 @@ const SendMailTab = () => {
           </Button>,
         ]}
       >
-        <p>Your email has been sent successfully.</p>
+        <p>{responseMsg}</p> 
       </Modal>
     </div>
   );
