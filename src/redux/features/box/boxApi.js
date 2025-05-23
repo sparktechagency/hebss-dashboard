@@ -17,13 +17,16 @@ export const boxApi = createApi({
       query: () => "/box/retrieve",
     }),
     getBoxById: builder.query({
-      query: (boxId) => `/box/${boxId}`,
+      query: (boxId) => `/box/retrieve/${boxId}`,
     }),
     getCurrentBox: builder.query({
       query: (boxId) => `/box/retrieve/${boxId}`,
     }),
     getBoxByUserId: builder.query({
-      query: (userId) => `/box/current/${userId}`, // <-- this is the new one
+      query: (userId) => `/box/current/${userId}`,
+    }),
+    getBookById: builder.query({
+      query: (bookId) => `/books/${bookId}`, // Adjust the URL if needed
     }),
     updateBox: builder.mutation({
       query: ({ _id, data }) => ({
@@ -42,6 +45,7 @@ export const {
   useGetCurrentBoxQuery,
   useUpdateBoxMutation,
   useGetBoxByUserIdQuery,
+  getBookById,
 } = boxApi;
 
 export default boxApi;

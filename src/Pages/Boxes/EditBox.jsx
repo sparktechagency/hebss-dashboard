@@ -1,38 +1,95 @@
-import { useState } from "react";
-import { Card, Table, Button, Select, Pagination, Input, Checkbox, Spin } from "antd";
+import { useState, useEffect } from "react";
+import {
+  Card,
+  Table,
+  Button,
+  Select,
+  Pagination,
+  Input,
+  Checkbox,
+  Spin,
+} from "antd";
 import { Grid, List } from "lucide-react";
 import { SearchOutlined } from "@ant-design/icons";
 import { AllImages } from "../../assets/image/AllImages";
-import { useNavigate } from "react-router-dom";
-import { useUpdateBoxMutation } from "../../redux/features/box/boxApi";
-
-const initialBooks = Array.from({ length: 30 }, (_, i) => ({
-  key: i,
-  name: `Allah Made All of Me (${225 + i})`,
-  price: "$120.00",
-  readerAge: "Tiny Mu'mins (0-3) age",
-  grade: "1st",
-  collection: "Arabic Books",
-  author: "Unknown",
-  language: "English",
-  level: "Beginner",
-  image: AllImages.book,
-  isChecked: i < 5, // First 5 books are pre-checked
-}));
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  useUpdateBoxMutation,
+  useGetBoxByIdQuery,
+} from "../../redux/features/box/boxApi";
+import { useGetAllBooksQuery } from "../../redux/features/products/productsApi";
 
 const EditBoxPage = () => {
   const navigate = useNavigate();
-  const [books, setBooks] = useState(initialBooks);
+  const { boxId } = useParams();
+
+  // Fetch box data with refetch function
+  const {
+    data: boxData,
+    isLoading: isBoxLoading,
+    isError: isBoxError,
+    error: boxError,
+    refetch: refetchBox,
+  } = useGetBoxByIdQuery(boxId, { skip: !boxId });
+
+  // Fetch all books
+  const {
+    data: allBooksData,
+    isLoading: isBooksLoading,
+    isError: isBooksError,
+    error: booksError,
+  } = useGetAllBooksQuery();
+
+  const [updateBox, { isLoading: isUpdating }] = useUpdateBoxMutation();
+
+  const [books, setBooks] = useState([]);
   const [view, setView] = useState("grid");
   const [currentPage, setCurrentPage] = useState(1);
-  const [updateBox, { isLoading, isSuccess, isError, error }] = useUpdateBoxMutation(); 
-
   const pageSize = 8;
-  const paginatedBooks = books.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-
   const primaryColor = "#F37975";
 
-  // Handle book selection changes
+  const isReady =
+    !isBoxLoading &&
+    !isBooksLoading &&
+    boxData?.data &&
+    Array.isArray(boxData.data.books) &&
+    allBooksData?.data &&
+    Array.isArray(allBooksData.data);
+
+  useEffect(() => {
+    if (!isReady) return;
+
+    const boxBookIds = boxData.data.books.map((id) => id.toString());
+
+    const formattedBooks = allBooksData.data.map((book) => {
+      const bookIdStr = book._id.toString();
+      return {
+        key: bookIdStr,
+        _id: bookIdStr,
+        name: book.name || book.title || "Untitled Book",
+        price:
+          typeof book.price === "object"
+            ? `${book.price.amount} ${book.price.currency}`
+            : book.price || "$0.00",
+        readerAge: book.readerAge || "All ages",
+        grade: book.grade || "N/A",
+        collection: book.collection || "N/A",
+        author: book.author || "Unknown",
+        language: book.language || "English",
+        level: book.level || "Beginner",
+        image: book.image || AllImages.book,
+        isChecked: boxBookIds.includes(bookIdStr),
+      };
+    });
+
+    setBooks(formattedBooks);
+  }, [boxData, allBooksData, isReady]);
+
+  const paginatedBooks = books.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
   const handleCheckboxChange = (key) => {
     setBooks((prevBooks) =>
       prevBooks.map((book) =>
@@ -41,32 +98,56 @@ const EditBoxPage = () => {
     );
   };
 
-  // Save the selected books changes to the box
   const handleSaveChanges = async () => {
-    const selectedBooks = books.filter((book) => book.isChecked);
-    console.log("Updated book selections:", selectedBooks);
+    if (!boxData || !boxData.data) {
+      alert("Box data not loaded yet.");
+      return;
+    }
 
-    // Assuming you have a box ID to update, for example:
-    const boxId = "yourBoxId"; // You should get this from your route or props
-    const updatedData = {
-      _id: boxId, // Box ID to update
-      books: selectedBooks, // Updated books data
+    const selectedBooks = books.filter((book) => book.isChecked);
+    const selectedBookIds = selectedBooks.map((book) => book._id);
+
+    const currentBookIds = (boxData.data.books || []).map((id) => id.toString());
+
+    const addedBooks = selectedBookIds.filter((id) => !currentBookIds.includes(id));
+    const removedBooks = currentBookIds.filter((id) => !selectedBookIds.includes(id));
+
+    const payload = {
+      addedBooks,
+      removedBooks,
     };
 
     try {
-      await updateBox(updatedData); // Call the updateBox mutation
+      const res = await updateBox({ _id: boxId, data: payload }).unwrap();
+      console.log("Update response:", res);
+      alert("Box updated successfully!");
+      refetchBox();
     } catch (err) {
-      console.error("Error updating box:", err);
+      console.error("Update error:", err);
+      alert(
+        "Failed to update box: " +
+          (err?.data?.message || err.error || "Unknown error")
+      );
     }
   };
 
-  if (isLoading) {
-    return <Spin size="large" className="p-10" />;
-  }
+  if (!isReady || isUpdating) return <Spin size="large" className="p-10" />;
 
-  if (isError) {
-    return <div>Error: {error?.message}</div>;
-  }
+  if (isBoxError)
+    return (
+      <div>
+        Error loading box:{" "}
+        {boxError?.data?.message || boxError?.error || "Unknown error"}
+      </div>
+    );
+
+  if (isBooksError)
+    return (
+      <div>
+        Error loading books:{" "}
+        {booksError?.data?.message || booksError?.error || "Unknown error"}
+      </div>
+    );
 
   return (
     <div className="min-h-screen p-6 bg-gray-100">
@@ -113,9 +194,15 @@ const EditBoxPage = () => {
       </div>
 
       {view === "grid" ? (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <div
+          key={boxData?.data?._id || "box-books-grid"}
+          className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+        >
           {paginatedBooks.map((book) => (
-            <Card key={book.key} className="relative p-4 bg-white rounded-lg shadow-lg">
+            <Card
+              key={book.key}
+              className="relative p-4 bg-white rounded-lg shadow-lg"
+            >
               <Checkbox
                 checked={book.isChecked}
                 onChange={() => handleCheckboxChange(book.key)}
@@ -123,7 +210,7 @@ const EditBoxPage = () => {
               />
               <img
                 src={book.image}
-                alt="Book"
+                alt={book.name}
                 className="object-cover w-full h-48 mb-4 rounded-md"
               />
               <h3 className="text-lg font-semibold">{book.name}</h3>
