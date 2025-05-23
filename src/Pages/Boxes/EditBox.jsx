@@ -8,6 +8,7 @@ import {
   Input,
   Checkbox,
   Spin,
+  message,
 } from "antd";
 import { Grid, List } from "lucide-react";
 import { SearchOutlined } from "@ant-design/icons";
@@ -23,7 +24,20 @@ const EditBoxPage = () => {
   const navigate = useNavigate();
   const { boxId } = useParams();
 
-  // Fetch box data with refetch function
+  const backendBaseUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+
+  // Helper to fix and build full image URLs
+  const getFullImageUrl = (imagePath) => {
+    if (!imagePath) return AllImages.book; // fallback image
+
+    const fixedPath = imagePath.replace(/\\/g, "/"); // fix backslashes
+
+    if (/^https?:\/\//i.test(fixedPath)) return fixedPath; // absolute URL
+
+    return `${backendBaseUrl.replace(/\/$/, "")}/${fixedPath.replace(/^\//, "")}`;
+  };
+
+  // Fetch box data
   const {
     data: boxData,
     isLoading: isBoxLoading,
@@ -63,6 +77,10 @@ const EditBoxPage = () => {
 
     const formattedBooks = allBooksData.data.map((book) => {
       const bookIdStr = book._id.toString();
+
+      // Use coverImage if exists, else image
+      const rawImage = book.coverImage || book.image || "";
+
       return {
         key: bookIdStr,
         _id: bookIdStr,
@@ -77,7 +95,7 @@ const EditBoxPage = () => {
         author: book.author || "Unknown",
         language: book.language || "English",
         level: book.level || "Beginner",
-        image: book.image || AllImages.book,
+        image: getFullImageUrl(rawImage),
         isChecked: boxBookIds.includes(bookIdStr),
       };
     });
@@ -120,11 +138,11 @@ const EditBoxPage = () => {
     try {
       const res = await updateBox({ _id: boxId, data: payload }).unwrap();
       console.log("Update response:", res);
-      alert("Box updated successfully!");
+      message.success("Box updated successfully!");
       refetchBox();
     } catch (err) {
       console.error("Update error:", err);
-      alert(
+      message.success(
         "Failed to update box: " +
           (err?.data?.message || err.error || "Unknown error")
       );
