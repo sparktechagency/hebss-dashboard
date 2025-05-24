@@ -6,39 +6,63 @@ const teamApi = createApi({
     baseUrl: import.meta.env.VITE_BACKEND_URL,
     prepareHeaders: (headers) => {
       const token = localStorage.getItem("token");
-      if (token) {
-        headers.set("Authorization", `Bearer ${token}`);
-      }
+      if (token) headers.set("Authorization", `Bearer ${token}`);
       return headers;
     },
   }),
+  tagTypes: ["Team"],  // <-- important for cache invalidation
   endpoints: (builder) => ({
+    getAllTeamMembers: builder.query({
+      query: () => "/team/retrieve/all",
+      providesTags: ["Team"],   // <-- provides tag
+    }),
     createTeamMember: builder.mutation({
       query: (data) => {
         const formData = new FormData();
-
         formData.append("name", data.name);
         formData.append("email", data.email);
         formData.append("position", data.position);
         formData.append("description", data.description);
-
-        if (data.image) {
-          formData.append("image", data.image);
-        }
-
+        if (data.image) formData.append("image", data.image);
         return {
           url: "/team/create",
           method: "POST",
           body: formData,
         };
       },
+      invalidatesTags: ["Team"],  // <-- invalidates tag on create
     }),
-    getAllTeamMembers: builder.query({
-      query: () => "/team/retrieve/all",
+    updateTeamMember: builder.mutation({
+      query: (data) => {
+        const formData = new FormData();
+        formData.append("name", data.name);
+        formData.append("email", data.email);
+        formData.append("position", data.position);
+        formData.append("description", data.description);
+        if (data.image) formData.append("image", data.image);
+        return {
+          url: `/team/update/${data._id}`,
+          method: "PATCH",
+          body: formData,
+        };
+      },
+      invalidatesTags: ["Team"],  // <-- invalidates tag on update
+    }),
+    deleteTeamMember: builder.mutation({
+      query: (id) => ({
+        url: `/team/delete/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Team"],  // <-- invalidates tag on delete
     }),
   }),
 });
 
-export const { useCreateTeamMemberMutation, useGetAllTeamMembersQuery } = teamApi;
+export const {
+  useCreateTeamMemberMutation,
+  useGetAllTeamMembersQuery,
+  useUpdateTeamMemberMutation,
+  useDeleteTeamMemberMutation,
+} = teamApi;
 
 export default teamApi;

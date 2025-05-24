@@ -1,32 +1,50 @@
-import React, { useState, useEffect } from "react";
-import { Button, Card, Modal, Input, Form, message, Row, Col, Upload, Avatar } from "antd";
-import { EditOutlined, DeleteOutlined, UploadOutlined } from "@ant-design/icons";
-import { useCreateTeamMemberMutation, useGetAllTeamMembersQuery } from "../../../redux/features/team/teamApi";
+import React, { useState } from "react";
+import {
+  Button,
+  Card,
+  Modal,
+  Input,
+  Form,
+  message,
+  Row,
+  Col,
+  Upload,
+  Avatar,
+  Spin,
+  Alert,
+} from "antd";
+import {
+  EditOutlined,
+  DeleteOutlined,
+  UploadOutlined,
+} from "@ant-design/icons";
+import {
+  useCreateTeamMemberMutation,
+  useGetAllTeamMembersQuery,
+  useUpdateTeamMemberMutation,
+  useDeleteTeamMemberMutation,
+} from "../../../redux/features/team/teamApi";
 
 const TeamPage = () => {
-  // State for team members list
-  const [teamMembers, setTeamMembers] = useState([]);
-
-  // Modal and form states
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentMember, setCurrentMember] = useState(null);
   const [form] = Form.useForm();
   const [imagePreview, setImagePreview] = useState(null);
 
-  // RTK Query hooks
-  const { data: fetchedTeamMembers, isLoading: isFetching } = useGetAllTeamMembersQuery();
-  const [createTeamMember, { isLoading }] = useCreateTeamMemberMutation();
+  const {
+    data: fetchedTeamMembers,
+    isLoading: isFetching,
+    isError: isFetchError,
+    error: fetchError,
+  } = useGetAllTeamMembersQuery();
 
-  // Update teamMembers state when data is fetched
-  useEffect(() => {
-    if (fetchedTeamMembers) {
-      // Adjust based on your API response shape - assume data array is under 'data'
-      setTeamMembers(fetchedTeamMembers.data || []);
-    }
-  }, [fetchedTeamMembers]);
+  const [createTeamMember, { isLoading: isCreating }] = useCreateTeamMemberMutation();
+  const [updateTeamMember, { isLoading: isUpdating }] = useUpdateTeamMemberMutation();
+  const [deleteTeamMember, { isLoading: isDeleting }] = useDeleteTeamMemberMutation();
 
-  // Add new member modal handler
+  const teamMembers = fetchedTeamMembers?.data || [];
+
   const handleAddMember = () => {
     setIsEditing(false);
     setCurrentMember(null);
@@ -35,22 +53,38 @@ const TeamPage = () => {
     setIsModalVisible(true);
   };
 
-  // Edit member modal handler
   const handleEditMember = (member) => {
     setIsEditing(true);
     setCurrentMember(member);
-    form.setFieldsValue(member);
-    setImagePreview(null);
+    form.setFieldsValue({
+      name: member.name,
+      email: member.email,
+      position: member.position,
+      description: member.description,
+    });
+    setImagePreview(member.image || null);
     setIsModalVisible(true);
   };
 
-  // Delete member handler (update state locally for now)
-  const handleDeleteMember = (key) => {
-    setTeamMembers(teamMembers.filter((member) => member.key !== key));
-    message.success("Team member deleted successfully");
+  const handleDeleteMember = async (memberId) => {
+    if (!memberId) {
+      message.error("Invalid member ID");
+      return;
+    }
+    try {
+      await deleteTeamMember(memberId).unwrap();
+      message.success("Team member deleted successfully");
+    } catch (error) {
+      console.error("Delete error:", error);
+      const errMsg =
+        error?.data?.error ||
+        error?.data?.message ||
+        error?.error ||
+        "Failed to delete team member";
+      message.error(errMsg);
+    }
   };
 
-  // Convert Base64 image to Blob for upload
   const dataURItoBlob = (dataURI) => {
     const byteString = atob(dataURI.split(",")[1]);
     const mimeString = dataURI.split(",")[0].split(":")[1].split(";")[0];
@@ -62,41 +96,49 @@ const TeamPage = () => {
     return new Blob([ab], { type: mimeString });
   };
 
-  // Form submit handler
   const handleFormSubmit = async (values) => {
     try {
       let imageFile = null;
-      if (imagePreview) {
+      if (imagePreview && imagePreview.startsWith("data:")) {
         imageFile = dataURItoBlob(imagePreview);
       }
 
       const teamData = {
         ...values,
         image: imageFile,
+        _id: isEditing ? currentMember._id : undefined,
       };
 
       if (isEditing) {
-        // TODO: Implement update logic if needed
+        await updateTeamMember(teamData).unwrap();
         message.success("Team member updated successfully");
       } else {
         await createTeamMember(teamData).unwrap();
         message.success("Team member added successfully");
       }
+
       setIsModalVisible(false);
       form.resetFields();
       setImagePreview(null);
     } catch (error) {
-      console.error("Error:", error);
-      message.error("Error creating/updating team member");
+      console.error("Create/Update Error Details:", error);
+
+      let errMsg = "Error creating/updating team member";
+
+      if (error?.data?.message) errMsg = error.data.message;
+      else if (error?.data?.error) errMsg = error.data.error;
+      else if (error?.error) errMsg = error.error;
+      else if (error?.message) errMsg = error.message;
+
+      message.error(errMsg);
     }
   };
 
-  // Upload handlers for image preview and preventing auto upload
   const handleBeforeUpload = (file) => {
     const reader = new FileReader();
     reader.onload = (e) => setImagePreview(e.target.result);
     reader.readAsDataURL(file);
-    return false; // Prevent automatic upload
+    return false; // prevent automatic upload
   };
 
   const handleImageChange = (info) => {
@@ -116,62 +158,83 @@ const TeamPage = () => {
             type="primary"
             onClick={handleAddMember}
             style={{ backgroundColor: "#FF4D4F", color: "white" }}
+            disabled={isCreating || isUpdating || isDeleting}
           >
             Add New Member
           </Button>
         </div>
 
-        {/* Team Members Cards */}
-        <Row gutter={[16, 16]}>
-          {Array.isArray(teamMembers) && teamMembers.length > 0 ? (
-            teamMembers.map((member) => (
-              <Col key={member._id || member.key} xs={24} sm={12} md={8} lg={6}>
-                <Card
-                  hoverable
-                  cover={
-                    <Avatar
-                      size={100}
-                      src={member.image}
-                      style={{
-                        borderRadius: "50%",
-                        border: "5px solid #fff",
-                        boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-                      }}
-                      className="mx-auto mt-4"
-                    />
-                  }
-                  actions={[
-                    <EditOutlined key="edit" onClick={() => handleEditMember(member)} />,
-                    <DeleteOutlined
-                      key="delete"
-                      onClick={() => handleDeleteMember(member._id || member.key)}
-                      style={{ color: "red" }}
-                    />,
-                  ]}
-                  className="rounded-lg shadow-lg"
-                >
-                  <Card.Meta
-                    title={member.name}
-                    description={
-                      <div>
-                        <p>{member.position}</p>
-                        <p>{member.email}</p>
-                        <p>{member.description}</p>
-                      </div>
-                    }
-                  />
-                </Card>
-              </Col>
-            ))
-          ) : (
-            <p>No team members found.</p>
-          )}
-        </Row>
+        {isFetching && (
+          <div className="p-10 text-center">
+            <Spin size="large" tip="Loading team members..." />
+          </div>
+        )}
 
-        {/* Modal for Adding/Editing Team Member */}
+        {isFetchError && (
+          <Alert
+            type="error"
+            message="Error loading team members"
+            description={
+              fetchError?.data?.message || fetchError?.error || "Unknown error"
+            }
+          />
+        )}
+
+        {!isFetching && !isFetchError && (
+          <Row gutter={[16, 16]}>
+            {teamMembers.length > 0 ? (
+              teamMembers.map((member) => (
+                <Col key={member._id} xs={24} sm={12} md={8} lg={6}>
+                  <Card
+                    hoverable
+                    cover={
+                      <Avatar
+                        size={100}
+                        src={member.image}
+                        style={{
+                          borderRadius: "50%",
+                          border: "5px solid #fff",
+                          boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+                        }}
+                        className="mx-auto mt-4"
+                      />
+                    }
+                    actions={[
+                      <EditOutlined
+                        key="edit"
+                        onClick={() => handleEditMember(member)}
+                      />,
+                      <DeleteOutlined
+                        key="delete"
+                        onClick={() => handleDeleteMember(member._id)}
+                        style={{ color: "red" }}
+                        disabled={isDeleting}
+                      />,
+                    ]}
+                    className="rounded-lg shadow-lg"
+                  >
+                    <Card.Meta
+                      title={member.name}
+                      description={
+                        <div>
+                          <p>{member.position}</p>
+                          <p>{member.email}</p>
+                          <p>{member.description}</p>
+                        </div>
+                      }
+                    />
+                  </Card>
+                </Col>
+              ))
+            ) : (
+              <p>No team members found.</p>
+            )}
+          </Row>
+        )}
+
         <Modal
           title={isEditing ? "Edit Team Member" : "Add New Team Member"}
-          visible={isModalVisible}
+          open={isModalVisible}
           onCancel={() => setIsModalVisible(false)}
           footer={[
             <Button key="cancel" onClick={() => setIsModalVisible(false)}>
@@ -181,11 +244,12 @@ const TeamPage = () => {
               key="submit"
               type="primary"
               onClick={() => form.submit()}
-              loading={isLoading}
+              loading={isCreating || isUpdating}
             >
               Save
             </Button>,
           ]}
+          destroyOnClose
         >
           <Form
             form={form}
@@ -234,7 +298,7 @@ const TeamPage = () => {
             <Form.Item
               name="image"
               label="Image"
-              rules={[{ required: true, message: "Please upload the image!" }]}
+              rules={[{ required: !isEditing, message: "Please upload the image!" }]}
             >
               <Upload
                 name="image"

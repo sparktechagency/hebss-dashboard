@@ -196,7 +196,10 @@ const BookList = () => {
                 alt="Book"
                 className="object-cover w-full h-48 mb-4 rounded-md"
               />
-              <h3 className="text-lg font-semibold">{book.name}</h3>
+              <div className="flex items-center justify-between gap-x-4">
+                <h3 className="text-lg font-semibold">{book.name}</h3>
+                <h4 className="text-[12px] font-semibold">{book.quantity} Books available </h4>
+              </div>
               <p className="text-sm text-gray-600">{book.bookLanguage}</p>
               <p className="text-sm text-gray-600">{book.bookCollection?.title || ""}</p>
               <p className="text-lg font-bold text-red-500">

@@ -11,7 +11,11 @@ const CurrentBoxTab = ({ userId }) => {
     return <Alert message="User ID missing" type="warning" />;
   }
 
-  const { data: boxData, error: boxError, isLoading: boxLoading } = useGetBoxByUserIdQuery(userId);
+  const {
+    data: boxData,
+    error: boxError,
+    isLoading: boxLoading,
+  } = useGetBoxByUserIdQuery(userId);
 
   if (boxLoading) {
     return <Spin tip="Loading assigned box..." />;
@@ -19,7 +23,9 @@ const CurrentBoxTab = ({ userId }) => {
 
   if (boxError) {
     if (boxError.status === 404) {
-      return <Alert message="No assigned box found for this user." type="info" />;
+      return (
+        <Alert message="No assigned box found for this user." type="info" />
+      );
     }
     return (
       <Alert
@@ -58,9 +64,14 @@ const CurrentBoxTab = ({ userId }) => {
             alt={box.title || "Box Image"}
             className="object-cover w-24 h-24 mx-auto mb-4 rounded-full"
           />
-          <h3 className="text-lg font-semibold">{box.title || "Unnamed Box"}</h3>
+          <h3 className="text-lg font-semibold">
+            {box.title || "Unnamed Box"}
+          </h3>
           <p className="text-sm text-gray-600">
-            Price: {box.price?.amount ? `${box.price.amount} ${box.price.currency}` : "Price N/A"}
+            Price:{" "}
+            {box.price?.amount
+              ? `${box.price.amount} ${box.price.currency}`
+              : "Price N/A"}
           </p>
           <p className="text-sm text-gray-600">Piece: {box.piece || "N/A"}</p>
         </div>

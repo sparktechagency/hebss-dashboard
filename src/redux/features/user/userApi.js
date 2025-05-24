@@ -33,13 +33,13 @@ const userApi = createApi({
         body: { email, subject, text },
       }),
     }),
-    sendMailAllUsers:builder.mutation({
-      query:({subject,text,email})=>({
-        url:'/user/send-email/bulk',
-        method:'POST',
-        body:{email,subject,text}
-      })
-    })
+    sendMailAllUsers: builder.mutation({
+      query: ({ subject, text, email }) => ({
+        url: "/user/send-email/bulk",
+        method: "POST",
+        body: { email, subject, text },
+      }),
+    }),
   }),
 });
 
