@@ -1,6 +1,8 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, Modal, Spin, Alert } from "antd";
 import {
+  BarChart,
+  Bar,
   LineChart,
   Line,
   XAxis,
@@ -10,30 +12,54 @@ import {
 } from "recharts";
 import { Eye } from "lucide-react";
 import { useGetAllOrdersQuery } from "../../redux/features/order/orderApi";
-
-const salesData = Array.from({ length: 60 }, (_, i) => ({
-  name: `${i * 1000}`,
-  value: Math.random() * 100,
-}));
+import { useGetDashboardMetricsQuery } from "../../redux/features/dashboard/dashboardApi";
 
 const Dashboard = () => {
-  const { data: response = {}, isLoading, error } = useGetAllOrdersQuery();
-  const fetchedOrders = response?.data || [];
+  // Fetch orders for recent orders table (unchanged)
+  const {
+    data: ordersResponse = {},
+    isLoading,
+    error,
+  } = useGetAllOrdersQuery();
+  const fetchedOrders = ordersResponse?.data || [];
 
-  const totalUsers = new Set(
-    fetchedOrders.map((order) => order.user?.userId || order.user?.id)
-  ).size;
-
-  const totalOrders = fetchedOrders.length;
+  // Fetch dashboard metrics for charts and stats
+  const {
+    data: dashboardData,
+    error: dashError,
+    isLoading: dashLoading,
+  } = useGetDashboardMetricsQuery();
 
   const [orders, setOrders] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [activeOrder, setActiveOrder] = useState(null);
 
-  // Update orders state only when fetchedOrders changes
+  // Update orders state on fetch
   useEffect(() => {
     setOrders(fetchedOrders);
   }, [fetchedOrders]);
+
+  // Prepare chart data from dashboardData
+  const {
+    totalUsers = 0,
+    totalOrders = 0,
+    totalProducts = 0,
+    totalBlogs = 0,
+    chartData = {},
+  } = dashboardData || {};
+
+  const { months = [], userStatistics = [], orderStatistics = [] } = chartData;
+
+  // Map chart data for recharts
+  const ordersData = months.map((month, i) => ({
+    name: month,
+    orders: orderStatistics[i] || 0,
+  }));
+
+  const userGrowthData = months.map((month, i) => ({
+    name: month,
+    users: userStatistics[i] || 0,
+  }));
 
   const handleEyeClick = (order) => {
     setActiveOrder(order);
@@ -45,9 +71,15 @@ const Dashboard = () => {
     setActiveOrder(null);
   };
 
+  // Sort latest orders for table
   const latestOrders = [...orders]
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
     .slice(0, 4);
+
+  // Loading or error handling for dashboard data (charts and stats)
+  if (dashLoading) return <Spin tip="Loading dashboard data..." />;
+  if (dashError)
+    return <Alert message="Failed to load dashboard data" type="error" />;
 
   return (
     <div className="min-h-screen p-4 bg-gray-100 sm:p-6">
@@ -56,13 +88,12 @@ const Dashboard = () => {
       </div>
 
       {/* Stats Section */}
-
       <div className="grid grid-cols-1 gap-4 mb-6 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          { title: "Total User", value: totalUsers },
-          { title: "Total Order", value: totalOrders },
-          { title: "Total Sales", value: "$89,000" }, //  static Data
-          { title: "Total Pending", value: 2040 }, //  static Data
+          { title: "Total Users", value: totalUsers },
+          { title: "Total Orders", value: totalOrders },
+          { title: "Total Products", value: totalProducts },
+          { title: "Total Blogs", value: totalBlogs },
         ].map(({ title, value }, i) => (
           <Card key={i} className="p-4 bg-white shadow-md">
             <h3 className="text-sm text-gray-600">{title}</h3>
@@ -74,18 +105,38 @@ const Dashboard = () => {
         ))}
       </div>
 
-      {/* Sales Chart */}
-      <div className="p-4 mb-6 bg-white shadow-md sm:p-6 rounded-xl">
-        <h2 className="mb-4 text-lg font-semibold">Sales Details</h2>
-        <div className="w-full min-w-[300px]">
+      {/* Charts Section */}
+      <div className="flex flex-wrap gap-x-4">
+        {/* Orders Bar Chart */}
+        <div
+          className="p-4 mb-6 bg-white shadow-md sm:p-6 rounded-xl flex-1 min-w-[300px]"
+          style={{ border: "1px solid #ddd" }}
+        >
+          <h2 className="mb-4 text-lg font-semibold">Orders (Monthly)</h2>
           <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={salesData}>
+            <BarChart data={ordersData}>
+              <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+              <YAxis tick={{ fontSize: 12 }} />
+              <Tooltip />
+              <Bar dataKey="orders" fill="#f87171" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* User Growth Line Chart */}
+        <div
+          className="p-4 mb-6 bg-white shadow-md sm:p-6 rounded-xl flex-1 min-w-[300px]"
+          style={{ border: "1px solid #ddd" }}
+        >
+          <h2 className="mb-4 text-lg font-semibold">User Growth (Monthly)</h2>
+          <ResponsiveContainer width="100%" height={250}>
+            <LineChart data={userGrowthData}>
               <XAxis dataKey="name" tick={{ fontSize: 12 }} />
               <YAxis tick={{ fontSize: 12 }} />
               <Tooltip />
               <Line
                 type="monotone"
-                dataKey="value"
+                dataKey="users"
                 stroke="#f87171"
                 strokeWidth={2}
                 fill="#fecaca"
@@ -95,7 +146,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Recent Orders */}
+      {/* Recent Orders Table (unchanged) */}
       <div className="p-4 overflow-x-auto bg-white shadow-md sm:p-6 rounded-xl">
         <h2 className="mb-4 text-lg font-semibold">Recent Orders</h2>
 
@@ -130,9 +181,7 @@ const Dashboard = () => {
               ) : (
                 latestOrders.map((order, i) => (
                   <tr key={order.id || i} className="border-b">
-                    <td className="p-2 text-sm">
-                      {order.orderId || order.orderId}
-                    </td>
+                    <td className="p-2 text-sm">{order.orderId}</td>
                     <td className="p-2 text-sm">
                       {order.name || order.user?.name}
                     </td>
@@ -143,7 +192,7 @@ const Dashboard = () => {
                       {order.date ||
                         new Date(order.createdAt).toLocaleDateString()}
                     </td>
-                    <td className="p-2 text-sm">{order.paymentInfo.status}</td>
+                    <td className="p-2 text-sm">{order.paymentInfo?.status}</td>
                     <td className="p-2 text-sm">
                       <Eye
                         className="w-5 h-5 text-gray-500 cursor-pointer"
@@ -158,7 +207,7 @@ const Dashboard = () => {
         )}
       </div>
 
-      {/* Modal for Order Details */}
+      {/* Modal */}
       <Modal
         title="Order Details"
         visible={isModalVisible}
@@ -168,8 +217,7 @@ const Dashboard = () => {
         {activeOrder && (
           <div>
             <p>
-              <strong>Order ID:</strong>{" "}
-              {activeOrder.orderId || activeOrder.orderId}
+              <strong>Order ID:</strong> {activeOrder.orderId}
             </p>
             <p>
               <strong>Name:</strong>{" "}

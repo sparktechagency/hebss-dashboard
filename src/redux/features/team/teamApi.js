@@ -10,11 +10,11 @@ const teamApi = createApi({
       return headers;
     },
   }),
-  tagTypes: ["Team"],  // <-- important for cache invalidation
+  tagTypes: ["Team"],  
   endpoints: (builder) => ({
     getAllTeamMembers: builder.query({
       query: () => "/team/retrieve/all",
-      providesTags: ["Team"],   // <-- provides tag
+      providesTags: ["Team"], 
     }),
     createTeamMember: builder.mutation({
       query: (data) => {
@@ -46,7 +46,7 @@ const teamApi = createApi({
           body: formData,
         };
       },
-      invalidatesTags: ["Team"],  // <-- invalidates tag on update
+      invalidatesTags: ["Team"],  
     }),
     deleteTeamMember: builder.mutation({
       query: (id) => ({

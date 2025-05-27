@@ -22,9 +22,9 @@ const AddBookPopup = ({ visible, onClose }) => {
     name: "",
     price: "",
     readerAge: "",
-    grade: "",          // store only ID string
+    grade: "", // store only ID string
     quantity: "",
-    collections: "",    // store only ID string
+    collections: "", // store only ID string
     author: "",
     language: "",
     level: "",
@@ -34,7 +34,7 @@ const AddBookPopup = ({ visible, onClose }) => {
     discountAvailable: false,
     discountType: "",
     discountPrice: "",
-    category: "",       // store only ID string
+    category: "", // store only ID string
     weight: "",
   });
 
@@ -122,7 +122,10 @@ const AddBookPopup = ({ visible, onClose }) => {
     formData.append("author", bookData.author);
     formData.append("summary", bookData.summary);
     formData.append("description", bookData.description);
-    formData.append("quantity", bookData.quantity ? String(bookData.quantity) : "0");
+    formData.append(
+      "quantity",
+      bookData.quantity ? String(bookData.quantity) : "0"
+    );
     formData.append("format", "paper");
     formData.append("status", "instock");
     formData.append("isArabic", "false");
@@ -130,7 +133,10 @@ const AddBookPopup = ({ visible, onClose }) => {
     formData.append("level", bookData.level);
     formData.append("weight", String(parseFloat(bookData.weight) || 0));
     formData.append("priceAmount", Number(bookData.price) || 0);
-    formData.append("isDiscount", bookData.discountAvailable ? "true" : "false");
+    formData.append(
+      "isDiscount",
+      bookData.discountAvailable ? "true" : "false"
+    );
 
     if (bookData.discountAvailable) {
       formData.append("discountType", bookData.discountType);
@@ -175,7 +181,6 @@ const AddBookPopup = ({ visible, onClose }) => {
         )}
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-
           {/* Category Select */}
           <div>
             <label className="block text-sm font-medium">Category</label>
@@ -192,7 +197,10 @@ const AddBookPopup = ({ visible, onClose }) => {
               }
             >
               {categoryList.map((cat) => (
-                <Select.Option key={cat._id || cat.id} value={cat._id || cat.id}>
+                <Select.Option
+                  key={cat._id || cat.id}
+                  value={cat._id || cat.id}
+                >
                   {cat.title}
                 </Select.Option>
               ))}
@@ -218,12 +226,17 @@ const AddBookPopup = ({ visible, onClose }) => {
               }
             >
               {gradeList.map((grade) => (
-                <Select.Option key={grade._id || grade.id} value={grade._id || grade.id}>
+                <Select.Option
+                  key={grade._id || grade.id}
+                  value={grade._id || grade.id}
+                >
                   {grade.title}
                 </Select.Option>
               ))}
             </Select>
-            {gradesError && <p style={{ color: "red" }}>Failed to load grades</p>}
+            {gradesError && (
+              <p style={{ color: "red" }}>Failed to load grades</p>
+            )}
           </div>
 
           {/* Collections Select */}
@@ -242,7 +255,10 @@ const AddBookPopup = ({ visible, onClose }) => {
               }
             >
               {collectionList.map((col) => (
-                <Select.Option key={col._id || col.id} value={col._id || col.id}>
+                <Select.Option
+                  key={col._id || col.id}
+                  value={col._id || col.id}
+                >
                   {col.title}
                 </Select.Option>
               ))}
@@ -367,7 +383,9 @@ const AddBookPopup = ({ visible, onClose }) => {
 
           {/* Discount Available */}
           <div className="col-span-2">
-            <label className="block text-sm font-medium">Discount Available</label>
+            <label className="block text-sm font-medium">
+              Discount Available
+            </label>
             <Switch
               checked={bookData.discountAvailable}
               onChange={handleDiscountToggle}
@@ -377,7 +395,9 @@ const AddBookPopup = ({ visible, onClose }) => {
           {bookData.discountAvailable && (
             <div className="flex col-span-2 gap-4">
               <div className="w-1/2">
-                <label className="block text-sm font-medium">Discount Type</label>
+                <label className="block text-sm font-medium">
+                  Discount Type
+                </label>
                 <Radio.Group
                   value={bookData.discountType}
                   onChange={handleDiscountTypeChange}
@@ -389,7 +409,9 @@ const AddBookPopup = ({ visible, onClose }) => {
               </div>
 
               <div className="w-1/2">
-                <label className="block text-sm font-medium">Discount Price</label>
+                <label className="block text-sm font-medium">
+                  Discount Price
+                </label>
                 <Input
                   name="discountPrice"
                   value={bookData.discountPrice}
@@ -401,7 +423,6 @@ const AddBookPopup = ({ visible, onClose }) => {
             </div>
           )}
         </div>
-
         <Button
           type="primary"
           block

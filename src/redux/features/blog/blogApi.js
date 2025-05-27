@@ -1,18 +1,16 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-// Define the blogApi using Redux Toolkit Query
-const blogApi = createApi({
+export const blogApi = createApi({
   reducerPath: "blogApi",
   baseQuery: fetchBaseQuery({
-    baseUrl:import.meta.env.VITE_BACKEND_URL,
+    baseUrl: import.meta.env.VITE_BACKEND_URL,
     prepareHeaders: (headers) => {
       const token = localStorage.getItem("token");
-      if (token) {
-        headers.set("Authorization", `Bearer ${token}`);
-      }
+      if (token) headers.set("Authorization", `Bearer ${token}`);
       return headers;
     },
   }),
+  tagTypes: ["Blogs"], // <-- Declare tags here
   endpoints: (builder) => ({
     createBlog: builder.mutation({
       query: (data) => ({
@@ -20,30 +18,35 @@ const blogApi = createApi({
         method: "POST",
         body: data,
       }),
+      invalidatesTags: ["Blogs"],  // <-- Invalidate blogs cache after create
     }),
-    // New endpoint to fetch all blogs
     getAllBlogs: builder.query({
       query: () => "/blog/retrieve/all",
+      providesTags: ["Blogs"],     // <-- Provide blogs cache tag
     }),
-    // Edit an existing blog
     editBlog: builder.mutation({
       query: ({ id, data }) => ({
-        url: `/blog/update/${id}`, 
+        url: `/blog/update/${id}`,
         method: "PATCH",
         body: data,
       }),
+      invalidatesTags: ["Blogs"],  // <-- Invalidate blogs cache after update
     }),
-
-    // Delete a blog
     deleteBlog: builder.mutation({
       query: (id) => ({
-        url: `/blog/delete/${id}`, 
+        url: `/blog/delete/${id}`,
         method: "DELETE",
       }),
+      invalidatesTags: ["Blogs"],  // <-- Invalidate blogs cache after delete
     }),
   }),
 });
 
-export const { useCreateBlogMutation, useGetAllBlogsQuery,useDeleteBlogMutation,useEditBlogMutation } = blogApi;
+export const {
+  useCreateBlogMutation,
+  useGetAllBlogsQuery,
+  useDeleteBlogMutation,
+  useEditBlogMutation,
+} = blogApi;
 
 export default blogApi;

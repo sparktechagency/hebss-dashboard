@@ -17,6 +17,7 @@ import reviewsApi from "./features/reviews/reviewsApi";
 import boxApi from "./features/box/boxApi";
 import invoiceApi from "./features/invoice/invoiceApi";
 import productsApi from "./features/products/productsApi";
+import { dashboardApi } from "./features/dashboard/dashboardApi";
 
 const persistConfig = {
   key: "root",
@@ -38,6 +39,7 @@ const rootReducer = combineReducers({
   [boxApi.reducerPath]:boxApi.reducer,
   [invoiceApi.reducerPath]:invoiceApi.reducer,
   [productsApi.reducerPath]:productsApi.reducer,
+  [dashboardApi.reducerPath]:dashboardApi.reducer,
   auth: authReducer,
 });
 
@@ -48,7 +50,7 @@ const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: false,
-    }).concat(authApi.middleware,adminApi.middleware,aboutApi.middleware,blogApi.middleware,teamApi.middleware,contactApi.middleware,userApi.middleware,faqApi.middleware,subscriptionApi.middleware,orderApi.middleware,reviewsApi.middleware, boxApi.middleware,invoiceApi.middleware,productsApi.middleware),
+    }).concat(authApi.middleware,adminApi.middleware,aboutApi.middleware,blogApi.middleware,teamApi.middleware,contactApi.middleware,userApi.middleware,faqApi.middleware,subscriptionApi.middleware,orderApi.middleware,reviewsApi.middleware, boxApi.middleware,invoiceApi.middleware,productsApi.middleware,dashboardApi.middleware),
 });
 
 export const persistor = persistStore(store); 

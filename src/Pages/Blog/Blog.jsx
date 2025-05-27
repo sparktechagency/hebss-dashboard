@@ -92,30 +92,66 @@ const BlogPage = () => {
     setIsModalVisible(true);
   };
 
+  // const handleSaveBlog = async () => {
+  //   try {
+  //     const blogData = {
+  //       category: newBlog.category,
+  //       title: newBlog.title,
+  //       description: newBlog.description,
+  //       image: newBlog.image,
+  //     };
+
+  //     if (isEditing) {
+  //       // Edit the blog
+  //       await editBlog({ id: currentBlog._id, data: blogData }).unwrap();
+  //       message.success("Blog updated successfully!");
+  //     } else {
+  //       // Create new blog
+  //       await createBlog(blogData).unwrap();
+  //       message.success("Blog created successfully!");
+  //     }
+
+  //     setIsModalVisible(false);
+  //   } catch (error) {
+  //     message.error("An error occurred while saving the blog.");
+  //   }
+  // };
+
+
   const handleSaveBlog = async () => {
-    try {
-      const blogData = {
-        category: newBlog.category,
-        title: newBlog.title,
-        description: newBlog.description,
-        image: newBlog.image,
-      };
+  try {
+    const blogData = {
+      category: newBlog.category,
+      title: newBlog.title,
+      description: newBlog.description,
+      image: newBlog.image,
+    };
 
-      if (isEditing) {
-        // Edit the blog
-        await editBlog({ id: currentBlog._id, data: blogData }).unwrap();
-        message.success("Blog updated successfully!");
-      } else {
-        // Create new blog
-        await createBlog(blogData).unwrap();
-        message.success("Blog created successfully!");
-      }
+    if (isEditing) {
+      await editBlog({ id: currentBlog._id, data: blogData }).unwrap();
+      message.success("Blog updated successfully!");
+    } else {
+      await createBlog(blogData).unwrap();
+      message.success("Blog created successfully!");
+    }
 
-      setIsModalVisible(false);
-    } catch (error) {
+    setIsModalVisible(false);
+  } catch (error) {
+    console.error("Save blog error full:", error);
+    if (error?.data?.message) {
+      message.error(`Error: ${error.data.message}`);
+    } else if (error?.error) {
+      message.error(`Error: ${error.error}`);
+    } else if (typeof error === "string") {
+      message.error(error);
+    } else {
       message.error("An error occurred while saving the blog.");
     }
-  };
+  }
+};
+
+
+  
   const handleDeleteBlog = async (_id) => {
     try {
       await deleteBlog(_id).unwrap();
@@ -246,13 +282,6 @@ const BlogPage = () => {
           />
 
           <label>Image</label>
-          {/* <Upload
-            beforeUpload={handleImageUpload}
-            showUploadList={false}
-            style={{ marginBottom: "10px" }}
-          >
-            <Button>Upload Image</Button>
-          </Upload> */}
           <Upload
             beforeUpload={() => false}
             showUploadList={false}
