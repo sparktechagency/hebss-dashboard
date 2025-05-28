@@ -1,27 +1,51 @@
-/* eslint-disable no-unused-vars */
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { message } from "antd";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
-import { useCreateOrUpdatePrivacyPolicyMutation } from "../../../redux/features/about/aboutApi";
+import {
+  useCreateOrUpdatePrivacyPolicyMutation,
+  useGetPrivacyPolicyQuery,
+} from "../../../redux/features/about/aboutApi";
 
 const PrivacyPolicy = () => {
   const [value, setValue] = useState("");
   const [loading, setLoading] = useState(false);
-  const [createOrUpdatePrivacyPolicy] =
-    useCreateOrUpdatePrivacyPolicyMutation();
 
-  const handleSubmit = async (value) => {
+  const {
+    data,
+    error,
+    isLoading,
+    isFetching,
+    refetch,
+  } = useGetPrivacyPolicyQuery();
+
+  const [createOrUpdatePrivacyPolicy] = useCreateOrUpdatePrivacyPolicyMutation();
+
+  useEffect(() => {
+    // console.log("Fetched data:", data);
+    if (data && data.data && data.data.privacyPolicy) {
+      setValue(data.data.privacyPolicy);
+    } else {
+      setValue(""); // clear if no data
+    }
+  }, [data]);
+
+  const handleSubmit = async () => {
     setLoading(true);
     try {
-      await createOrUpdatePrivacyPolicy({ privacyPolicy: value });
+      await createOrUpdatePrivacyPolicy({ privacyPolicy: value }).unwrap();
       message.success("Privacy Policy updated successfully");
-    } catch (error) {
+      refetch(); // re-fetch after update to sync UI
+    } catch (err) {
+      console.error("Update failed:", err);
       message.error("Failed to update Privacy Policy");
     } finally {
       setLoading(false);
     }
   };
+
+  if (isLoading) return <p>Loading Privacy Policy...</p>;
+  if (error) return <p>Error loading Privacy Policy. Try refreshing.</p>;
 
   return (
     <div className="container mx-auto">
@@ -35,9 +59,8 @@ const PrivacyPolicy = () => {
         />
 
         <button
-          onClick={() => handleSubmit(value)}
+          onClick={handleSubmit}
           className="px-6 py-2 mt-16 text-white rounded-lg bg-primary"
-          type="submit"
           disabled={loading}
         >
           {loading ? "Updating..." : "Update Privacy Policy"}
