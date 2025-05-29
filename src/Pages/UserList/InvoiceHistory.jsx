@@ -1,107 +1,64 @@
-import React, { useState } from "react";
-import { Table, Button, Row, Col, Input, Modal } from "antd";
+import React, { useEffect, useState } from "react";
+import { Table, Button, Row, Col, Input, Modal, Spin, Alert } from "antd";
 import { EyeOutlined } from "@ant-design/icons";
-
-// Sample invoice history data
-const invoiceHistoryData = [
-  {
-    key: "1",
-    invoiceId: "00001",
-    name: "Christine Brooks",
-    address: "089 Kutch Green Apt. 448",
-    date: "04 Sep 2019",
-    price: "$80",
-  },
-  {
-    key: "2",
-    invoiceId: "00002",
-    name: "Rosie Pearson",
-    address: "979 Immanuel Ferry Suite 526",
-    date: "28 Oct 2019",
-    price: "$80",
-  },
-  {
-    key: "3",
-    invoiceId: "00003",
-    name: "Darrell Caldwell",
-    address: "8587 Frida Ports",
-    date: "23 Nov 2019",
-    price: "$80",
-  },
-  {
-    key: "4",
-    invoiceId: "00004",
-    name: "Gilbert Johnston",
-    address: "768 Destiny Lake Suite 600",
-    date: "05 Dec 2019",
-    price: "$80",
-  },
-  {
-    key: "5",
-    invoiceId: "00005",
-    name: "Alan Cain",
-    address: "042 Mylene Throughway",
-    date: "29 Jan 2019",
-    price: "$80",
-  },
-  {
-    key: "6",
-    invoiceId: "00006",
-    name: "Alfred Murray",
-    address: "543 Weinmann Mountain",
-    date: "29 Feb 2019",
-    price: "$80",
-  },
-  {
-    key: "7",
-    invoiceId: "00007",
-    name: "Maggie Sullivan",
-    address: "New Scottieberg",
-    date: "29 Mar 2019",
-    price: "$80",
-  },
-  {
-    key: "8",
-    invoiceId: "00008",
-    name: "Rosie Todd",
-    address: "New Jon",
-    date: "30 Apr 2019",
-    price: "$80",
-  },
-  {
-    key: "9",
-    invoiceId: "00009",
-    name: "Dollie Hines",
-    address: "124 Lyla Forge Suite 975",
-    date: "29 May 2019",
-    price: "$80",
-  },
-];
+import { useGetInvoiceHistoryByIdQuery } from "../../redux/features/invoice/invoiceApi";
 
 const InvoiceHistoryPage = () => {
-  const [searchText, setSearchText] = useState(""); // For search functionality
-  const [selectedInvoice, setSelectedInvoice] = useState(null); // Store selected invoice for modal
-  const [isModalVisible, setIsModalVisible] = useState(false); // To control modal visibility
+  const [searchText, setSearchText] = useState("");
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
-  // Handle viewing an invoice
+  useEffect(() => {
+    if (!localStorage.getItem("userId")) {
+      localStorage.setItem("userId", "67c308af6f9bb7542aed1784");
+      console.log("Default userId set in localStorage");
+    }
+    if (!localStorage.getItem("token")) {
+      localStorage.setItem("token", "your-valid-jwt-token");
+      console.log("Default token set in localStorage");
+    }
+  }, []);
+
+  const userId = localStorage.getItem("userId") || "";
+
+  const { data, error, isLoading } = useGetInvoiceHistoryByIdQuery(userId, {
+    skip: !userId,
+  });
+
+  // console.log("Invoice history data:", data);
+
+ 
+
+  // **Fix here:** invoice data is in `data` as an array, not `data.invoices`
+  const invoiceHistoryData = Array.isArray(data) ? data : [];
+
+
+//    {!isLoading && !error && invoiceHistoryData.length === 0 && (
+//   <Alert
+//     message="No invoices found for this user."
+//     type="info"
+//     showIcon
+//     className="mb-4"
+//   />
+// )}
+
   const handleView = (invoice) => {
     setSelectedInvoice(invoice);
-    setIsModalVisible(true); // Show modal when an invoice is clicked
+    setIsModalVisible(true);
   };
 
-  // Handle closing the modal
   const handleCancel = () => {
     setIsModalVisible(false);
-    setSelectedInvoice(null); // Clear the selected invoice when modal is closed
+    setSelectedInvoice(null);
   };
 
-  // Columns for the table
+  // Update columns as per your invoice data structure:
   const columns = [
     { title: "Invoice ID", dataIndex: "invoiceId", key: "invoiceId" },
-    { title: "NAME", dataIndex: "name", key: "name" },
-    { title: "ADDRESS", dataIndex: "address", key: "address" },
-    { title: "DATE", dataIndex: "date", key: "date" },
-    { title: "Price", dataIndex: "price", key: "price" },
+    { title: "Name", dataIndex: "user", key: "user", render: user => user?.email || "N/A" },
+    { title: "Address", dataIndex: "user", key: "address", render: user => user?.address || "N/A" },
+    { title: "Date", dataIndex: "createdAt", key: "createdAt", render: date => new Date(date).toLocaleDateString() },
+    { title: "Price", dataIndex: "totalAmount", key: "totalAmount", render: amount => `$${amount}` },
     {
       title: "View",
       key: "view",
@@ -109,7 +66,7 @@ const InvoiceHistoryPage = () => {
         <Button
           icon={<EyeOutlined />}
           style={{ backgroundColor: "#FF4D4F", color: "white" }}
-          onClick={() => handleView(record)} // Show modal when View button is clicked
+          onClick={() => handleView(record)}
         >
           View
         </Button>
@@ -117,63 +74,66 @@ const InvoiceHistoryPage = () => {
     },
   ];
 
-  // Filter data based on search text
-  const filteredData = invoiceHistoryData.filter(
-    (invoice) =>
-      invoice.name.toLowerCase().includes(searchText.toLowerCase()) ||
-      invoice.address.toLowerCase().includes(searchText.toLowerCase()) ||
-      invoice.date.toLowerCase().includes(searchText.toLowerCase())
-  );
+  // Adjust search filtering for relevant fields
+  const filteredData = invoiceHistoryData.filter((invoice) => {
+    const userEmail = invoice.user?.email?.toLowerCase() || "";
+    const address = invoice.user?.address?.toLowerCase() || "";
+    const createdAt = invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString().toLowerCase() : "";
+
+    return (
+      userEmail.includes(searchText.toLowerCase()) ||
+      address.includes(searchText.toLowerCase()) ||
+      createdAt.includes(searchText.toLowerCase())
+    );
+  });
 
   return (
     <div className="p-6">
-      <h3 className="text-2xl font-semibold mb-4">Invoice History</h3>
+      <h3 className="mb-4 text-2xl font-semibold">Invoice History</h3>
 
-      {/* Search Bar */}
       <Row justify="end" className="mb-4">
         <Col>
           <Input
             placeholder="Search invoices..."
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            style={{ width: "300px" }}
+            style={{ width: 300 }}
           />
         </Col>
       </Row>
 
-      {/* Table with pagination */}
-      <Table
-        columns={columns}
-        dataSource={filteredData}
-        pagination={{
-          pageSize: 5,
-        }}
-        rowKey="key"
-      />
+      {!userId && (
+        <Alert message="User ID not found. Please log in." type="warning" showIcon className="mb-4" />
+      )}
 
-      {/* Modal to show invoice details */}
+      {isLoading && <Spin tip="Loading invoices..." />}
+
+      {error && (
+        <Alert
+          message="Error loading invoices"
+          description={error?.message || "Unknown error"}
+          type="error"
+          showIcon
+          className="mb-4"
+        />
+      )}
+
+      {!isLoading && !error && userId && (
+        <Table
+          columns={columns}
+          dataSource={filteredData}
+          pagination={{ pageSize: 5 }}
+          rowKey={(record) => record._id || record.invoiceId}
+        />
+      )}
+
       {selectedInvoice && (
-        <Modal
-          title="Invoice Details"
-          visible={isModalVisible}
-          onCancel={handleCancel}
-          footer={null}
-        >
-          <p>
-            <strong>Invoice ID:</strong> {selectedInvoice.invoiceId}
-          </p>
-          <p>
-            <strong>Name:</strong> {selectedInvoice.name}
-          </p>
-          <p>
-            <strong>Address:</strong> {selectedInvoice.address}
-          </p>
-          <p>
-            <strong>Date:</strong> {selectedInvoice.date}
-          </p>
-          <p>
-            <strong>Price:</strong> {selectedInvoice.price}
-          </p>
+        <Modal title="Invoice Details" visible={isModalVisible} onCancel={handleCancel} footer={null}>
+          <p><strong>Invoice ID:</strong> {selectedInvoice.invoiceId}</p>
+          <p><strong>Name:</strong> {selectedInvoice.user?.email || "N/A"}</p>
+          <p><strong>Address:</strong> {selectedInvoice.user?.address || "N/A"}</p>
+          <p><strong>Date:</strong> {new Date(selectedInvoice.createdAt).toLocaleDateString()}</p>
+          <p><strong>Price:</strong> ${selectedInvoice.totalAmount}</p>
         </Modal>
       )}
     </div>

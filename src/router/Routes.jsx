@@ -27,7 +27,8 @@ import AdminManagementPage from "../Pages/Admin/Admin";
 import FAQPage from "../Pages/Settings/FAQs/FAQs";
 import TeamPage from "../Pages/Settings/Team/Team";
 import SubscribersPage from "../Pages/Subscription/Subscribers";
-// import PrivateRoute from "./privateRoute";
+// import UserDetails from "../Pages/UserList/UserDetails";
+import SendMailAll from "../Pages/SendMailAll/SendMailAll";
 
 export const router = createBrowserRouter([
   {
@@ -46,7 +47,7 @@ export const router = createBrowserRouter([
 
   {
     path: "/new-password",
-    element: <Newpass></Newpass>,
+    element: <Newpass />,
   },
   {
     path: "/continue-page",
@@ -88,17 +89,21 @@ export const router = createBrowserRouter([
             element: <SubscriptionPage />,
           },
           {
-            path: "/subscription/subscribers",
+            path: "/subscription/subscribers/:subscriptionId",
             element: <SubscribersPage />,
+          },
+          {
+            path: "/user-details/:userId",
+            element: <UserDetails/>,
           },
           {
             path: "/user-list",
             element: <UserList />,
           },
-          {
-            path: "/user-details/:id",
-            element: <UserDetails />,
-          },
+          // {
+          //   path: "/user-details/:id",
+          //   element: <UserDetails />,
+          // },
           {
             path: "/add-book-to-invoice",
             element: <EditBoxPage />,
@@ -110,6 +115,10 @@ export const router = createBrowserRouter([
           {
             path: "/reviews",
             element: <ReviewsPage />,
+          },
+          {
+            path: "/send-mail-all",
+            element: <SendMailAll />,
           },
           {
             path: "/blog",

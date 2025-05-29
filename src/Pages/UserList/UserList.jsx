@@ -1,7 +1,8 @@
-import React, { useState } from "react";
-import { Table, Input, Pagination } from "antd";
+import React, { useState, useEffect } from "react";
+import { Table, Input, Pagination, Spin, Alert } from "antd";
 import { EyeOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
+import { useGetAllUserQuery } from "../../redux/features/user/userApi";
 
 const { Search } = Input;
 
@@ -9,92 +10,33 @@ const UserList = () => {
   const [searchText, setSearchText] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
-  const pageSize = 5;
+  const pageSize = 8;
 
-  const data = [
-    {
-      id: "00001",
-      name: "Christine Brooks",
-      address: "089 Kutch Green Apt. 448",
-      date: "04 Sep 2019",
-      type: "Electric",
-    },
-    {
-      id: "00002",
-      name: "Rosie Pearson",
-      address: "979 Immanuel Ferry Suite 526",
-      date: "28 May 2019",
-      type: "Book",
-    },
-    {
-      id: "00003",
-      name: "Darrell Caldwell",
-      address: "8587 Frida Ports",
-      date: "23 Nov 2019",
-      type: "Medicine",
-    },
-    {
-      id: "00004",
-      name: "Gilbert Johnston",
-      address: "768 Destiny Lake Suite 600",
-      date: "05 Feb 2019",
-      type: "Mobile",
-    },
-    {
-      id: "00005",
-      name: "Alan Cain",
-      address: "042 Mylene Throughway",
-      date: "29 Jul 2019",
-      type: "Watch",
-    },
-    {
-      id: "00006",
-      name: "Alfred Murray",
-      address: "543 Weinmann Mountain",
-      date: "15 Aug 2019",
-      type: "Medicine",
-    },
-    {
-      id: "00007",
-      name: "Maggie Sullivan",
-      address: "New Scottieberg",
-      date: "21 Dec 2019",
-      type: "Watch",
-    },
-    {
-      id: "00008",
-      name: "Rosie Todd",
-      address: "New Jon",
-      date: "30 Apr 2019",
-      type: "Medicine",
-    },
-    {
-      id: "00009",
-      name: "Dollie Hines",
-      address: "124 Lyla Forge Suite 975",
-      date: "09 Jan 2019",
-      type: "Book",
-    },
-  ];
+  // Fetch data using the API hook
+  const { data, isLoading, error } = useGetAllUserQuery();
+
+  // Ensure data is correctly structured and has 'users' array
+  const users = data?.data || [];
+  const totalPage = data?.meta?.totalPage || 1;
+  const totalUsers = data?.meta?.totalData || 0;
 
   const columns = [
-    { title: "ID", dataIndex: "id", key: "id", responsive: ["sm"] },
-    { title: "Name", dataIndex: "name", key: "name" },
+    { title: "ID", dataIndex: "_id", key: "id", responsive: ["sm"] },
+    { title: "Email", dataIndex: "email", key: "email" },
+    { title: "Phone", dataIndex: "phone", key: "phone" },
     {
-      title: "Address",
-      dataIndex: "address",
-      key: "address",
+      title: "Role",
+      dataIndex: "role",
+      key: "role",
       responsive: ["md"],
     },
-    { title: "Date", dataIndex: "date", key: "date", responsive: ["sm"] },
-    { title: "Type", dataIndex: "type", key: "type" },
     {
       title: "View",
       key: "view",
       render: (_, record) => (
         <button
-          className="px-2 py-1 bg-red-500 text-white rounded"
-          onClick={() => navigate(`/user-details/${record.id}`)}
+          className="px-2 py-1 text-white bg-red-500 rounded"
+          onClick={() => navigate(`/user-details/${record._id}`)}
         >
           <EyeOutlined />
         </button>
@@ -102,9 +44,10 @@ const UserList = () => {
     },
   ];
 
-  const filteredData = data.filter((item) =>
+  // Filter based on search text (adjusted filtering logic)
+  const filteredData = users.filter((item) =>
     Object.values(item).some((value) =>
-      value.toString().toLowerCase().includes(searchText.toLowerCase())
+      value?.toString().toLowerCase().includes(searchText.toLowerCase())
     )
   );
 
@@ -113,9 +56,11 @@ const UserList = () => {
     currentPage * pageSize
   );
 
+  // console.log("Paginated Data:", paginatedData);
+
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6">
+    <div className="min-h-screen p-6 bg-gray-100">
+      <div className="flex flex-col items-center justify-between mb-6 md:flex-row">
         <h2 className="text-3xl font-bold">User List</h2>
         <Search
           placeholder="Search users..."
@@ -124,23 +69,37 @@ const UserList = () => {
           allowClear
         />
       </div>
-      <div className="bg-white p-5 rounded shadow-md">
-        <Table
-          columns={columns}
-          dataSource={paginatedData}
-          pagination={false}
-          rowKey="id"
-          scroll={{ x: "max-content" }}
-        />
-        <div className="flex justify-center mt-4">
-          <Pagination
-            current={currentPage}
-            pageSize={pageSize}
-            total={filteredData.length}
-            onChange={(page) => setCurrentPage(page)}
-            showSizeChanger={false}
-          />
-        </div>
+
+      <div className="p-5 bg-white rounded shadow-md">
+        {isLoading ? (
+          <div className="flex justify-center my-10">
+            <Spin size="large" />
+          </div>
+        ) : error ? (
+          <Alert message="Failed to load users" type="error" />
+        ) : filteredData.length === 0 ? (
+          <Alert message="No users found" type="info" />
+        ) : (
+          <>
+            <Table
+              columns={columns}
+              dataSource={paginatedData}
+              pagination={false}
+              rowKey="_id"
+              scroll={{ x: "max-content" }}
+            />
+            <div className="flex justify-center mt-4">
+              <Pagination
+                current={currentPage}
+                pageSize={pageSize}
+                total={totalUsers}
+                onChange={(page) => setCurrentPage(page)}
+                showSizeChanger={false}
+                pageSizeOptions={[pageSize]}
+              />
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

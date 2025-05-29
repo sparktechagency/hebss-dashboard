@@ -38,28 +38,21 @@ const BlogPage = () => {
   const [createBlog, { isLoading }] = useCreateBlogMutation();
   const [editBlog] = useEditBlogMutation();
   const [deleteBlog] = useDeleteBlogMutation();
-
-  // Fetch blogs using the Redux Toolkit Query
   const {
     data: blogs = [],
     error,
     isLoading: blogsLoading,
   } = useGetAllBlogsQuery();
-
-  // Log the fetched blogs to check the structure
   useEffect(() => {
     console.log("Blogs Data:", blogs); // Log the data to inspect its structure
   }, [blogs]);
 
-  console.log(blogs.data);
-
-  // Fetch categories when the component loads
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const response = await fetch(
-          "http://10.0.60.55:5003/v1/category/retrieve"
-        ); // Update with your category endpoint
+          `${import.meta.env.VITE_BACKEND_URL}/category/retrieve`
+        );
         const data = await response.json();
         if (data.status === "success") {
           setCategories(data.data); // Set categories state
@@ -67,7 +60,6 @@ const BlogPage = () => {
           message.error("Failed to fetch categories");
         }
       } catch (error) {
-        // console.error("Error fetching categories:", error);
         message.error("Error fetching categories");
       }
     };
@@ -100,35 +92,66 @@ const BlogPage = () => {
     setIsModalVisible(true);
   };
 
+  // const handleSaveBlog = async () => {
+  //   try {
+  //     const blogData = {
+  //       category: newBlog.category,
+  //       title: newBlog.title,
+  //       description: newBlog.description,
+  //       image: newBlog.image,
+  //     };
+
+  //     if (isEditing) {
+  //       // Edit the blog
+  //       await editBlog({ id: currentBlog._id, data: blogData }).unwrap();
+  //       message.success("Blog updated successfully!");
+  //     } else {
+  //       // Create new blog
+  //       await createBlog(blogData).unwrap();
+  //       message.success("Blog created successfully!");
+  //     }
+
+  //     setIsModalVisible(false);
+  //   } catch (error) {
+  //     message.error("An error occurred while saving the blog.");
+  //   }
+  // };
+
+
   const handleSaveBlog = async () => {
-    try {
-      const blogData = {
-        category: newBlog.category,
-        title: newBlog.title,
-        description: newBlog.description,
-        image: newBlog.image,
-      };
+  try {
+    const blogData = {
+      category: newBlog.category,
+      title: newBlog.title,
+      description: newBlog.description,
+      image: newBlog.image,
+    };
 
-      if (isEditing) {
-        // Edit the blog
-        await editBlog({ id: currentBlog._id, data: blogData }).unwrap();
-        message.success("Blog updated successfully!");
-      } else {
-        // Create new blog
-        await createBlog(blogData).unwrap();
-        message.success("Blog created successfully!");
-      }
+    if (isEditing) {
+      await editBlog({ id: currentBlog._id, data: blogData }).unwrap();
+      message.success("Blog updated successfully!");
+    } else {
+      await createBlog(blogData).unwrap();
+      message.success("Blog created successfully!");
+    }
 
-      setIsModalVisible(false);
-    } catch (error) {
+    setIsModalVisible(false);
+  } catch (error) {
+    console.error("Save blog error full:", error);
+    if (error?.data?.message) {
+      message.error(`Error: ${error.data.message}`);
+    } else if (error?.error) {
+      message.error(`Error: ${error.error}`);
+    } else if (typeof error === "string") {
+      message.error(error);
+    } else {
       message.error("An error occurred while saving the blog.");
     }
-  };
+  }
+};
 
-  // Handle Delete Blog
-  // const handleDeleteBlog = (key) => {
-  //   setBlogs(blogList.filter((blog) => blog.key !== key));
-  // };
+
+  
   const handleDeleteBlog = async (_id) => {
     try {
       await deleteBlog(_id).unwrap();
@@ -153,13 +176,20 @@ const BlogPage = () => {
     setNewBlog({ ...newBlog, category: value });
   };
 
-  // Handle image upload
+  // const handleImageUpload = (file) => {
+  //   setNewBlog({ ...newBlog, image: reader.result });
+  //   return false;
+  // };
+
   const handleImageUpload = (file) => {
-    setNewBlog({ ...newBlog, image: file.name });
-    return false; // Prevent upload to the server
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setNewBlog({ ...newBlog, image: reader.result }); // ✅ store base64
+    };
+    reader.readAsDataURL(file);
+    return false; // prevent actual upload
   };
 
-  // Check if blogs are still loading or if there's an error
   if (blogsLoading) return <p>Loading blogs...</p>;
   if (error) return <p>Error loading blogs: {error.message}</p>;
 
@@ -182,7 +212,10 @@ const BlogPage = () => {
             <Col key={blog.key} span={8}>
               <Card
                 title={blog.title}
-                cover={<img alt={blog.title} src={AllImages.blog} />}
+                // cover={<img alt={blog.title} src={AllImages.blog} />}
+                cover={
+                  <img alt={blog.title} src={blog.image || AllImages.blog} />
+                }
                 actions={[
                   <EditOutlined onClick={() => handleEditBlog(blog)} />,
                   <DeleteOutlined
@@ -250,9 +283,9 @@ const BlogPage = () => {
 
           <label>Image</label>
           <Upload
-            beforeUpload={handleImageUpload}
+            beforeUpload={() => false}
             showUploadList={false}
-            style={{ marginBottom: "10px" }}
+            onChange={({ file }) => handleImageUpload(file)}
           >
             <Button>Upload Image</Button>
           </Upload>

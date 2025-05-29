@@ -1,98 +1,144 @@
 import React, { useState } from "react";
-import { Button, Card, Modal, Input, Form, message, Row, Col, Upload, Avatar } from "antd";
-import { EditOutlined, DeleteOutlined, UploadOutlined } from "@ant-design/icons";
-import { useCreateTeamMemberMutation } from "../../../redux/features/team/teamApi";
+import {
+  Button,
+  Card,
+  Modal,
+  Input,
+  Form,
+  message,
+  Row,
+  Col,
+  Upload,
+  Avatar,
+  Spin,
+  Alert,
+} from "antd";
+import {
+  EditOutlined,
+  DeleteOutlined,
+  UploadOutlined,
+} from "@ant-design/icons";
+import {
+  useCreateTeamMemberMutation,
+  useGetAllTeamMembersQuery,
+  useUpdateTeamMemberMutation,
+  useDeleteTeamMemberMutation,
+} from "../../../redux/features/team/teamApi";
 
 const TeamPage = () => {
-  const [teamMembers, setTeamMembers] = useState([
-    {
-      key: "1",
-      name: "Fahad Hossain",
-      email: "fahadhossain0503@gmail.com",
-      position: "Software Engineer",
-      description: "Founder of the company",
-      image: "https://via.placeholder.com/150", 
-    },
-    {
-      key: "2",
-      name: "Eanara Ghouleh",
-      email: "eanara_ghouleh@gmail.com",
-      position: "Founders",
-      description: "Founder of the company",
-      image: "https://via.placeholder.com/150", 
-    },
-    {
-      key: "3",
-      name: "Khader Zahdan",
-      email: "khade_zahdank@gmail.com",
-      position: "CEO",
-      description: "Chief Executive Officer",
-      image: "https://via.placeholder.com/150", 
-    },
-    {
-      key: "4",
-      name: "Heba Morad",
-      email: "heba_morad@kunde.us",
-      position: "Chief Operating Officer",
-      description: "Chief Operating Officer",
-      image: "https://via.placeholder.com/150", 
-    },
-    {
-      key: "5",
-      name: "Nadean Ghouleh",
-      email: "nadean_ghouleh@cremin.us",
-      position: "Social Media and Logistics Coordinator",
-      description: "Coordinator at Cremin",
-      image: "https://via.placeholder.com/150", 
-    },
-  ]);
-
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentMember, setCurrentMember] = useState(null);
   const [form] = Form.useForm();
-  const [imagePreview, setImagePreview] = useState(null); 
-  const [createTeamMember, { isLoading }] = useCreateTeamMemberMutation();  
+  const [imagePreview, setImagePreview] = useState(null);
+
+  const {
+    data: fetchedTeamMembers,
+    isLoading: isFetching,
+    isError: isFetchError,
+    error: fetchError,
+  } = useGetAllTeamMembersQuery();
+
+  const [createTeamMember, { isLoading: isCreating }] = useCreateTeamMemberMutation();
+  const [updateTeamMember, { isLoading: isUpdating }] = useUpdateTeamMemberMutation();
+  const [deleteTeamMember, { isLoading: isDeleting }] = useDeleteTeamMemberMutation();
+
+  const teamMembers = fetchedTeamMembers?.data || [];
 
   const handleAddMember = () => {
     setIsEditing(false);
-    setIsModalVisible(true);
+    setCurrentMember(null);
     form.resetFields();
+    setImagePreview(null);
+    setIsModalVisible(true);
   };
 
   const handleEditMember = (member) => {
     setIsEditing(true);
     setCurrentMember(member);
-    form.setFieldsValue(member);
+    form.setFieldsValue({
+      name: member.name,
+      email: member.email,
+      position: member.position,
+      description: member.description,
+    });
+    setImagePreview(member.image || null);
     setIsModalVisible(true);
   };
 
-  const handleDeleteMember = (key) => {
-    setTeamMembers(teamMembers.filter((member) => member.key !== key));
-    message.success("Team member deleted successfully");
+  const handleDeleteMember = async (memberId) => {
+    if (!memberId) {
+      message.error("Invalid member ID");
+      return;
+    }
+    try {
+      await deleteTeamMember(memberId).unwrap();
+      message.success("Team member deleted successfully");
+    } catch (error) {
+      console.error("Delete error:", error);
+      const errMsg =
+        error?.data?.error ||
+        error?.data?.message ||
+        error?.error ||
+        "Failed to delete team member";
+      message.error(errMsg);
+    }
+  };
+
+  const dataURItoBlob = (dataURI) => {
+    const byteString = atob(dataURI.split(",")[1]);
+    const mimeString = dataURI.split(",")[0].split(":")[1].split(";")[0];
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i);
+    }
+    return new Blob([ab], { type: mimeString });
   };
 
   const handleFormSubmit = async (values) => {
-    const image = imagePreview || values.image; 
-
-    // Prepare the data for the API
-    const teamData = { ...values, image };
-
     try {
+      let imageFile = null;
+      if (imagePreview && imagePreview.startsWith("data:")) {
+        imageFile = dataURItoBlob(imagePreview);
+      }
+
+      const teamData = {
+        ...values,
+        image: imageFile,
+        _id: isEditing ? currentMember._id : undefined,
+      };
+
       if (isEditing) {
-        // If editing, send an update to the backend (you should define an API update endpoint)
+        await updateTeamMember(teamData).unwrap();
         message.success("Team member updated successfully");
       } else {
-        // Add new member via API
-        await createTeamMember(teamData).unwrap();  // Call the API mutation
+        await createTeamMember(teamData).unwrap();
         message.success("Team member added successfully");
       }
-      
-      // Close the modal and reset form
+
       setIsModalVisible(false);
+      form.resetFields();
+      setImagePreview(null);
     } catch (error) {
-      message.error("Error creating/updating team member");
+      console.error("Create/Update Error Details:", error);
+
+      let errMsg = "Error creating/updating team member";
+
+      if (error?.data?.message) errMsg = error.data.message;
+      else if (error?.data?.error) errMsg = error.data.error;
+      else if (error?.error) errMsg = error.error;
+      else if (error?.message) errMsg = error.message;
+
+      message.error(errMsg);
     }
+  };
+
+  const handleBeforeUpload = (file) => {
+    const reader = new FileReader();
+    reader.onload = (e) => setImagePreview(e.target.result);
+    reader.readAsDataURL(file);
+    return false; // prevent automatic upload
   };
 
   const handleImageChange = (info) => {
@@ -103,79 +149,107 @@ const TeamPage = () => {
     }
   };
 
-  const handleBeforeUpload = (file) => {
-    const reader = new FileReader();
-    reader.onload = (e) => setImagePreview(e.target.result); 
-    reader.readAsDataURL(file);
-    return false; 
-  };
-
   return (
     <div className="container mx-auto mt-10">
-      <div className="">
+      <div>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-gray-700">Team Management</h2>
           <Button
             type="primary"
             onClick={handleAddMember}
             style={{ backgroundColor: "#FF4D4F", color: "white" }}
+            disabled={isCreating || isUpdating || isDeleting}
           >
             Add New Member
           </Button>
         </div>
 
-        {/* Team Members Cards */}
-        <Row gutter={[16, 16]}>
-          {teamMembers.map((member) => (
-            <Col key={member.key} xs={24} sm={12} md={8} lg={6}>
-              <Card
-                hoverable
-                cover={
-                  <Avatar
-                    size={100}
-                    src={member.image}  
-                    style={{
-                      borderRadius: "50%", 
-                      border: "5px solid #fff", 
-                      boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-                    }}
-                    className="mx-auto mt-4"
-                  />
-                }
-                actions={[
-                  <EditOutlined key="edit" onClick={() => handleEditMember(member)} />,
-                  <DeleteOutlined key="delete" onClick={() => handleDeleteMember(member.key)} style={{ color: "red" }} />,
-                ]}
-                className="rounded-lg shadow-lg"
-              >
-                <Card.Meta
-                  title={member.name}
-                  description={
-                    <div>
-                      <p>{member.position}</p>
-                      <p>{member.email}</p>
-                      <p>{member.description}</p>
-                    </div>
-                  }
-                />
-              </Card>
-            </Col>
-          ))}
-        </Row>
+        {isFetching && (
+          <div className="p-10 text-center">
+            <Spin size="large" tip="Loading team members..." />
+          </div>
+        )}
 
-        {/* Modal for Adding/Editing Team Member */}
+        {isFetchError && (
+          <Alert
+            type="error"
+            message="Error loading team members"
+            description={
+              fetchError?.data?.message || fetchError?.error || "Unknown error"
+            }
+          />
+        )}
+
+        {!isFetching && !isFetchError && (
+          <Row gutter={[16, 16]}>
+            {teamMembers.length > 0 ? (
+              teamMembers.map((member) => (
+                <Col key={member._id} xs={24} sm={12} md={8} lg={6}>
+                  <Card
+                    hoverable
+                    cover={
+                      <Avatar
+                        size={100}
+                        src={member.image}
+                        style={{
+                          borderRadius: "50%",
+                          border: "5px solid #fff",
+                          boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+                        }}
+                        className="mx-auto mt-4"
+                      />
+                    }
+                    actions={[
+                      <EditOutlined
+                        key="edit"
+                        onClick={() => handleEditMember(member)}
+                      />,
+                      <DeleteOutlined
+                        key="delete"
+                        onClick={() => handleDeleteMember(member._id)}
+                        style={{ color: "red" }}
+                        disabled={isDeleting}
+                      />,
+                    ]}
+                    className="rounded-lg shadow-lg"
+                  >
+                    <Card.Meta
+                      title={member.name}
+                      description={
+                        <div>
+                          <p>{member.position}</p>
+                          <p>{member.email}</p>
+                          <p>{member.description}</p>
+                        </div>
+                      }
+                    />
+                  </Card>
+                </Col>
+              ))
+            ) : (
+              <p>No team members found.</p>
+            )}
+          </Row>
+        )}
+
         <Modal
           title={isEditing ? "Edit Team Member" : "Add New Team Member"}
-          visible={isModalVisible}
+          open={isModalVisible}
           onCancel={() => setIsModalVisible(false)}
           footer={[
             <Button key="cancel" onClick={() => setIsModalVisible(false)}>
               Cancel
             </Button>,
-            <Button key="submit" type="primary" onClick={() => form.submit()} loading={isLoading}>
+            <Button
+              key="submit"
+              type="primary"
+              onClick={() => form.submit()}
+              loading={isCreating || isUpdating}
+            >
               Save
             </Button>,
           ]}
+          destroyOnClose
         >
           <Form
             form={form}
@@ -224,7 +298,7 @@ const TeamPage = () => {
             <Form.Item
               name="image"
               label="Image"
-              rules={[{ required: true, message: "Please upload the image!" }]}
+              rules={[{ required: !isEditing, message: "Please upload the image!" }]}
             >
               <Upload
                 name="image"

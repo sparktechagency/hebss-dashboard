@@ -1,40 +1,38 @@
 import React, { useState } from "react";
 import ReactQuill from "react-quill"; 
-import "react-quill/dist/quill.snow.css";
+import "react-quill/dist/quill.snow.css"; 
 import { Button, Modal, Alert } from "antd";
 import { CheckOutlined, CloseOutlined } from "@ant-design/icons";
-import { useSendMailindivisualMutation } from "../../redux/features/user/userApi";
+import { useSendMailAllUsersMutation } from "../../redux/features/user/userApi";
 
-const SendMailTab = ({ userId, userEmail }) => {
+const SendMailAll = () => {
   const [message, setMessage] = useState(""); 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
-  const [responseMsg, setResponseMsg] = useState("");  
+  const [responseMsg, setResponseMsg] = useState("");
 
-  const [sendMail, { isLoading }] = useSendMailindivisualMutation();
+  const [sendMailAll, { isLoading }] = useSendMailAllUsersMutation();
 
   const handleSend = async () => {
     setErrorMsg(null);
     setResponseMsg("");
     try {
-      const response = await sendMail({
-        userId,
-        email: userEmail,
-        subject: "Important Message from Admin",
+      const response = await sendMailAll({
+        subject: "Important Message to All Users",
         text: message,
       }).unwrap();
 
       if (response?.status === "success") {
-        setResponseMsg(response.message || "Email sent successfully .");
+        setResponseMsg(response.message || "Emails sent successfully to All .");
         setIsModalVisible(true);
-        setMessage(""); 
-        console.log(response.message)
+        setMessage("");
+        console.log(response)
       } else {
-        setErrorMsg(response?.message || "Failed to send email.");
+        setErrorMsg(response?.message || "Failed to send emails.");
       }
     } catch (error) {
-      setErrorMsg(error?.data?.message || "Failed to send email.");
-      console.error("Send mail error:", error);
+      setErrorMsg(error?.data?.message || "Failed to send emails.");
+      console.error("Send mail all error:", error);
     }
   };
 
@@ -44,7 +42,7 @@ const SendMailTab = ({ userId, userEmail }) => {
 
   return (
     <div className="min-h-screen p-6 bg-gray-100">
-      <h2 className="mb-6 text-3xl font-bold">Send Email</h2>
+      <h2 className="mb-6 text-3xl font-bold">Send Email All</h2>
 
       <div className="p-6 bg-white rounded-lg shadow-md">
         <h3 className="mb-4 text-xl font-bold">Compose Your Email</h3>
@@ -77,7 +75,7 @@ const SendMailTab = ({ userId, userEmail }) => {
           style={{
             backgroundColor: "#F37975",
             color: "white",
-            padding: "8px 16px",
+            padding: "5px 16px",
             float: "right",
           }}
           onClick={handleSend}
@@ -89,7 +87,7 @@ const SendMailTab = ({ userId, userEmail }) => {
       </div>
 
       <Modal
-        title="Email Status"
+        title="Email Sent"
         visible={isModalVisible}
         onCancel={handleModalClose}
         footer={[
@@ -106,10 +104,10 @@ const SendMailTab = ({ userId, userEmail }) => {
           </Button>,
         ]}
       >
-        <p>{responseMsg}</p> 
+        <p>{responseMsg}</p>
       </Modal>
     </div>
   );
 };
 
-export default SendMailTab;
+export default SendMailAll;

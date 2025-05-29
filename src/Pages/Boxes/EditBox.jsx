@@ -1,33 +1,112 @@
-import { useState } from "react";
-import { Card, Table, Button, Select, Pagination, Input, Checkbox } from "antd";
+import { useState, useEffect } from "react";
+import {
+  Card,
+  Table,
+  Button,
+  Select,
+  Pagination,
+  Input,
+  Checkbox,
+  Spin,
+  message,
+} from "antd";
 import { Grid, List } from "lucide-react";
 import { SearchOutlined } from "@ant-design/icons";
 import { AllImages } from "../../assets/image/AllImages";
-
-const initialBooks = Array.from({ length: 30 }, (_, i) => ({
-  key: i,
-  name: `Allah Made All of Me (${225 + i})`,
-  price: "$120.00",
-  readerAge: "Tiny Mu'mins (0-3) age",
-  grade: "1st",
-  collection: "Arabic Books",
-  author: "Unknown",
-  language: "English",
-  level: "Beginner",
-  image: AllImages.book,
-  isChecked: i < 5, // First 5 books are pre-checked
-}));
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  useUpdateBoxMutation,
+  useGetBoxByIdQuery,
+} from "../../redux/features/box/boxApi";
+import { useGetAllBooksQuery } from "../../redux/features/products/productsApi";
 
 const EditBoxPage = () => {
-  const [books, setBooks] = useState(initialBooks);
+  const navigate = useNavigate();
+  const { boxId } = useParams();
+
+  const backendBaseUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+
+  // Helper to fix and build full image URLs
+  const getFullImageUrl = (imagePath) => {
+    if (!imagePath) return AllImages.book; // fallback image
+
+    const fixedPath = imagePath.replace(/\\/g, "/"); // fix backslashes
+
+    if (/^https?:\/\//i.test(fixedPath)) return fixedPath; // absolute URL
+
+    return `${backendBaseUrl.replace(/\/$/, "")}/${fixedPath.replace(/^\//, "")}`;
+  };
+
+  // Fetch box data
+  const {
+    data: boxData,
+    isLoading: isBoxLoading,
+    isError: isBoxError,
+    error: boxError,
+    refetch: refetchBox,
+  } = useGetBoxByIdQuery(boxId, { skip: !boxId });
+
+  // Fetch all books
+  const {
+    data: allBooksData,
+    isLoading: isBooksLoading,
+    isError: isBooksError,
+    error: booksError,
+  } = useGetAllBooksQuery();
+
+  const [updateBox, { isLoading: isUpdating }] = useUpdateBoxMutation();
+
+  const [books, setBooks] = useState([]);
   const [view, setView] = useState("grid");
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 8;
+  const primaryColor = "#F37975";
+
+  const isReady =
+    !isBoxLoading &&
+    !isBooksLoading &&
+    boxData?.data &&
+    Array.isArray(boxData.data.books) &&
+    allBooksData?.data &&
+    Array.isArray(allBooksData.data);
+
+  useEffect(() => {
+    if (!isReady) return;
+
+    const boxBookIds = boxData.data.books.map((id) => id.toString());
+
+    const formattedBooks = allBooksData.data.map((book) => {
+      const bookIdStr = book._id.toString();
+
+      // Use coverImage if exists, else image
+      const rawImage = book.coverImage || book.image || "";
+
+      return {
+        key: bookIdStr,
+        _id: bookIdStr,
+        name: book.name || book.title || "Untitled Book",
+        price:
+          typeof book.price === "object"
+            ? `${book.price.amount} ${book.price.currency}`
+            : book.price || "$0.00",
+        readerAge: book.readerAge || "All ages",
+        grade: book.grade || "N/A",
+        collection: book.collection || "N/A",
+        author: book.author || "Unknown",
+        language: book.language || "English",
+        level: book.level || "Beginner",
+        image: getFullImageUrl(rawImage),
+        isChecked: boxBookIds.includes(bookIdStr),
+      };
+    });
+
+    setBooks(formattedBooks);
+  }, [boxData, allBooksData, isReady]);
+
   const paginatedBooks = books.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
-  const primaryColor = "#F37975";
 
   const handleCheckboxChange = (key) => {
     setBooks((prevBooks) =>
@@ -37,18 +116,62 @@ const EditBoxPage = () => {
     );
   };
 
-  const handleSaveChanges = () => {
-    console.log(
-      "Updated book selections:",
-      books.filter((book) => book.isChecked)
-    );
+  const handleSaveChanges = async () => {
+    if (!boxData || !boxData.data) {
+      alert("Box data not loaded yet.");
+      return;
+    }
+
+    const selectedBooks = books.filter((book) => book.isChecked);
+    const selectedBookIds = selectedBooks.map((book) => book._id);
+
+    const currentBookIds = (boxData.data.books || []).map((id) => id.toString());
+
+    const addedBooks = selectedBookIds.filter((id) => !currentBookIds.includes(id));
+    const removedBooks = currentBookIds.filter((id) => !selectedBookIds.includes(id));
+
+    const payload = {
+      addedBooks,
+      removedBooks,
+    };
+
+    try {
+      const res = await updateBox({ _id: boxId, data: payload }).unwrap();
+      console.log("Update response:", res);
+      message.success("Box updated successfully!");
+      refetchBox();
+    } catch (err) {
+      console.error("Update error:", err);
+      message.success(
+        "Failed to update box: " +
+          (err?.data?.message || err.error || "Unknown error")
+      );
+    }
   };
 
+  if (!isReady || isUpdating) return <Spin size="large" className="p-10" />;
+
+  if (isBoxError)
+    return (
+      <div>
+        Error loading box:{" "}
+        {boxError?.data?.message || boxError?.error || "Unknown error"}
+      </div>
+    );
+
+  if (isBooksError)
+    return (
+      <div>
+        Error loading books:{" "}
+        {booksError?.data?.message || booksError?.error || "Unknown error"}
+      </div>
+    );
+
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+    <div className="min-h-screen p-6 bg-gray-100">
+      <div className="flex flex-col items-center justify-between gap-4 mb-6 md:flex-row">
         <h1 className="text-3xl font-bold">Edit Box</h1>
-        <div className="flex flex-wrap gap-4 items-center">
+        <div className="flex flex-wrap items-center gap-4">
           <Input
             placeholder="Search books..."
             prefix={<SearchOutlined className="text-gray-500" />}
@@ -61,7 +184,7 @@ const EditBoxPage = () => {
         </div>
       </div>
 
-      <div className="flex justify-end items-center mb-4 gap-4">
+      <div className="flex items-center justify-end gap-4 mb-4">
         <div className="flex gap-4">
           <Button
             onClick={() => setView("grid")}
@@ -89,11 +212,14 @@ const EditBoxPage = () => {
       </div>
 
       {view === "grid" ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div
+          key={boxData?.data?._id || "box-books-grid"}
+          className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+        >
           {paginatedBooks.map((book) => (
             <Card
               key={book.key}
-              className="shadow-lg p-4 rounded-lg bg-white relative"
+              className="relative p-4 bg-white rounded-lg shadow-lg"
             >
               <Checkbox
                 checked={book.isChecked}
@@ -102,8 +228,8 @@ const EditBoxPage = () => {
               />
               <img
                 src={book.image}
-                alt="Book"
-                className="w-full h-48 object-cover rounded-md mb-4"
+                alt={book.name}
+                className="object-cover w-full h-48 mb-4 rounded-md"
               />
               <h3 className="text-lg font-semibold">{book.name}</h3>
               <p className="text-sm text-gray-600">{book.readerAge}</p>
@@ -116,7 +242,7 @@ const EditBoxPage = () => {
         <Table
           dataSource={paginatedBooks}
           pagination={false}
-          className="shadow-md bg-white rounded-lg overflow-hidden"
+          className="overflow-hidden bg-white rounded-lg shadow-md"
           columns={[
             {
               title: "Select",
@@ -132,16 +258,12 @@ const EditBoxPage = () => {
             { title: "Price", dataIndex: "price", key: "price" },
             { title: "Reader Age", dataIndex: "readerAge", key: "readerAge" },
             { title: "Reader Grade", dataIndex: "grade", key: "grade" },
-            {
-              title: "Collections",
-              dataIndex: "collection",
-              key: "collection",
-            },
+            { title: "Collections", dataIndex: "collection", key: "collection" },
           ]}
         />
       )}
 
-      <div className="mt-6 flex justify-center">
+      <div className="flex justify-center mt-6">
         <Pagination
           current={currentPage}
           pageSize={pageSize}

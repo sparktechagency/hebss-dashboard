@@ -21,8 +21,8 @@ const MainLayout = () => {
 
   // ✅ Now build adminProfile based on logged-in user
   const adminProfile = {
-    name: user?.fullName ,
-    email: user?.email ,
+    name: user?.fullName,
+    email: user?.email,
     role: "admin", // If you store role in user, replace "admin" with user.role
   };
 

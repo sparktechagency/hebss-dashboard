@@ -1,20 +1,23 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Table,
   Input,
   Pagination,
   Modal,
   Button,
-  Popconfirm,
   Dropdown,
   Menu,
-  Select,
   Row,
   Col,
   Divider,
+  Spin,
 } from "antd";
 import { EyeOutlined, EditOutlined } from "@ant-design/icons";
 import { AllImages } from "../../assets/image/AllImages";
+import {
+  useGetAllOrdersQuery,
+  useUpdateOrderStatusMutation,
+} from "../../redux/features/order/orderApi";
 
 const { Search } = Input;
 
@@ -23,65 +26,42 @@ const OrderList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [currentOrder, setCurrentOrder] = useState(null);
-  const [orders, setOrders] = useState([
-    {
-      id: "00001",
-      name: "Christine Brooks",
-      address: "089 Kutch Green Apt. 448",
-      date: "04 Sep 2019",
-      type: "Electric",
-      status: "Ordered",
-      items: [
-        { image: AllImages.book, name: "Allah Made All of Me", price: 120 },
-      ],
-    },
-    {
-      id: "00002",
-      name: "Rosie Pearson",
-      address: "979 Immanuel Ferry Suite 526",
-      date: "28 May 2019",
-      type: "Book",
-      status: "Ongoing",
-      items: [{ image: AllImages.book, name: "React JS Book", price: 30 }],
-    },
-    {
-      id: "00003",
-      name: "Darrell Caldwell",
-      address: "8587 Frida Ports",
-      date: "23 Nov 2019",
-      type: "Medicine",
-      status: "Delivered",
-      items: [{ image: AllImages.book, name: "Painkiller", price: 15 }],
-    },
-    // Add more orders as necessary
-  ]);
+  const [orders, setOrders] = useState([]);
 
+  // Fetch orders from the API
+  const { data: response = {}, isLoading, error } = useGetAllOrdersQuery();
+  const fetchedOrders = response?.data || [];
+
+  // console.log(response);
+  // Use the update order status mutation
+
+  const [updateOrderStatus, { isLoading: isUpdating, error: updateError }] =
+    useUpdateOrderStatusMutation();
+  // Update orders after fetching from API
+  if (fetchedOrders.length > 0 && orders.length === 0) {
+    setOrders(fetchedOrders);
+  }
   const pageSize = 5;
-
   const getStatusColor = (status) => {
     switch (status) {
       case "Ordered":
-        return "gold"; // Yellow
+        return "gold";
       case "Ongoing":
-        return "blue"; // Blue
+        return "blue";
       case "Delivered":
-        return "green"; // Green
+        return "green";
       default:
         return "gray";
     }
   };
-
   const columns = [
-    { title: "ID", dataIndex: "id", key: "id", responsive: ["sm"] },
-    { title: "Name", dataIndex: "name", key: "name" },
+    { title: "ID", dataIndex: "orderId", key: "orderId", responsive: ["sm"] },
+    { title: "Name", dataIndex: ["user", "name"], key: "name" },
     {
       title: "Address",
-      dataIndex: "address",
+      dataIndex: ["shippingAddress", "street"],
       key: "address",
-      responsive: ["md"],
     },
-    { title: "Date", dataIndex: "date", key: "date", responsive: ["sm"] },
-    { title: "Type", dataIndex: "type", key: "type" },
     {
       title: "Status",
       dataIndex: "status",
@@ -104,7 +84,7 @@ const OrderList = () => {
           />
           <Dropdown
             overlay={
-              <Menu onClick={(e) => updateOrderStatus(record, e.key)}>
+              <Menu onClick={(e) => updateOrderStatusHandler(record, e.key)}>
                 <Menu.Item key="Ordered">Ordered</Menu.Item>
                 <Menu.Item key="Ongoing">Ongoing</Menu.Item>
                 <Menu.Item key="Delivered">Delivered</Menu.Item>
@@ -118,12 +98,14 @@ const OrderList = () => {
       ),
     },
   ];
-
-  const filteredData = orders.filter((item) =>
-    Object.values(item).some((value) =>
-      value.toString().toLowerCase().includes(searchText.toLowerCase())
-    )
-  );
+  // Ensure `orders` is an array before calling filter()
+  const filteredData = Array.isArray(orders)
+    ? orders.filter((item) =>
+        Object.values(item).some((value) =>
+          value.toString().toLowerCase().includes(searchText.toLowerCase())
+        )
+      )
+    : [];
 
   const paginatedData = filteredData.slice(
     (currentPage - 1) * pageSize,
@@ -139,10 +121,22 @@ const OrderList = () => {
     setIsModalVisible(false);
   };
 
-  const updateOrderStatus = (order, newStatus) => {
-    setOrders(
-      orders.map((o) => (o.id === order.id ? { ...o, status: newStatus } : o))
-    );
+  const updateOrderStatusHandler = async (order, newStatus) => {
+    const orderId = order._id;
+
+    try {
+      await updateOrderStatus({ orderId, status: newStatus }).unwrap();
+
+      const updatedOrders = orders.map((o) =>
+        o._id === orderId ? { ...o, status: newStatus } : o
+      );
+
+      setOrders(updatedOrders);
+      console.log("Order status updated successfully!");
+    } catch (err) {
+      console.error("Error updating order status:", err);
+      console.error("Error details:", err.response?.data);
+    }
   };
 
   const modalContent = currentOrder ? (
@@ -150,15 +144,15 @@ const OrderList = () => {
       <Row gutter={16}>
         <Col span={12}>
           <p>
-            <strong>Order ID:</strong> {currentOrder.id}
+            <strong>Order ID:</strong> {currentOrder.orderId}
           </p>
           <p>
-            <strong>Order Date:</strong> {currentOrder.date}
+            <strong>Order Date:</strong> {currentOrder.createdAt}
           </p>
         </Col>
         <Col span={12}>
           <p>
-            <strong>Status:</strong>{" "}
+            <strong>Status:</strong>
             <span
               style={{
                 color: getStatusColor(currentOrder.status),
@@ -168,27 +162,27 @@ const OrderList = () => {
               {currentOrder.status}
             </span>
           </p>
-          <p>
-            <strong>Product Type:</strong> {currentOrder.type}
-          </p>
         </Col>
       </Row>
       <Divider />
       <Row gutter={16}>
         <Col span={12}>
           <p>
-            <strong>Name:</strong> {currentOrder.name}
+            <strong>Name:</strong> {currentOrder.user.name}
           </p>
           <p>
-            <strong>Email:</strong> customer@example.com
+            <strong>Email:</strong> {currentOrder.user.email}
           </p>
           <p>
-            <strong>Phone:</strong> +1234567890
+            <strong>Phone:</strong> {currentOrder.user.phone || "Not provided"}
           </p>
         </Col>
         <Col span={12}>
           <p>
-            <strong>Address:</strong> {currentOrder.address}
+            <strong>Address:</strong> {currentOrder.shippingAddress.street},
+            {currentOrder.shippingAddress.city},
+            {currentOrder.shippingAddress.state},
+            {currentOrder.shippingAddress.zipCode}
           </p>
         </Col>
       </Row>
@@ -217,9 +211,17 @@ const OrderList = () => {
     </div>
   ) : null;
 
+  if (isLoading) {
+    return <Spin size="large" />;
+  }
+
+  if (error) {
+    return <div>Error loading orders: {error.message}</div>;
+  }
+
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6">
+    <div className="min-h-screen p-6 bg-gray-100">
+      <div className="flex flex-col items-center justify-between mb-6 md:flex-row">
         <h2 className="text-3xl font-bold">Orders</h2>
         <Search
           placeholder="Search orders..."
@@ -228,12 +230,12 @@ const OrderList = () => {
           allowClear
         />
       </div>
-      <div className="bg-white p-5 rounded shadow-md">
+      <div className="p-5 bg-white rounded shadow-md">
         <Table
           columns={columns}
           dataSource={paginatedData}
           pagination={false}
-          rowKey="id"
+          rowKey="orderId"
           scroll={{ x: "max-content" }}
         />
         <div className="flex justify-center mt-4">

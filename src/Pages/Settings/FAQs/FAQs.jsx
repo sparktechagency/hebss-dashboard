@@ -1,67 +1,85 @@
+
+
 import React, { useState } from "react";
 import { Table, Button, Modal, Input, Form, message } from "antd";
 import { EditOutlined, DeleteOutlined, EyeOutlined } from "@ant-design/icons";
+import { useCreateFaqMutation, useDeleteFaqMutation, useEditFaqMutation, useGetAllFaqQuery } from "../../../redux/features/faq/faqApi";
 
 const FAQPage = () => {
-  const [faqs, setFaqs] = useState([
-    { key: "1", question: "What is your service?", answer: "We provide tech support." },
-    { key: "2", question: "How can I contact support?", answer: "You can contact us through email." },
-  ]);
+  const { data: rawData, isLoading, isError, error, refetch } = useGetAllFaqQuery(); 
+  const [deleteFaq] = useDeleteFaqMutation(); 
+
+  // Extract the FAQ data from the response
+  const faqs = rawData?.data && Array.isArray(rawData.data) ? rawData.data : [];
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (isError) {
+    return <div>Error: {error.message}</div>;
+  }
+
+  const [createFaq] = useCreateFaqMutation();
+  const [editFaq] = useEditFaqMutation();
+
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [currentFAQ, setCurrentFAQ] = useState(null); // Store the FAQ to edit
-  const [isViewModalVisible, setIsViewModalVisible] = useState(false); // Modal visibility for view
+  const [currentFAQ, setCurrentFAQ] = useState(null);  // Store current FAQ being edited
+  const [isViewModalVisible, setIsViewModalVisible] = useState(false); 
   const [form] = Form.useForm();
 
-  // Handle form submission (Add or Edit FAQ)
-  const handleFormSubmit = (values) => {
-    if (isEditing) {
-      // Update FAQ
-      setFaqs(faqs.map(faq => faq.key === currentFAQ.key ? { ...faq, ...values } : faq));
-      message.success("FAQ updated successfully");
-    } else {
-      // Add new FAQ
-      const newFAQ = { key: faqs.length + 1, ...values };
-      setFaqs([...faqs, newFAQ]);
-      message.success("FAQ added successfully");
+  const handleFormSubmit = async (values) => {
+    try {
+      if (isEditing) {
+        // Update FAQ
+        await editFaq({ _id: currentFAQ._id, ...values }).unwrap();
+        message.success("FAQ updated successfully");
+      } else {
+        // Add new FAQ
+        await createFaq(values).unwrap();
+        message.success("FAQ added successfully");
+      }
+      setIsModalVisible(false);
+      refetch();  // Refetch data after a successful add or edit
+    } catch (error) {
+      message.error("Failed to save FAQ: " + error.message);
     }
-    setIsModalVisible(false);
   };
 
-  // Open modal for adding new FAQ
   const handleAddFAQ = () => {
     setIsEditing(false);
     setIsModalVisible(true);
-    form.resetFields();
+    form.resetFields();  // Reset form for adding new FAQ
   };
 
-  // Open modal for editing FAQ
   const handleEditFAQ = (faq) => {
     setIsEditing(true);
     setCurrentFAQ(faq);
-    form.setFieldsValue(faq);
-    setIsModalVisible(true);
+    form.setFieldsValue(faq);  // Populate form with the selected FAQ's data
+    setIsModalVisible(true);  // Open modal for editing
   };
 
-  // Handle deleting an FAQ
-  const handleDeleteFAQ = (key) => {
-    setFaqs(faqs.filter(faq => faq.key !== key));
-    message.success("FAQ deleted successfully");
+  const handleDeleteFAQ = async (_id) => {
+    try {
+      await deleteFaq(_id).unwrap();  // Call deleteFAQ mutation
+      message.success("FAQ deleted successfully");
+      refetch();  // Refetch the data to update the table
+    } catch (error) {
+      message.error("Failed to delete FAQ: " + error.message);
+    }
   };
 
-  // Open the View Answer modal
   const handleViewAnswer = (faq) => {
     setCurrentFAQ(faq);
     setIsViewModalVisible(true);
   };
 
-  // Handle closing the modal
   const handleCloseModal = () => {
     setIsModalVisible(false);
     setIsViewModalVisible(false);
   };
 
-  // Modal footer buttons
   const modalFooter = [
     <Button key="cancel" onClick={handleCloseModal}>
       Cancel
@@ -71,7 +89,6 @@ const FAQPage = () => {
     </Button>,
   ];
 
-  // Columns for the FAQ table
   const columns = [
     { title: "Question", dataIndex: "question", key: "question" },
     { title: "Answer", dataIndex: "answer", key: "answer" },
@@ -83,16 +100,16 @@ const FAQPage = () => {
           <Button
             icon={<EditOutlined />}
             style={{ marginRight: 8 }}
-            onClick={() => handleEditFAQ(record)}
+            onClick={() => handleEditFAQ(record)} // Edit action
           />
           <Button
             icon={<DeleteOutlined />}
-            onClick={() => handleDeleteFAQ(record.key)}
+            onClick={() => handleDeleteFAQ(record._id)} // Delete action
             style={{ color: "red" }}
           />
           <Button
             icon={<EyeOutlined />}
-            onClick={() => handleViewAnswer(record)}
+            onClick={() => handleViewAnswer(record)} // View action
             style={{ color: "#1890ff", marginLeft: 8 }}
           />
         </div>
@@ -102,8 +119,8 @@ const FAQPage = () => {
 
   return (
     <div className="container mx-auto mt-10">
-      <div className="bg-white rounded-lg p-6 shadow-lg">
-        <div className="flex justify-between items-center mb-6">
+      <div className="p-6 bg-white rounded-lg shadow-lg">
+        <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-gray-700">FAQs</h2>
           <Button
             type="primary"
@@ -119,7 +136,7 @@ const FAQPage = () => {
           columns={columns}
           dataSource={faqs}
           pagination={false}
-          rowKey="key"
+          rowKey={(record) => record._id}  // Use `_id` as the row key
         />
 
         {/* Modal for Adding/Editing FAQ */}
@@ -173,3 +190,4 @@ const FAQPage = () => {
 };
 
 export default FAQPage;
+

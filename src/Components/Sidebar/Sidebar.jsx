@@ -12,7 +12,7 @@ import {
 } from "react-icons/md";
 import { LuCircleDollarSign } from "react-icons/lu";
 import { FaMoneyCheckAlt, FaEdit, FaUserShield } from "react-icons/fa";
-import { RiTerminalWindowLine } from "react-icons/ri";
+import { RiMailSendFill, RiTerminalWindowLine } from "react-icons/ri";
 
 const Sidebar = ({ closeDrawer }) => {
   const [active, setActive] = useState("Dashboard");
@@ -53,6 +53,11 @@ const Sidebar = ({ closeDrawer }) => {
       icon: <FaEdit className="w-5 h-5" />,
       label: "Reviews",
       Link: "/reviews",
+    },
+    {
+      icon: <RiMailSendFill className="w-5 h-5" />,
+      label: "Mail",
+      Link: "/send-mail-all",
     },
 
     {
