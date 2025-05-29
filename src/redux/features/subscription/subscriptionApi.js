@@ -4,6 +4,7 @@ const subscriptionApi = createApi({
   reducerPath: "subscriptionApi",
   baseQuery: fetchBaseQuery({
     baseUrl: import.meta.env.VITE_BACKEND_URL,
+    // baseUrl:"http://10.0.60.55:5003/v1",
     prepareHeaders: (headers) => {
       const token = localStorage.getItem("token");
       if (token) {
@@ -45,9 +46,8 @@ const subscriptionApi = createApi({
         method: "DELETE",
       }),
     }),
-
      getSubscriptionByUserId: builder.query({
-      query: (userId) => `/subscription-purchase/retrieve/user/${userId}`, // ✅ correct!
+      query: (userId) => `/subscription-purchase/retrieve/user/${userId}`, 
     }),
   }),
 });

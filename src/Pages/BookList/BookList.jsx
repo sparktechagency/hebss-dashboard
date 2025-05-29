@@ -10,6 +10,7 @@ import {
   useGetAllBooksQuery,
   useUpdateBookMutation,
   useDeleteBookMutation,
+  useGetAllCategoryQuery,
 } from "../../redux/features/products/productsApi";
 
 const BookList = () => {
@@ -19,41 +20,67 @@ const BookList = () => {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [editingBook, setEditingBook] = useState(null);
 
-  // New states for sorting and filters
+  // Sorting and filters
   const [sortOrder, setSortOrder] = useState("none");
   const [searchTerm, setSearchTerm] = useState("");
   const [priceFilter, setPriceFilter] = useState("");
   const [shortPositionFilter, setShortPositionFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
 
-  // Fetch books using the Redux API hook
+  // Fetch data
   const { data, isLoading, isError } = useGetAllBooksQuery();
   const [updateBook] = useUpdateBookMutation();
   const [createBook] = useCreateBookMutation();
   const [deleteBook] = useDeleteBookMutation();
 
+  const {
+    data: categories,
+    isLoading: categoriesLoading,
+    error: categoriesError,
+  } = useGetAllCategoryQuery();
+
+  // Extract category list safely
+  const categoryList = Array.isArray(categories?.data)
+    ? categories.data
+    : Array.isArray(categories?.categories)
+    ? categories.categories
+    : Array.isArray(categories)
+    ? categories
+    : [];
+
   const pageSize = 8;
   const books = data?.data || [];
 
-  // Filter books based on search, price, short position inputs
+  // Debugging: Log first book's category to inspect structure (optional)
+  // console.log("Sample book category:", books[0]?.category);
+
+  // Filter books with all filters including category
   const filteredBooks = useMemo(() => {
     if (!Array.isArray(books)) return [];
 
     return books.filter((book) => {
       const matchesSearch = book.name.toLowerCase().includes(searchTerm.toLowerCase());
-
       const matchesPrice =
-        priceFilter === "" || 
+        priceFilter === "" ||
         (book.price?.amount && book.price.amount === Number(priceFilter));
-
       const matchesShortPosition =
         shortPositionFilter === "" ||
         (book.shortPosition && book.shortPosition.toString().includes(shortPositionFilter));
 
-      return matchesSearch && matchesPrice && matchesShortPosition;
-    });
-  }, [books, searchTerm, priceFilter]);
+      // Flexible category matching: book.category can be string or object with _id
+      const bookCategoryId =
+        typeof book.category === "object" && book.category !== null
+          ? book.category._id || book.category.id || ""
+          : book.category || "";
 
-  // Sort the filtered books by price based on sortOrder
+      const matchesCategory =
+        categoryFilter === "" || String(bookCategoryId) === String(categoryFilter);
+
+      return matchesSearch && matchesPrice && matchesShortPosition && matchesCategory;
+    });
+  }, [books, searchTerm, priceFilter, shortPositionFilter, categoryFilter]);
+
+  // Sort filtered books by price
   const sortedBooks = useMemo(() => {
     if (sortOrder === "lowToHigh") {
       return [...filteredBooks].sort((a, b) => (a.price?.amount || 0) - (b.price?.amount || 0));
@@ -64,12 +91,15 @@ const BookList = () => {
     }
   }, [filteredBooks, sortOrder]);
 
-  // Paginate the sorted books
-  const paginatedBooks = sortedBooks.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  // Paginate
+  const paginatedBooks = sortedBooks.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   const primaryColor = "#F37975";
 
-  // Handle adding a new book
+  // Add book handler
   const handleAddBook = async (newBook) => {
     try {
       await createBook(newBook);
@@ -79,7 +109,7 @@ const BookList = () => {
     }
   };
 
-  // Handle editing a book
+  // Edit book handler
   const handleEditBook = async (updatedBook) => {
     try {
       await updateBook(updatedBook);
@@ -89,7 +119,7 @@ const BookList = () => {
     }
   };
 
-  // Handle deleting a book
+  // Delete book handler
   const handleDeleteBook = async (bookId) => {
     try {
       await deleteBook(bookId).unwrap();
@@ -100,19 +130,17 @@ const BookList = () => {
     }
   };
 
-  // Open the edit modal with the selected book's details
+  // Open edit modal
   const openEditModal = (book) => {
     setEditingBook(book);
     setIsEditModalVisible(true);
   };
 
-  // Display loading and error states
-  if (isLoading) {
+  if (isLoading || categoriesLoading) {
     return <Spin size="large" className="p-10" />;
   }
-
-  if (isError) {
-    return <div>Error loading books.</div>;
+  if (isError || categoriesError) {
+    return <div>Error loading books or categories.</div>;
   }
 
   return (
@@ -141,10 +169,30 @@ const BookList = () => {
             value={shortPositionFilter}
             onChange={(e) => setShortPositionFilter(e.target.value)}
           />
-          <Select defaultValue="Category" className="w-40">
-            <Select.Option value="fiction">Fiction</Select.Option>
-            <Select.Option value="non-fiction">Non-Fiction</Select.Option>
+          {/* Category dropdown for filtering */}
+          <Select
+            placeholder="Filter by Category"
+            className="w-40"
+            loading={categoriesLoading}
+            allowClear
+            value={categoryFilter || undefined}
+            onChange={(value) => {
+              setCategoryFilter(value || "");
+              setCurrentPage(1);
+            }}
+            showSearch
+            optionFilterProp="children"
+            filterOption={(input, option) =>
+              option.children.toLowerCase().includes(input.toLowerCase())
+            }
+          >
+            {categoryList.map((cat) => (
+              <Select.Option key={cat._id || cat.id} value={cat._id || cat.id}>
+                {cat.title}
+              </Select.Option>
+            ))}
           </Select>
+
           <Select
             defaultValue="none"
             className="w-40"
@@ -198,10 +246,14 @@ const BookList = () => {
               />
               <div className="flex items-center justify-between gap-x-4">
                 <h3 className="text-lg font-semibold">{book.name}</h3>
-                <h4 className="text-[12px] font-semibold">{book.quantity} Books available </h4>
+                <h4 className="text-[12px] font-semibold">
+                  {book.quantity} Books available{" "}
+                </h4>
               </div>
               <p className="text-sm text-gray-600">{book.bookLanguage}</p>
-              <p className="text-sm text-gray-600">{book.bookCollection?.title || ""}</p>
+              <p className="text-sm text-gray-600">
+                {book.bookCollection?.title || ""}
+              </p>
               <p className="text-lg font-bold text-red-500">
                 {book.price?.amount} {book.price?.currency}
               </p>

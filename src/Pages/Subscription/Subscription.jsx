@@ -12,6 +12,7 @@ const SubscriptionPage = () => {
 
   // Ensure subscriptions is always an array
   const subscriptions = Array.isArray(rawSubscriptions?.data) ? rawSubscriptions.data : [];
+  console.log(subscriptions)
 
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [form] = Form.useForm();
@@ -36,14 +37,14 @@ const SubscriptionPage = () => {
 
   // Handle editing a subscription
   const handleEdit = (subscription) => {
-    setEditingSubscription(subscription); // Set the subscription being edited
-    setFeatures(subscription.features); // Set the existing features for editing
+    setEditingSubscription(subscription); 
+    setFeatures(subscription.features); 
     editForm.setFieldsValue({
       title: subscription.name,
       chargeType: subscription.type,
       price: subscription.price.amount,
     });
-    setIsEditModalVisible(true); // Open the edit modal
+    setIsEditModalVisible(true); 
   };
 
   // Add feature to a subscription
@@ -143,7 +144,7 @@ const SubscriptionPage = () => {
              <div className="absolute flex gap-2 top-4 right-4">
               <UsergroupAddOutlined
                 className="text-gray-500 cursor-pointer hover:text-gray-700"
-                onClick={() => navigate(`/subscription/subscribers/${sub._id}`)} // Navigate to subscribers page with subscription ID
+                onClick={() => navigate(`/subscription/subscribers/${sub._id}`)}
               />
               <EditOutlined
                 className="text-gray-500 cursor-pointer hover:text-gray-700"

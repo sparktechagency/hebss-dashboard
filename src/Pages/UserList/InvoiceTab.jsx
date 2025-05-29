@@ -1,7 +1,11 @@
 import React, { useRef } from "react";
 import { Table, Button, Row, Col, Spin, Alert } from "antd";
 import { Link } from "react-router-dom";
-import { PrinterOutlined } from "@ant-design/icons";
+import {
+  BorderOutlined,
+  CheckSquareOutlined,
+  PrinterOutlined,
+} from "@ant-design/icons";
 import { MdSpatialTracking } from "react-icons/md";
 import { useGetCurrentInvoiceByUserIdQuery } from "../../redux/features/invoice/invoiceApi";
 
@@ -35,33 +39,48 @@ const InvoiceTab = ({ userId }) => {
 
   const invoice = data.data;
 
-  const getBookTitle = (bookId) => {
-    // Replace with actual logic to fetch book title
-    return `Book Title for ID: ${bookId}`;
-  };
-
-  const invoiceData = invoice.soldBooks.map((item, index) => {
-    const keepQty = item.quantity || 0;
-    const maxQty = 1;
-    const skipQty = maxQty - keepQty > 0 ? maxQty - keepQty : 0;
+  // Build invoiceData from all box books
+  const invoiceData = invoice.box.books.map((book) => {
+    const soldBook = invoice.soldBooks.find((sb) => sb.bookId._id === book._id);
+    const isSold = !!soldBook;
 
     return {
-      key: item._id || index.toString(),
+      key: book._id,
       invoiceId: invoice.invoiceId,
-      description: getBookTitle(item.bookId),
-      quantity: item.quantity,
+      description: book.name, // Book name here
+      keep: isSold,
+      skip: !isSold,
+      quantity: soldBook?.quantity || 0,
       baseCost: `$${invoice.dueAmount}`,
       total: `$${invoice.totalAmount}`,
-      keep: keepQty,
-      skip: skipQty,
     };
   });
 
   const columns = [
     { title: "Invoice ID", dataIndex: "invoiceId", key: "invoiceId" },
     { title: "Book Title", dataIndex: "description", key: "description" },
-    { title: "Skip", dataIndex: "skip", key: "skip" },
-    { title: "Keep", dataIndex: "keep", key: "keep" },
+    {
+      title: "Skip",
+      dataIndex: "skip",
+      key: "skip",
+      render: (skip) =>
+        skip ? (
+          <BorderOutlined style={{ fontSize: 20, color: "gray" }} />
+        ) : (
+          <CheckSquareOutlined style={{ fontSize: 20, color: "gray" }} />
+        ),
+    },
+    {
+      title: "Keep",
+      dataIndex: "keep",
+      key: "keep",
+      render: (keep) =>
+        keep ? (
+          <CheckSquareOutlined style={{ fontSize: 20, color: "green" }} />
+        ) : (
+          <BorderOutlined style={{ fontSize: 20, color: "gray" }} />
+        ),
+    },
     { title: "Quantity", dataIndex: "quantity", key: "quantity" },
     { title: "Base Cost", dataIndex: "baseCost", key: "baseCost" },
     { title: "Total Cost", dataIndex: "total", key: "total" },
@@ -132,12 +151,20 @@ const InvoiceTab = ({ userId }) => {
     }, 500);
   };
 
-  // Tracking button click handler
+  // Tracking handlers
   const handleTrackingClick = () => {
     if (invoice.trackingUrl) {
       window.open(invoice.trackingUrl, "_blank", "noopener,noreferrer");
     } else {
       alert("Tracking URL not available");
+    }
+  };
+
+  const handleTrackingLabel = () => {
+    if (invoice.returnLabelUrl) {
+      window.open(invoice.returnLabelUrl, "_blank", "noopener,noreferrer");
+    } else {
+      alert("Return Label URL not available");
     }
   };
 
@@ -166,7 +193,7 @@ const InvoiceTab = ({ userId }) => {
       {/* Printable Invoice Content */}
       <div ref={printRef}>
         {/* Invoice Header */}
-        <div className="header-section">
+        <div className="flex justify-between header-section">
           <div>
             <h2>Invoice From:</h2>
             <p>Virginia Walker</p>
@@ -176,9 +203,6 @@ const InvoiceTab = ({ userId }) => {
             <h2>Invoice To:</h2>
             <p>{invoice.user.email}</p>
             <p>{invoice.user.phone}</p>
-          </div>
-          <div>
-            <h2>Dates:</h2>
             <p>Invoice Date: {new Date(invoice.createdAt).toLocaleDateString()}</p>
             <p>Due Date: {new Date(invoice.updatedAt).toLocaleDateString()}</p>
           </div>
@@ -206,14 +230,21 @@ const InvoiceTab = ({ userId }) => {
           <Button
             onClick={handleTrackingClick}
             icon={<MdSpatialTracking />}
-            style={{ marginRight: "10px", color: primaryColor }}
+            style={{ marginRight: 10, color: primaryColor }}
           >
-            Tracking Product
+            Tracking Status
+          </Button>
+          <Button
+            onClick={handleTrackingLabel}
+            icon={<MdSpatialTracking />}
+            style={{ marginRight: 10, color: primaryColor }}
+          >
+            Tracking Label
           </Button>
           <Button
             icon={<PrinterOutlined />}
             onClick={handlePrint}
-            style={{ marginRight: "10px", color: primaryColor }}
+            style={{ marginRight: 10, color: primaryColor }}
           >
             Print
           </Button>

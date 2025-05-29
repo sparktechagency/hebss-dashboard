@@ -30,7 +30,7 @@ const teamApi = createApi({
           body: formData,
         };
       },
-      invalidatesTags: ["Team"],  // <-- invalidates tag on create
+      invalidatesTags: ["Team"],  
     }),
     updateTeamMember: builder.mutation({
       query: (data) => {
