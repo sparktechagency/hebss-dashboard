@@ -27,72 +27,41 @@ const SubscriptionTab = ({ userId }) => {
     }
   }, [subscriptionPurchases]);
 
-  // const handleToggle = async (checked) => {
-  //   setIsActive(checked);
-
-  //   try {
-  //     if (checked) {
-  //       // Activate or create subscription
-  //       // You might want to send more data here if required by your backend
-  //       await createSubscription({
-  //         userId,
-  //         subscriptionId: subscriptonInfo?._id, // or relevant subscription data
-  //       }).unwrap();
-  //       message.success("Subscription activated successfully");
-  //     } else {
-  //       // Cancel subscription
-  //       if (subscriptionPurchases?._id) {
-  //         await cancelSubscription(subscriptionPurchases._id).unwrap();
-  //         message.success("Subscription cancelled successfully");
-  //       } else {
-  //         message.error("Subscription ID missing, cannot cancel.");
-  //       }
-  //     }
-  //   } catch (err) {
-  //     console.error(err);
-  //     message.error("Error updating subscription status");
-  //     // revert UI toggle on error
-  //     setIsActive(!checked);
-  //   }
-  // };
-
-
   const handleToggle = async (checked) => {
-  setIsActive(checked);
+    setIsActive(checked);
 
-  try {
-    if (checked) {
-      // Activate subscription - send required fields
-      await createSubscription({
-        userId,
-        type: subscriptonInfo?.type || "defaultType", // fill in valid values
-        name: subscriptonInfo?.name || "defaultName",
-        subscriptionId: subscriptonInfo?._id,
-      }).unwrap();
-      message.success("Subscription activated successfully");
-    } else {
-      // Cancel subscription - send required fields for patch
-      if (subscriptionPurchases?._id) {
-        await cancelSubscription({
-          id: subscriptionPurchases._id,
-          data: {
-            isActive: false,
-            type: subscriptonInfo?.type || "defaultType",
-            name: subscriptonInfo?.name || "defaultName",
-          },
+    try {
+      if (checked) {
+        // Activate subscription - send required fields
+        await createSubscription({
+          userId,
+          type: subscriptonInfo?.type || "defaultType",
+          name: subscriptonInfo?.name || "defaultName",
+          subscriptionId: subscriptonInfo?._id,
         }).unwrap();
-        message.success("Subscription cancelled successfully");
+        message.success("Subscription activated successfully");
       } else {
-        message.error("Subscription ID missing, cannot cancel.");
+        // Cancel subscription - send required fields for patch
+        if (subscriptionPurchases?._id) {
+          await cancelSubscription({
+            id: subscriptionPurchases._id,
+            data: {
+              isActive: false,
+              type: subscriptonInfo?.type || "defaultType",
+              name: subscriptonInfo?.name || "defaultName",
+            },
+          }).unwrap();
+          message.success("Subscription cancelled successfully");
+        } else {
+          message.error("Subscription ID missing, cannot cancel.");
+        }
       }
+    } catch (err) {
+      console.error(err);
+      message.error("Error updating subscription status");
+      setIsActive(!checked); // revert toggle on error
     }
-  } catch (err) {
-    console.error(err);
-    message.error("Error updating subscription status");
-    setIsActive(!checked); // revert toggle on error
-  }
-};
-
+  };
 
   if (!userId)
     return <Alert type="warning" message="User ID is missing" />;
@@ -128,14 +97,28 @@ const SubscriptionTab = ({ userId }) => {
         </p>
 
         <ul className="text-sm text-center text-gray-700">
-          <li className="py-1">
-            Stripe Price ID: {subscriptionPurchases.subscription?.priceId}
-          </li>
-          <li className="py-1">User ID: {subscriptionPurchases.user}</li>
+            {/* <li className="py-1">
+              Stripe Price ID: {subscriptionPurchases.subscription?.priceId}
+            </li>
+            <li className="py-1">User ID: {subscriptionPurchases.user}</li> */}
           <li className="py-1">
             Payment Status: {subscriptionPurchases.paymentStatus}
           </li>
         </ul>
+
+        {/* Features List */}
+        {Array.isArray(subscriptonInfo?.features) && (
+          <div className="flex flex-col items-center justify-center mt-4">
+            <h4 className="mb-2 font-semibold text-center text-gray-800 text-md">
+              Features Included:
+            </h4>
+            <ul className="text-sm text-gray-700 list-disc list-inside">
+              {subscriptonInfo.features.map((feature, index) => (
+                <li key={index}>{feature}</li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <Row justify="center" className="mt-6">
           <Col>
