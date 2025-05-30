@@ -49,6 +49,13 @@ const subscriptionApi = createApi({
      getSubscriptionByUserId: builder.query({
       query: (userId) => `/subscription-purchase/retrieve/user/${userId}`, 
     }),
+     cancelSubscription: builder.mutation({
+      query: ({id,data}) => ({
+        url: `/subscription-purchase/cancel/subscription-purchase/${id}`,
+        method: "PATCH", 
+        body:data,
+      }),
+    }),
   }),
 });
 
@@ -58,7 +65,8 @@ export const {
   useGetAllSubscriptionQuery,
   useDeleteSubscriptionMutation,
   useEditSubscriptionMutation,
-  useGetSubscriptionByUserIdQuery
+  useGetSubscriptionByUserIdQuery,
+  useCancelSubscriptionMutation,
 } = subscriptionApi;
 
 export default subscriptionApi;

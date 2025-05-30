@@ -1,41 +1,68 @@
 import React, { useState, useEffect } from "react";
-import { Card, Switch, Row, Col, Spin, Alert } from "antd";
-import { useGetSubscriptionByUserIdQuery } from "../../redux/features/subscription/subscriptionApi";
+import { Card, Switch, Row, Col, Spin, Alert, message } from "antd";
+import {
+  useGetSubscriptionByUserIdQuery,
+  useCancelSubscriptionMutation,
+  useCreateSubscriptionMutation,
+} from "../../redux/features/subscription/subscriptionApi";
 
 const SubscriptionTab = ({ userId }) => {
-  // Fetch subscription data only if userId exists
   const { data, error, isLoading } = useGetSubscriptionByUserIdQuery(userId, {
     skip: !userId,
   });
 
-  // Local UI toggle state for subscription active status
+  const [cancelSubscription, { isLoading: isCancelling }] = useCancelSubscriptionMutation();
+  const [createSubscription, { isLoading: isCreating }] = useCreateSubscriptionMutation();
+
   const [isActive, setIsActive] = useState(false);
 
-  // Debug: Log API response to inspect its structure
-  useEffect(() => {
-    console.log("Subscription API data:", data);
-  }, [data]);
-
-  // Safely extract subscriptionPurchases and subscriptonInfo,
-  // whether data is full response or already the nested data object
   const subscriptionPurchases =
     data?.data?.subscriptionPurchases || data?.subscriptionPurchases;
   const subscriptonInfo =
     data?.data?.subscriptonInfo || data?.subscriptonInfo;
 
-  // Set initial isActive state from backend data
   useEffect(() => {
     if (subscriptionPurchases?.isActive !== undefined) {
       setIsActive(subscriptionPurchases.isActive);
     }
   }, [subscriptionPurchases]);
 
-  const handleToggle = (checked) => {
+  const handleToggle = async (checked) => {
     setIsActive(checked);
-    // TODO: Call mutation to update isActive status on backend if needed
+
+    try {
+      if (checked) {
+        // Activate subscription - send required fields
+        await createSubscription({
+          userId,
+          type: subscriptonInfo?.type || "defaultType",
+          name: subscriptonInfo?.name || "defaultName",
+          subscriptionId: subscriptonInfo?._id,
+        }).unwrap();
+        message.success("Subscription activated successfully");
+      } else {
+        // Cancel subscription - send required fields for patch
+        if (subscriptionPurchases?._id) {
+          await cancelSubscription({
+            id: subscriptionPurchases._id,
+            data: {
+              isActive: false,
+              type: subscriptonInfo?.type || "defaultType",
+              name: subscriptonInfo?.name || "defaultName",
+            },
+          }).unwrap();
+          message.success("Subscription cancelled successfully");
+        } else {
+          message.error("Subscription ID missing, cannot cancel.");
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      message.error("Error updating subscription status");
+      setIsActive(!checked); // revert toggle on error
+    }
   };
 
-  // Handle loading and error states
   if (!userId)
     return <Alert type="warning" message="User ID is missing" />;
   if (isLoading) return <Spin tip="Loading subscription..." />;
@@ -49,6 +76,8 @@ const SubscriptionTab = ({ userId }) => {
     );
   if (!subscriptionPurchases)
     return <Alert type="info" message="No subscription found." />;
+
+  const loading = isCancelling || isCreating;
 
   return (
     <div className="p-6">
@@ -68,16 +97,29 @@ const SubscriptionTab = ({ userId }) => {
         </p>
 
         <ul className="text-sm text-center text-gray-700">
-          <li className="py-1">
-            Stripe Price ID: {subscriptionPurchases.subscription?.priceId}
-          </li>
-          <li className="py-1">User ID: {subscriptionPurchases.user}</li>
+            {/* <li className="py-1">
+              Stripe Price ID: {subscriptionPurchases.subscription?.priceId}
+            </li>
+            <li className="py-1">User ID: {subscriptionPurchases.user}</li> */}
           <li className="py-1">
             Payment Status: {subscriptionPurchases.paymentStatus}
           </li>
         </ul>
 
-        {/* Subscription status and toggle */}
+        {/* Features List */}
+        {Array.isArray(subscriptonInfo?.features) && (
+          <div className="flex flex-col items-center justify-center mt-4">
+            <h4 className="mb-2 font-semibold text-center text-gray-800 text-md">
+              Features Included:
+            </h4>
+            <ul className="text-sm text-gray-700 list-disc list-inside">
+              {subscriptonInfo.features.map((feature, index) => (
+                <li key={index}>{feature}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <Row justify="center" className="mt-6">
           <Col>
             <p className="font-semibold text-center text-gray-800">
@@ -87,7 +129,11 @@ const SubscriptionTab = ({ userId }) => {
               </span>
             </p>
             <div className="flex justify-center mt-2">
-              <Switch checked={isActive} onChange={handleToggle} />
+              <Switch
+                checked={isActive}
+                onChange={handleToggle}
+                loading={loading}
+              />
             </div>
           </Col>
         </Row>

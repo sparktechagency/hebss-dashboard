@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Modal,
   Input,
@@ -13,25 +13,36 @@ import { UploadOutlined } from "@ant-design/icons";
 import { useUpdateBookMutation } from "../../redux/features/products/productsApi";
 
 const EditBookPopup = ({ visible, onClose, book, onSave }) => {
-  const [bookData, setBookData] = useState({
-    ...book,
-    price: book?.price || { amount: "", currency: "USD" },
-    discountPrice: book?.discountAmount || "",
-  });
+  const [bookData, setBookData] = useState(null);
+  const initializedRef = useRef(false);
 
+  // ADD this line to get isLoading from your mutation
   const [updateBook, { isLoading }] = useUpdateBookMutation();
 
   useEffect(() => {
-    if (book) {
+    if (visible && book && !initializedRef.current) {
       setBookData({
         ...book,
         price: book.price || { amount: "", currency: "USD" },
-        discountPrice: book.discountAmount || "",
+        discountPrice:
+          book.discountAmount !== undefined
+            ? String(book.discountAmount)
+            : "",
+        quantity:
+          book.quantity !== undefined && book.quantity !== null
+            ? String(book.quantity)
+            : "",
       });
+      initializedRef.current = true;
     }
-  }, [book]);
+    if (!visible) {
+      initializedRef.current = false;
+      setBookData(null);
+    }
+  }, [visible, book]);
 
-  // Generic input handler for simple fields
+  if (!bookData) return null;
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setBookData((prev) => ({
@@ -40,7 +51,6 @@ const EditBookPopup = ({ visible, onClose, book, onSave }) => {
     }));
   };
 
-  // Price amount input handler (nested object)
   const handlePriceChange = (e) => {
     const amount = e.target.value;
     setBookData((prev) => ({
@@ -52,18 +62,16 @@ const EditBookPopup = ({ visible, onClose, book, onSave }) => {
     }));
   };
 
-  // Quantity input handler with explicit number conversion
   const handleQuantityChange = (e) => {
-    let val = e.target.value;
-    if (val === "") val = 0;
-    else val = parseInt(val, 10);
-    setBookData((prev) => ({
-      ...prev,
-      quantity: val,
-    }));
+    const val = e.target.value;
+    if (val === "" || /^\d+$/.test(val)) {
+      setBookData((prev) => ({
+        ...prev,
+        quantity: val,
+      }));
+    }
   };
 
-  // Select change handler
   const handleSelectChange = (name, value) => {
     setBookData((prev) => ({
       ...prev,
@@ -71,7 +79,6 @@ const EditBookPopup = ({ visible, onClose, book, onSave }) => {
     }));
   };
 
-  // Discount toggle switch
   const handleDiscountToggle = (checked) => {
     setBookData((prev) => ({
       ...prev,
@@ -79,7 +86,6 @@ const EditBookPopup = ({ visible, onClose, book, onSave }) => {
     }));
   };
 
-  // Discount type radio group
   const handleDiscountTypeChange = (e) => {
     setBookData((prev) => ({
       ...prev,
@@ -87,7 +93,6 @@ const EditBookPopup = ({ visible, onClose, book, onSave }) => {
     }));
   };
 
-  // Discount price input handler
   const handleDiscountPriceChange = (e) => {
     setBookData((prev) => ({
       ...prev,
@@ -95,7 +100,6 @@ const EditBookPopup = ({ visible, onClose, book, onSave }) => {
     }));
   };
 
-  // Upload handler (cover image)
   const handleUpload = ({ file }) => {
     setBookData((prev) => ({
       ...prev,
@@ -103,71 +107,43 @@ const EditBookPopup = ({ visible, onClose, book, onSave }) => {
     }));
   };
 
-
-  const handleSave = async () => {
-  const updatedBook = {
-    ...bookData,
-    price: {
-      amount: parseFloat(bookData.price.amount) || 0,
-      currency: "USD",
-    },
-    discountAmount: parseFloat(bookData.discountPrice) || 0,
-    // Remove quantity from update to check if backend changes it
-    // quantity: Number(bookData.quantity) || 0,
+  const handleReset = () => {
+    if (book) {
+      setBookData({
+        ...book,
+        price: book.price || { amount: "", currency: "USD" },
+        discountPrice:
+          book.discountAmount !== undefined ? String(book.discountAmount) : "",
+        quantity:
+          book.quantity !== undefined && book.quantity !== null
+            ? String(book.quantity)
+            : "",
+        cover: book.cover || null,
+      });
+    }
   };
 
-  try {
-    await updateBook({
-      bookId: book._id,
-      updatedBook,
-    }).unwrap();
-    message.success("Book updated successfully!");
-    onClose();
-  } catch (err) {
-    console.error(err);
-    message.error("Failed to update book.");
-  }
-};
+  const handleSave = async () => {
+    const updatedBook = {
+      ...bookData,
+      price: {
+        amount: parseFloat(bookData.price.amount) || 0,
+        currency: "USD",
+      },
+      discountAmount: parseFloat(bookData.discountPrice) || 0,
+      quantity: Number(bookData.quantity) || 0,
+    };
 
-
-
-
-
-  // Save handler with validated and cleaned payload
-  // const handleSave = async () => {
-  //   const updatedBook = {
-  //     ...bookData,
-  //     price: {
-  //       amount: parseFloat(bookData.price.amount) || 0,
-  //       currency: "USD",
-  //     },
-  //     discountAmount: parseFloat(bookData.discountPrice) || 0,
-  //     quantity: Number(bookData.quantity) || 0,
-  //   };
-
-  //   console.log("Saving updated book:", updatedBook);
-
-  //   try {
-  //     await updateBook({
-  //       bookId: book._id,
-  //       updatedBook,
-  //     }).unwrap();
-  //     message.success("Book updated successfully!");
-  //     onClose();
-  //     if (onSave) onSave(updatedBook);
-  //   } catch (err) {
-  //     if (err?.data) {
-  //       console.error("Server error response:", err.data);
-  //       message.error(`Failed to update book: ${err.data.message || JSON.stringify(err.data)}`);
-  //     } else if (err?.error) {
-  //       console.error("Error:", err.error);
-  //       message.error(`Failed to update book: ${err.error}`);
-  //     } else {
-  //       console.error("Unknown error:", err);
-  //       message.error("Failed to update book. Please try again.");
-  //     }
-  //   }
-  // };
+    try {
+      // Call onSave passed from parent, passing _id
+      await onSave({ ...updatedBook, _id: book._id });
+      message.success("Book updated successfully!");
+      onClose();
+    } catch (err) {
+      console.error(err);
+      message.error("Failed to update book.");
+    }
+  };
 
   return (
     <Modal
@@ -177,6 +153,7 @@ const EditBookPopup = ({ visible, onClose, book, onSave }) => {
       footer={null}
       centered
       className="p-4"
+      destroyOnClose={false}
     >
       <div className="flex flex-col gap-4">
         <Upload beforeUpload={() => false} onChange={handleUpload} maxCount={1}>
@@ -205,6 +182,8 @@ const EditBookPopup = ({ visible, onClose, book, onSave }) => {
             <label className="block text-sm font-medium">Product Price</label>
             <Input
               name="priceAmount"
+              type="number"
+              step="0.01"
               value={bookData.price.amount || ""}
               onChange={handlePriceChange}
               placeholder="$0.00"
@@ -215,9 +194,7 @@ const EditBookPopup = ({ visible, onClose, book, onSave }) => {
             <label className="block text-sm font-medium">Quantity</label>
             <Input
               name="quantity"
-              type="number"
-              min={0}
-              value={bookData.quantity || ""}
+              value={bookData.quantity}
               onChange={handleQuantityChange}
               placeholder="Enter quantity"
             />
@@ -348,6 +325,14 @@ const EditBookPopup = ({ visible, onClose, book, onSave }) => {
             </div>
           )}
         </div>
+
+        <Button
+          type="default"
+          onClick={handleReset}
+          style={{ marginBottom: 8 }}
+        >
+          Reset Changes
+        </Button>
 
         <Button
           type="primary"

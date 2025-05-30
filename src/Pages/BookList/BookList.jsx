@@ -20,7 +20,7 @@ const BookList = () => {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [editingBook, setEditingBook] = useState(null);
 
-  // Sorting and filters
+  // Filters and sorting states
   const [sortOrder, setSortOrder] = useState("none");
   const [searchTerm, setSearchTerm] = useState("");
   const [priceFilter, setPriceFilter] = useState("");
@@ -39,7 +39,7 @@ const BookList = () => {
     error: categoriesError,
   } = useGetAllCategoryQuery();
 
-  // Extract category list safely
+  // Safely extract categories
   const categoryList = Array.isArray(categories?.data)
     ? categories.data
     : Array.isArray(categories?.categories)
@@ -51,10 +51,7 @@ const BookList = () => {
   const pageSize = 8;
   const books = data?.data || [];
 
-  // Debugging: Log first book's category to inspect structure (optional)
-  // console.log("Sample book category:", books[0]?.category);
-
-  // Filter books with all filters including category
+  // Filtering books
   const filteredBooks = useMemo(() => {
     if (!Array.isArray(books)) return [];
 
@@ -67,7 +64,6 @@ const BookList = () => {
         shortPositionFilter === "" ||
         (book.shortPosition && book.shortPosition.toString().includes(shortPositionFilter));
 
-      // Flexible category matching: book.category can be string or object with _id
       const bookCategoryId =
         typeof book.category === "object" && book.category !== null
           ? book.category._id || book.category.id || ""
@@ -80,7 +76,7 @@ const BookList = () => {
     });
   }, [books, searchTerm, priceFilter, shortPositionFilter, categoryFilter]);
 
-  // Sort filtered books by price
+  // Sorting filtered books
   const sortedBooks = useMemo(() => {
     if (sortOrder === "lowToHigh") {
       return [...filteredBooks].sort((a, b) => (a.price?.amount || 0) - (b.price?.amount || 0));
@@ -91,7 +87,7 @@ const BookList = () => {
     }
   }, [filteredBooks, sortOrder]);
 
-  // Paginate
+  // Pagination
   const paginatedBooks = sortedBooks.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
@@ -99,7 +95,7 @@ const BookList = () => {
 
   const primaryColor = "#F37975";
 
-  // Add book handler
+  // Handlers
   const handleAddBook = async (newBook) => {
     try {
       await createBook(newBook);
@@ -109,17 +105,19 @@ const BookList = () => {
     }
   };
 
-  // Edit book handler
+  // IMPORTANT: Fix handleEditBook to pass { bookId, updatedBook }
   const handleEditBook = async (updatedBook) => {
     try {
-      await updateBook(updatedBook);
+      await updateBook({
+        bookId: updatedBook._id,
+        updatedBook,
+      });
       setIsEditModalVisible(false);
     } catch (error) {
       console.error("Error updating book:", error);
     }
   };
 
-  // Delete book handler
   const handleDeleteBook = async (bookId) => {
     try {
       await deleteBook(bookId).unwrap();
@@ -130,7 +128,6 @@ const BookList = () => {
     }
   };
 
-  // Open edit modal
   const openEditModal = (book) => {
     setEditingBook(book);
     setIsEditModalVisible(true);
@@ -169,7 +166,6 @@ const BookList = () => {
             value={shortPositionFilter}
             onChange={(e) => setShortPositionFilter(e.target.value)}
           />
-          {/* Category dropdown for filtering */}
           <Select
             placeholder="Filter by Category"
             className="w-40"
@@ -192,7 +188,6 @@ const BookList = () => {
               </Select.Option>
             ))}
           </Select>
-
           <Select
             defaultValue="none"
             className="w-40"
@@ -330,7 +325,7 @@ const BookList = () => {
         visible={isEditModalVisible}
         onClose={() => setIsEditModalVisible(false)}
         book={editingBook}
-        onSave={handleEditBook}
+        onSave={handleEditBook} // <-- pass the fixed handler here
       />
     </div>
   );
