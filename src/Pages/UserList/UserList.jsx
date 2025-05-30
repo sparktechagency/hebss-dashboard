@@ -20,6 +20,7 @@ const UserList = () => {
   const totalPage = data?.meta?.totalPage || 1;
   const totalUsers = data?.meta?.totalData || 0;
 
+
   const columns = [
     { title: "ID", dataIndex: "_id", key: "id", responsive: ["sm"] },
     { title: "Email", dataIndex: "email", key: "email" },
@@ -56,7 +57,6 @@ const UserList = () => {
     currentPage * pageSize
   );
 
-  // console.log("Paginated Data:", paginatedData);
 
   return (
     <div className="min-h-screen p-6 bg-gray-100">

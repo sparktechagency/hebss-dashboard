@@ -26,7 +26,7 @@ export const boxApi = createApi({
       query: (userId) => `/box/current/${userId}`,
     }),
     getBookById: builder.query({
-      query: (bookId) => `/books/${bookId}`, // Adjust the URL if needed
+      query: (bookId) => `/books/${bookId}`, 
     }),
     updateBox: builder.mutation({
       query: ({ _id, data }) => ({
@@ -34,6 +34,9 @@ export const boxApi = createApi({
         method: "PATCH",
         body: data,
       }),
+    }),
+     getBoxByCategoryId: builder.query({
+      query: (categoryId) => `/box/retrieve/category/${categoryId}`,
     }),
   }),
 });
@@ -45,6 +48,7 @@ export const {
   useGetCurrentBoxQuery,
   useUpdateBoxMutation,
   useGetBoxByUserIdQuery,
+  useGetBoxByCategoryIdQuery,
   getBookById,
 } = boxApi;
 
