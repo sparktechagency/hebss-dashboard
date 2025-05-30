@@ -1,11 +1,7 @@
-import React, { useRef } from "react";
-import { Table, Button, Row, Col, Spin, Alert } from "antd";
+import React, { useState, useEffect, useMemo, useRef } from "react";
+import { Table, Checkbox, Button, Row, Col, Spin, Alert } from "antd";
 import { Link } from "react-router-dom";
-import {
-  BorderOutlined,
-  CheckSquareOutlined,
-  PrinterOutlined,
-} from "@ant-design/icons";
+import { PrinterOutlined } from "@ant-design/icons";
 import { MdSpatialTracking } from "react-icons/md";
 import { useGetCurrentInvoiceByUserIdQuery } from "../../redux/features/invoice/invoiceApi";
 
@@ -14,6 +10,27 @@ const primaryColor = "#FF4D4F";
 const InvoiceTab = ({ userId }) => {
   const { data, isLoading, isError, error } = useGetCurrentInvoiceByUserIdQuery(userId);
   const printRef = useRef();
+
+  // Track which books are skipped
+  const [skipState, setSkipState] = useState({});
+  // Store original quantities (fixed)
+  const [originalQuantities, setOriginalQuantities] = useState({});
+
+  useEffect(() => {
+    if (!data?.data) return;
+
+    const initialSkip = {};
+    const originalQtys = {};
+
+    data.data.box.books.forEach((book) => {
+      const soldBook = data.data.soldBooks.find((sb) => sb.bookId._id === book._id);
+      initialSkip[book._id] = !soldBook;
+      originalQtys[book._id] = soldBook?.quantity || 0;
+    });
+
+    setSkipState(initialSkip);
+    setOriginalQuantities(originalQtys);
+  }, [data]);
 
   if (isLoading) {
     return (
@@ -38,55 +55,72 @@ const InvoiceTab = ({ userId }) => {
   }
 
   const invoice = data.data;
+  const baseCost = Number(invoice.dueAmount) || 0;
 
-  // Build invoiceData from all box books
-  const invoiceData = invoice.box.books.map((book) => {
-    const soldBook = invoice.soldBooks.find((sb) => sb.bookId._id === book._id);
-    const isSold = !!soldBook;
+  const toggleSkip = (bookId) => {
+    setSkipState((prev) => ({ ...prev, [bookId]: !prev[bookId] }));
+  };
 
-    return {
-      key: book._id,
-      invoiceId: invoice.invoiceId,
-      description: book.name, // Book name here
-      keep: isSold,
-      skip: !isSold,
-      quantity: soldBook?.quantity || 0,
-      baseCost: `$${invoice.dueAmount}`,
-      total: `$${invoice.totalAmount}`,
-    };
-  });
+  const invoiceData = useMemo(() => {
+    return invoice.box.books.map((book) => {
+      const skipped = skipState[book._id] ?? true;
+      const quantity = skipped ? 0 : originalQuantities[book._id] || 0;
+      const total = quantity * baseCost;
+
+      return {
+        key: book._id,
+        invoiceId: invoice.invoiceId,
+        description: book.name,
+        skip: skipped,
+        quantity,
+        baseCost,
+        total,
+      };
+    });
+  }, [invoice.box.books, skipState, originalQuantities, baseCost, invoice.invoiceId]);
+
+  const totalAmount = useMemo(() => {
+    return invoiceData.reduce((acc, book) => acc + book.total, 0);
+  }, [invoiceData]);
 
   const columns = [
-    { title: "Invoice ID", dataIndex: "invoiceId", key: "invoiceId" },
+    {
+      title: "S/N",
+      key: "serial",
+      render: (text, record, index) => index + 1,
+    },
     { title: "Book Title", dataIndex: "description", key: "description" },
     {
       title: "Skip",
-      dataIndex: "skip",
+      dataIndex: "key",
       key: "skip",
-      render: (skip) =>
-        skip ? (
-          <BorderOutlined style={{ fontSize: 20, color: "gray" }} />
-        ) : (
-          <CheckSquareOutlined style={{ fontSize: 20, color: "gray" }} />
-        ),
+      render: (bookId) => (
+        <Checkbox checked={!!skipState[bookId]} onChange={() => toggleSkip(bookId)} />
+      ),
     },
     {
       title: "Keep",
-      dataIndex: "keep",
+      dataIndex: "key",
       key: "keep",
-      render: (keep) =>
-        keep ? (
-          <CheckSquareOutlined style={{ fontSize: 20, color: "green" }} />
-        ) : (
-          <BorderOutlined style={{ fontSize: 20, color: "gray" }} />
-        ),
+      render: (bookId) => (
+        <Checkbox checked={!skipState[bookId]} onChange={() => toggleSkip(bookId)} />
+      ),
     },
     { title: "Quantity", dataIndex: "quantity", key: "quantity" },
-    { title: "Base Cost", dataIndex: "baseCost", key: "baseCost" },
-    { title: "Total Cost", dataIndex: "total", key: "total" },
+    {
+      title: "Base Cost",
+      dataIndex: "baseCost",
+      key: "baseCost",
+      render: (cost) => `$${cost.toFixed(2)}`,
+    },
+    {
+      title: "Total Cost",
+      dataIndex: "total",
+      key: "total",
+      render: (total) => (typeof total === "number" ? `$${total.toFixed(2)}` : "$0.00"),
+    },
   ];
 
-  // Print handler
   const handlePrint = () => {
     const printContents = printRef.current.innerHTML;
     const printWindow = window.open("", "", "width=800,height=900");
@@ -95,52 +129,19 @@ const InvoiceTab = ({ userId }) => {
         <head>
           <title>Invoice Print</title>
           <style>
-            @media print {
-              @page { size: A4; margin: 20mm; }
-            }
-            body {
-              font-family: Arial, sans-serif;
-              margin: 0;
-              padding: 20px;
-            }
-            table {
-              width: 100%;
-              border-collapse: collapse;
-              margin-top: 20px;
-            }
-            th, td {
-              border: 1px solid #333;
-              padding: 8px;
-              text-align: left;
-            }
-            th {
-              background-color: #f0f0f0;
-            }
-            .header-section {
-              display: flex;
-              justify-content: space-between;
-              margin-bottom: 20px;
-            }
-            .header-section div {
-              flex: 1;
-            }
-            .header-section div:not(:last-child) {
-              margin-right: 20px;
-            }
-            h2 {
-              margin-top: 0;
-            }
-            .total-row {
-              margin-top: 20px;
-              text-align: right;
-              font-weight: bold;
-              font-size: 18px;
-            }
+            @media print { @page { size: A4; margin: 20mm; } }
+            body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #333; padding: 8px; text-align: left; }
+            th { background-color: #f0f0f0; }
+            .header-section { display: flex; justify-content: space-between; margin-bottom: 20px; }
+            .header-section div { flex: 1; }
+            .header-section div:not(:last-child) { margin-right: 20px; }
+            h2 { margin-top: 0; }
+            .total-row { margin-top: 20px; text-align: right; font-weight: bold; font-size: 18px; }
           </style>
         </head>
-        <body>
-          ${printContents}
-        </body>
+        <body>${printContents}</body>
       </html>
     `);
     printWindow.document.close();
@@ -151,48 +152,32 @@ const InvoiceTab = ({ userId }) => {
     }, 500);
   };
 
-  // Tracking handlers
   const handleTrackingClick = () => {
-    if (invoice.trackingUrl) {
-      window.open(invoice.trackingUrl, "_blank", "noopener,noreferrer");
-    } else {
-      alert("Tracking URL not available");
-    }
+    if (invoice.trackingUrl) window.open(invoice.trackingUrl, "_blank", "noopener,noreferrer");
+    else alert("Tracking URL not available");
   };
 
   const handleTrackingLabel = () => {
-    if (invoice.returnLabelUrl) {
-      window.open(invoice.returnLabelUrl, "_blank", "noopener,noreferrer");
-    } else {
-      alert("Return Label URL not available");
-    }
+    if (invoice.returnLabelUrl) window.open(invoice.returnLabelUrl, "_blank", "noopener,noreferrer");
+    else alert("Return Label URL not available");
   };
 
   return (
     <div className="p-6">
-      {/* Action Buttons */}
       <div className="flex justify-end gap-2 mb-4">
         <Link to="/invoice-history">
-          <Button
-            type="default"
-            style={{ border: "none", backgroundColor: primaryColor, color: "white" }}
-          >
+          <Button type="default" style={{ border: "none", backgroundColor: primaryColor, color: "white" }}>
             Invoice History
           </Button>
         </Link>
         <Link to="/book-list">
-          <Button
-            type="default"
-            style={{ border: "none", backgroundColor: primaryColor, color: "white" }}
-          >
+          <Button type="default" style={{ border: "none", backgroundColor: primaryColor, color: "white" }}>
             Add New Book
           </Button>
         </Link>
       </div>
 
-      {/* Printable Invoice Content */}
       <div ref={printRef}>
-        {/* Invoice Header */}
         <div className="flex justify-between header-section">
           <div>
             <h2>Invoice From:</h2>
@@ -208,7 +193,6 @@ const InvoiceTab = ({ userId }) => {
           </div>
         </div>
 
-        {/* Invoice Table */}
         <Table
           columns={columns}
           dataSource={invoiceData}
@@ -218,13 +202,14 @@ const InvoiceTab = ({ userId }) => {
           style={{ marginTop: 20 }}
         />
 
-        {/* Total Cost */}
-        <div className="total-row">
-          Total: <span style={{ color: primaryColor }}>${invoice.totalAmount || 0}</span>
+        <div
+          className="total-row"
+          style={{ marginTop: 20, textAlign: "right", fontWeight: "bold", fontSize: 18 }}
+        >
+          Total: <span style={{ color: primaryColor }}>${totalAmount.toFixed(2)}</span>
         </div>
       </div>
 
-      {/* Buttons */}
       <Row justify="end" className="mt-6">
         <Col>
           <Button

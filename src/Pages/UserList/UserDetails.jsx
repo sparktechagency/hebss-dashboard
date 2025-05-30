@@ -8,9 +8,7 @@ import InvoiceTab from "./InvoiceTab";
 import CurrentBoxTab from "./CurrentTab";
 import SubscriptionTab from "./SubscriptionTab";
 import SendMailTab from "./SendMail";
-
-const { TabPane } = Tabs;
-
+import TabPane from "antd/es/tabs/TabPane";
 const UserDetails = () => {
   const { userId } = useParams();
   const [activeTab, setActiveTab] = useState("profile");
@@ -37,6 +35,9 @@ const UserDetails = () => {
     return <Alert message="User not found" type="warning" />;
   }
 
+  // Extract categoryId safely from user data
+  const categoryId = user?.survey?.category || null;
+
   return (
     <div className="flex min-h-screen p-6 bg-gray-100">
       <div className="w-full p-6 bg-white rounded-lg shadow-lg">
@@ -50,7 +51,7 @@ const UserDetails = () => {
           </TabPane>
 
           <TabPane tab="Current Box" key="currentBox">
-            <CurrentBoxTab userId={user._id} />
+            <CurrentBoxTab categoryId={categoryId} />
           </TabPane>
 
           <TabPane tab="Subscription" key="subscription">
