@@ -12,27 +12,55 @@ import {
 } from "recharts";
 import { Eye } from "lucide-react";
 import { useGetAllOrdersQuery } from "../../redux/features/order/orderApi";
-import { useGetDashboardMetricsQuery } from "../../redux/features/dashboard/dashboardApi";
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
 const Dashboard = () => {
-  // Fetch orders for recent orders table (unchanged)
   const {
     data: ordersResponse = {},
-    isLoading,
-    error,
+    isLoading: ordersLoading, // Renamed to avoid conflict
+    error: ordersError, // Renamed to avoid conflict
   } = useGetAllOrdersQuery();
   const fetchedOrders = ordersResponse?.data || [];
 
-  // Fetch dashboard metrics for charts and stats
-  const {
-    data: dashboardData,
-    error: dashError,
-    isLoading: dashLoading,
-  } = useGetDashboardMetricsQuery();
+  // State for the selected year for charts
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear()); 
 
-  const [orders, setOrders] = useState([]);
+  // States for fetch API data
+  const [dashboardData, setDashboardData] = useState(null);
+  const [dashLoading, setDashLoading] = useState(true);
+  const [dashError, setDashError] = useState(null);
+
+  const [orders, setOrders] = useState([]); // This state is for recent orders table
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [activeOrder, setActiveOrder] = useState(null);
+
+  // Effect to fetch dashboard metrics using the Fetch API
+  useEffect(() => {
+    const fetchDashboardMetrics = async () => {
+      setDashLoading(true);
+      setDashError(null); // Clear previous errors
+
+      try {
+        const response = await fetch(
+           `${API_BASE_URL}/dashboard-matrix/retrieve?year=${selectedYear}`
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        setDashboardData(data);
+      } catch (error) {
+        console.error("Failed to fetch dashboard metrics:", error);
+        setDashError(error);
+      } finally {
+        setDashLoading(false);
+      }
+    };
+
+    fetchDashboardMetrics();
+  }, [selectedYear]); // Re-run effect when selectedYear changes
 
   // Update orders state on fetch
   useEffect(() => {
@@ -40,13 +68,14 @@ const Dashboard = () => {
   }, [fetchedOrders]);
 
   // Prepare chart data from dashboardData
+  // Safely destructure dashboardData.data if the API wraps it
   const {
     totalUsers = 0,
     totalOrders = 0,
     totalProducts = 0,
     totalBlogs = 0,
     chartData = {},
-  } = dashboardData || {};
+  } = dashboardData?.data || {}; 
 
   const { months = [], userStatistics = [], orderStatistics = [] } = chartData;
 
@@ -71,6 +100,14 @@ const Dashboard = () => {
     setActiveOrder(null);
   };
 
+  // Handler for year selection change
+  const handleYearChange = (event) => {
+    setSelectedYear(Number(event.target.value));
+  };
+
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 5 }, (_, i) => currentYear - i); 
+
   // Sort latest orders for table
   const latestOrders = [...orders]
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
@@ -79,7 +116,7 @@ const Dashboard = () => {
   // Loading or error handling for dashboard data (charts and stats)
   if (dashLoading) return <Spin tip="Loading dashboard data..." />;
   if (dashError)
-    return <Alert message="Failed to load dashboard data" type="error" />;
+    return <Alert message={`Failed to load dashboard data: ${dashError.message}`} type="error" />;
 
   return (
     <div className="min-h-screen p-4 bg-gray-100 sm:p-6">
@@ -112,7 +149,16 @@ const Dashboard = () => {
           className="p-4 mb-6 bg-white shadow-md sm:p-6 rounded-xl flex-1 min-w-[300px]"
           style={{ border: "1px solid #ddd" }}
         >
-          <h2 className="mb-4 text-lg font-semibold">Orders (Monthly)</h2>
+          <div className="flex justify-between">
+            <h2 className="mb-4 text-lg font-semibold">Orders (Monthly)</h2>
+            <select onChange={handleYearChange} value={selectedYear}>
+              {years.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+          </div>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={ordersData}>
               <XAxis dataKey="name" tick={{ fontSize: 12 }} />
@@ -128,7 +174,16 @@ const Dashboard = () => {
           className="p-4 mb-6 bg-white shadow-md sm:p-6 rounded-xl flex-1 min-w-[300px]"
           style={{ border: "1px solid #ddd" }}
         >
-          <h2 className="mb-4 text-lg font-semibold">User Growth (Monthly)</h2>
+          <div className="flex justify-between">
+            <h2 className="mb-4 text-lg font-semibold">User Growth (Monthly)</h2>
+            <select onChange={handleYearChange} value={selectedYear}>
+              {years.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+          </div>
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={userGrowthData}>
               <XAxis dataKey="name" tick={{ fontSize: 12 }} />
@@ -146,14 +201,14 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Recent Orders Table (unchanged) */}
+      {/* Recent Orders Table (unchanged from your original, still uses RTK Query) */}
       <div className="p-4 overflow-x-auto bg-white shadow-md sm:p-6 rounded-xl">
         <h2 className="mb-4 text-lg font-semibold">Recent Orders</h2>
 
-        {isLoading && <Spin tip="Loading orders..." />}
-        {error && <Alert message="Error loading orders" type="error" />}
+        {ordersLoading && <Spin tip="Loading orders..." />}
+        {ordersError && <Alert message="Error loading orders" type="error" />}
 
-        {!isLoading && !error && (
+        {!ordersLoading && !ordersError && (
           <table className="w-full min-w-[600px] border-collapse">
             <thead>
               <tr className="border-b">
@@ -220,20 +275,20 @@ const Dashboard = () => {
               <strong>Order ID:</strong> {activeOrder.orderId}
             </p>
             <p>
-              <strong>Name:</strong>{" "}
+              <strong>Name:</strong>
               {activeOrder.name || activeOrder.user?.name}
             </p>
             <p>
-              <strong>Address:</strong>{" "}
+              <strong>Address:</strong>
               {activeOrder.address || activeOrder.shippingAddress?.street}
             </p>
             <p>
-              <strong>Date:</strong>{" "}
+              <strong>Date:</strong>
               {activeOrder.date ||
                 new Date(activeOrder.createdAt).toLocaleDateString()}
             </p>
             <p>
-              <strong>Type:</strong>{" "}
+              <strong>Type:</strong>
               {activeOrder.type || activeOrder.items?.[0]?.type || "N/A"}
             </p>
           </div>
