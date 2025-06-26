@@ -20,27 +20,23 @@ const InvoiceHistoryPage = () => {
   }, []);
 
   const userId = localStorage.getItem("userId") || "";
-
   const { data, error, isLoading } = useGetInvoiceHistoryByIdQuery(userId, {
     skip: !userId,
   });
 
   // console.log("Invoice history data:", data);
 
- 
-
   // **Fix here:** invoice data is in `data` as an array, not `data.invoices`
   const invoiceHistoryData = Array.isArray(data) ? data : [];
 
-
-//    {!isLoading && !error && invoiceHistoryData.length === 0 && (
-//   <Alert
-//     message="No invoices found for this user."
-//     type="info"
-//     showIcon
-//     className="mb-4"
-//   />
-// )}
+  //    {!isLoading && !error && invoiceHistoryData.length === 0 && (
+  //   <Alert
+  //     message="No invoices found for this user."
+  //     type="info"
+  //     showIcon
+  //     className="mb-4"
+  //   />
+  // )}
 
   const handleView = (invoice) => {
     setSelectedInvoice(invoice);
@@ -55,10 +51,30 @@ const InvoiceHistoryPage = () => {
   // Update columns as per your invoice data structure:
   const columns = [
     { title: "Invoice ID", dataIndex: "invoiceId", key: "invoiceId" },
-    { title: "Name", dataIndex: "user", key: "user", render: user => user?.email || "N/A" },
-    { title: "Address", dataIndex: "user", key: "address", render: user => user?.address || "N/A" },
-    { title: "Date", dataIndex: "createdAt", key: "createdAt", render: date => new Date(date).toLocaleDateString() },
-    { title: "Price", dataIndex: "totalAmount", key: "totalAmount", render: amount => `$${amount}` },
+    {
+      title: "Name",
+      dataIndex: "user",
+      key: "user",
+      render: (user) => user?.email || "N/A",
+    },
+    {
+      title: "Address",
+      dataIndex: "user",
+      key: "address",
+      render: (user) => user?.address || "N/A",
+    },
+    {
+      title: "Date",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      render: (date) => new Date(date).toLocaleDateString(),
+    },
+    {
+      title: "Price",
+      dataIndex: "totalAmount",
+      key: "totalAmount",
+      render: (amount) => `$${amount}`,
+    },
     {
       title: "View",
       key: "view",
@@ -78,7 +94,9 @@ const InvoiceHistoryPage = () => {
   const filteredData = invoiceHistoryData.filter((invoice) => {
     const userEmail = invoice.user?.email?.toLowerCase() || "";
     const address = invoice.user?.address?.toLowerCase() || "";
-    const createdAt = invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString().toLowerCase() : "";
+    const createdAt = invoice.createdAt
+      ? new Date(invoice.createdAt).toLocaleDateString().toLowerCase()
+      : "";
 
     return (
       userEmail.includes(searchText.toLowerCase()) ||
@@ -103,7 +121,12 @@ const InvoiceHistoryPage = () => {
       </Row>
 
       {!userId && (
-        <Alert message="User ID not found. Please log in." type="warning" showIcon className="mb-4" />
+        <Alert
+          message="User ID not found. Please log in."
+          type="warning"
+          showIcon
+          className="mb-4"
+        />
       )}
 
       {isLoading && <Spin tip="Loading invoices..." />}
@@ -128,12 +151,28 @@ const InvoiceHistoryPage = () => {
       )}
 
       {selectedInvoice && (
-        <Modal title="Invoice Details" visible={isModalVisible} onCancel={handleCancel} footer={null}>
-          <p><strong>Invoice ID:</strong> {selectedInvoice.invoiceId}</p>
-          <p><strong>Name:</strong> {selectedInvoice.user?.email || "N/A"}</p>
-          <p><strong>Address:</strong> {selectedInvoice.user?.address || "N/A"}</p>
-          <p><strong>Date:</strong> {new Date(selectedInvoice.createdAt).toLocaleDateString()}</p>
-          <p><strong>Price:</strong> ${selectedInvoice.totalAmount}</p>
+        <Modal
+          title="Invoice Details"
+          visible={isModalVisible}
+          onCancel={handleCancel}
+          footer={null}
+        >
+          <p>
+            <strong>Invoice ID:</strong> {selectedInvoice.invoiceId}
+          </p>
+          <p>
+            <strong>Name:</strong> {selectedInvoice.user?.email || "N/A"}
+          </p>
+          <p>
+            <strong>Address:</strong> {selectedInvoice.user?.address || "N/A"}
+          </p>
+          <p>
+            <strong>Date:</strong>{" "}
+            {new Date(selectedInvoice.createdAt).toLocaleDateString()}
+          </p>
+          <p>
+            <strong>Price:</strong> ${selectedInvoice.totalAmount}
+          </p>
         </Modal>
       )}
     </div>

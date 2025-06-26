@@ -49,8 +49,6 @@ const ReviewsPage = () => {
       ),
     },
   ];
-
-  // Filter data based on search text
   const filteredData = reviews.filter(
     (review) =>
       review.user.toLowerCase().includes(searchText.toLowerCase()) ||
@@ -90,7 +88,7 @@ const ReviewsPage = () => {
         pagination={{
           pageSize: 12,
         }}
-        rowKey="orderId" // Assuming orderId is a unique key
+        rowKey="orderId"
       />
 
       {/* Modal to show review details */}
