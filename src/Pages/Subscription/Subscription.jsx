@@ -12,7 +12,7 @@ const SubscriptionPage = () => {
 
   // Ensure subscriptions is always an array
   const subscriptions = Array.isArray(rawSubscriptions?.data) ? rawSubscriptions.data : [];
-  console.log(subscriptions)
+  // console.log(subscriptions)
 
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [form] = Form.useForm();
