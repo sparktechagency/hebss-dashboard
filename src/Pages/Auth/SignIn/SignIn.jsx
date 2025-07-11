@@ -4,7 +4,7 @@ import { useState } from "react";
 import { FaRegEye, FaRegEyeSlash } from "react-icons/fa";
 import { useLoginMutation } from "../../../redux/features/auth/authApi";
 import { useDispatch } from "react-redux";
-import { setCredentials } from "../../../redux/features/auth/authSlice"; // ✅ Make sure you import it
+import { setCredentials } from "../../../redux/features/auth/authSlice"; 
 
 const SignIn = () => {
   const navigate = useNavigate();
@@ -25,9 +25,6 @@ const SignIn = () => {
         email: values.email,
         password: values.password,
       }).unwrap();
-
-      // console.log(response); // ✅ Check full API response
-
       // Save full user info to localStorage
       localStorage.setItem("user", JSON.stringify(response?.data));
 

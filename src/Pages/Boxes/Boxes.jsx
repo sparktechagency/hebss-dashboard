@@ -11,7 +11,7 @@ const BoxesList = () => {
   // Fetching boxes data from API using the custom hook
   const { data, isLoading, isError, error } = useGetAllBoxQuery();
 
-  // console.log("API Data:", data); 
+  console.log("API Data:", data); 
 
   // Safely access the boxes array (from data.data)
   const boxes = Array.isArray(data?.data) ? data.data : [];
