@@ -8,6 +8,14 @@ import { useCreateFaqMutation, useDeleteFaqMutation, useEditFaqMutation, useGetA
 const FAQPage = () => {
   const { data: rawData, isLoading, isError, error, refetch } = useGetAllFaqQuery(); 
   const [deleteFaq] = useDeleteFaqMutation(); 
+    const [createFaq] = useCreateFaqMutation();
+  const [editFaq] = useEditFaqMutation();
+
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentFAQ, setCurrentFAQ] = useState(null);  // Store current FAQ being edited
+  const [isViewModalVisible, setIsViewModalVisible] = useState(false); 
+  const [form] = Form.useForm();
 
   // Extract the FAQ data from the response
   const faqs = rawData?.data && Array.isArray(rawData.data) ? rawData.data : [];
@@ -20,14 +28,7 @@ const FAQPage = () => {
     return <div>Error: {error.message}</div>;
   }
 
-  const [createFaq] = useCreateFaqMutation();
-  const [editFaq] = useEditFaqMutation();
 
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [currentFAQ, setCurrentFAQ] = useState(null);  // Store current FAQ being edited
-  const [isViewModalVisible, setIsViewModalVisible] = useState(false); 
-  const [form] = Form.useForm();
 
   const handleFormSubmit = async (values) => {
     try {

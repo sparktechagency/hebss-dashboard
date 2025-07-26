@@ -13,7 +13,7 @@ const ReviewsPage = () => {
   const { data: response = {}, isLoading, error } = useGetAllReviewsQuery();
   const reviews = response?.data || [];
   
-  console.log(reviews)
+
 
   const handleViewClick = (review) => {
     setSelectedReview(review);
@@ -39,9 +39,9 @@ const ReviewsPage = () => {
 
   const columns = [
     {
-      title: "User",
+      title: "Name",
       key: "user",
-      render: (_, record) => record.user?.name || "Unknown",
+      render: (_, record) => record.user?.firstName || "Unknown",
     },
     { title: "Comment", dataIndex: "comment", key: "comment" },
     { title: "Created At", dataIndex: "createdAt", key: "createdAt" },

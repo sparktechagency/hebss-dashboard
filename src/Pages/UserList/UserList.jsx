@@ -14,6 +14,7 @@ const UserList = () => {
 
   // Fetch data using the API hook
   const { data, isLoading, error } = useGetAllUserQuery();
+  console.log(data)
 
   // Ensure data is correctly structured and has 'users' array
   const users = data?.data || [];
@@ -22,7 +23,7 @@ const UserList = () => {
 
 
   const columns = [
-    { title: "ID", dataIndex: "_id", key: "id", responsive: ["sm"] },
+    { title: "Name", dataIndex: "firstName", key: "firstName" },
     { title: "Email", dataIndex: "email", key: "email" },
     { title: "Phone", dataIndex: "phone", key: "phone" },
     {

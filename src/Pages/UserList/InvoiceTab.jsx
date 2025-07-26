@@ -1,33 +1,49 @@
-import { useState, useEffect, useMemo, useRef } from "react";
-import { Table, Checkbox, Button, Row, Col, Spin, Alert, message } from "antd";
+import {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+} from "react";
+import {
+  Table,
+  Button,
+  Row,
+  Col,
+  Spin,
+  Alert,
+  message,
+  InputNumber,
+  Radio,
+} from "antd";
 import { Link } from "react-router-dom";
 import { PrinterOutlined } from "@ant-design/icons";
 import { MdPaid, MdSpatialTracking } from "react-icons/md";
-import { useGetCurrentInvoiceByUserIdQuery } from "../../redux/features/invoice/invoiceApi";
 import { GiCargoShip } from "react-icons/gi";
 import { TbTruckReturn } from "react-icons/tb";
 import { useSelector } from "react-redux";
+import { useGetCurrentInvoiceByUserIdQuery } from "../../redux/features/invoice/invoiceApi";
 
 const primaryColor = "#FF4D4F";
 
 const InvoiceTab = ({ userId }) => {
   const token = useSelector((state) => state.auth.token);
-  const { data, isLoading, isError, error } = useGetCurrentInvoiceByUserIdQuery(userId);
+  const { data, isLoading, isError, error, refetch } =
+    useGetCurrentInvoiceByUserIdQuery(userId);
   const printRef = useRef();
 
   const invoice = data?.data;
-  const baseCost = Number(invoice?.dueAmount) || 0;
 
   const [skipState, setSkipState] = useState({});
-  const [originalQuantities, setOriginalQuantities] = useState({});
+  const [quantities, setQuantities] = useState({});
+
+  const baseCost = Number(invoice?.dueAmount) || 0;
 
   const invoiceData = useMemo(() => {
     if (!invoice?.box?.books) return [];
     return invoice.box.books.map((book) => {
       const skipped = skipState[book._id] ?? true;
-      const quantity = skipped ? 0 : originalQuantities[book._id] || 0;
+      const quantity = skipped ? 0 : quantities[book._id] || 0;
       const total = quantity * baseCost;
-
       return {
         key: book._id,
         invoiceId: invoice.invoiceId,
@@ -38,7 +54,7 @@ const InvoiceTab = ({ userId }) => {
         total,
       };
     });
-  }, [invoice?.box?.books, skipState, originalQuantities, baseCost, invoice?.invoiceId]);
+  }, [invoice?.box?.books, skipState, quantities, baseCost, invoice?.invoiceId]);
 
   const totalAmount = useMemo(() => {
     return invoiceData.reduce((acc, book) => acc + book.total, 0);
@@ -48,16 +64,18 @@ const InvoiceTab = ({ userId }) => {
     if (!invoice?.box?.books) return;
 
     const initialSkip = {};
-    const originalQtys = {};
+    const qty = {};
 
     invoice.box.books.forEach((book) => {
-      const soldBook = invoice.soldBooks?.find((sb) => sb.bookId._id === book._id);
+      const soldBook = invoice.soldBooks?.find(
+        (sb) => sb.bookId._id === book._id
+      );
       initialSkip[book._id] = !soldBook;
-      originalQtys[book._id] = soldBook?.quantity || 0;
+      qty[book._id] = soldBook?.quantity || 1;
     });
 
     setSkipState(initialSkip);
-    setOriginalQuantities(originalQtys);
+    setQuantities(qty);
   }, [invoice]);
 
   if (isLoading) {
@@ -73,54 +91,68 @@ const InvoiceTab = ({ userId }) => {
       <Alert
         message="Error loading invoice"
         type="error"
-        description={error?.data?.message || error?.error || "Failed to fetch invoice data."}
+        description={
+          error?.data?.message || error?.error || "Failed to fetch invoice data."
+        }
       />
     );
   }
 
-  if (!invoice) {
-    return <Alert message="No current invoice found." type="info" />;
+  if (!invoice || !invoice?.user || !invoice?.box?.books) {
+    return <Alert message="No valid invoice found." type="info" />;
   }
 
-  const toggleSkip = (bookId) => {
-    setSkipState((prev) => ({ ...prev, [bookId]: !prev[bookId] }));
+  const toggleSkip = (bookId, value) => {
+    setSkipState((prev) => ({ ...prev, [bookId]: value }));
+  };
+
+  const updateQuantity = (bookId, value) => {
+    setQuantities((prev) => ({ ...prev, [bookId]: value }));
   };
 
   const columns = [
     {
       title: "S/N",
-      key: "serial",
       render: (text, record, index) => index + 1,
     },
-    { title: "Book Title", dataIndex: "description", key: "description" },
+    { title: "Book Title", dataIndex: "description" },
     {
-      title: "Skip",
+      title: "Action",
       dataIndex: "key",
-      key: "skip",
       render: (bookId) => (
-        <Checkbox checked={!!skipState[bookId]} onChange={() => toggleSkip(bookId)} />
+        <Radio.Group
+          value={skipState[bookId] ? "skip" : "keep"}
+          onChange={(e) => toggleSkip(bookId, e.target.value === "skip")}
+        >
+          <Radio value="keep">Keep</Radio>
+          <Radio value="skip">Skip</Radio>
+        </Radio.Group>
       ),
     },
     {
-      title: "Keep",
+      title: "Quantity",
       dataIndex: "key",
-      key: "keep",
-      render: (bookId) => (
-        <Checkbox checked={!skipState[bookId]} onChange={() => toggleSkip(bookId)} />
-      ),
+      render: (bookId) =>
+        !skipState[bookId] ? (
+          <InputNumber
+            min={1}
+            value={quantities[bookId]}
+            onChange={(val) => updateQuantity(bookId, val)}
+          />
+        ) : (
+          0
+        ),
     },
-    { title: "Quantity", dataIndex: "quantity", key: "quantity" },
     {
       title: "Base Cost",
       dataIndex: "baseCost",
-      key: "baseCost",
       render: (cost) => `$${cost.toFixed(2)}`,
     },
     {
       title: "Total Cost",
       dataIndex: "total",
-      key: "total",
-      render: (total) => (typeof total === "number" ? `$${total.toFixed(2)}` : "$0.00"),
+      render: (total) =>
+        typeof total === "number" ? `$${total.toFixed(2)}` : "$0.00",
     },
   ];
 
@@ -133,15 +165,12 @@ const InvoiceTab = ({ userId }) => {
           <title>Invoice Print</title>
           <style>
             @media print { @page { size: A4; margin: 20mm; } }
-            body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+            body { font-family: Arial, sans-serif; padding: 20px; }
             table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { border: 1px solid #333; padding: 8px; text-align: left; }
+            th, td { border: 1px solid #333; padding: 8px; }
             th { background-color: #f0f0f0; }
             .header-section { display: flex; justify-content: space-between; margin-bottom: 20px; }
-            .header-section div { flex: 1; }
-            .header-section div:not(:last-child) { margin-right: 20px; }
-            h2 { margin-top: 0; }
-            .total-row { margin-top: 20px; text-align: right; font-weight: bold; font-size: 18px; }
+            h2 { margin: 0; }
           </style>
         </head>
         <body>${printContents}</body>
@@ -157,7 +186,7 @@ const InvoiceTab = ({ userId }) => {
 
   const handleTrackingClick = () => {
     if (invoice.trackingUrl) {
-      window.open(invoice.trackingUrl, "_blank", "noopener,noreferrer");
+      window.open(invoice.trackingUrl, "_blank");
     } else {
       alert("Tracking URL not available");
     }
@@ -165,7 +194,7 @@ const InvoiceTab = ({ userId }) => {
 
   const handleTrackingLabel = () => {
     if (invoice.returnLabelUrl) {
-      window.open(invoice.returnLabelUrl, "_blank", "noopener,noreferrer");
+      window.open(invoice.returnLabelUrl, "_blank");
     } else {
       alert("Return Label URL not available");
     }
@@ -173,71 +202,57 @@ const InvoiceTab = ({ userId }) => {
 
   const handleMakeShip = async () => {
     try {
-      if (!token) {
-        message.error("Unauthorized. Please login.");
-        return;
+      if (!token) return message.error("Unauthorized. Please login.");
+
+      const address = invoice.user?.address;
+      if (!address?.street1 || !address?.zip) {
+        return message.error("Incomplete address for shipping.");
       }
 
-      const address = invoice.user?.address || {};
-      const weight = invoice.box?.weight || 17.6;
-
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/order/get-shipping-rates`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          toAddress: {
-            street1: address.street1 || "416 Montgomery",
-            city: address.city || "San Francisco",
-            state: address.state || "CA",
-            zip: address.zip || "94105",
-            country: address.country || "US",
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/order/get-shipping-rates`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
-          parcelDetails: {
-            weight: weight.toString(),
-          },
-        }),
-      });
+          body: JSON.stringify({
+            toAddress: address,
+            parcelDetails: {
+              weight: invoice.box?.weight?.toString() || "17.6",
+            },
+          }),
+        }
+      );
 
       const result = await response.json();
-      console.log("🚀 Full API response:", result);
 
-      if (result.statusCode !== 200) {
-        throw new Error(result.message || result.error || "Failed to fetch shipping rates");
-      }
-
+      if (result.statusCode !== 200) throw new Error(result.message);
       message.success(result.message || "Shipping rates retrieved!");
-
+      refetch();
       if (result.data?.trackingUrl) {
-        window.open(result.data.trackingUrl, "_blank", "noopener,noreferrer");
+        window.open(result.data.trackingUrl, "_blank");
       }
-    } catch (error) {
-      console.error("❌ Shipping Error:", error);
-      message.error(error.message || "Shipping failed.");
+    } catch (err) {
+      console.error("Shipping Error:", err);
+      message.error(err.message || "Shipping failed.");
     }
   };
 
   const getpaid = async () => {
     try {
-      if (!token) {
-        message.error("Unauthorized. Please log in.");
-        return;
-      }
+      if (!token) return message.error("Unauthorized. Please login.");
 
       const soldBooks = invoice.box.books
         .filter((book) => !skipState[book._id])
         .map((book) => ({
           bookId: book._id,
-          quantity: originalQuantities[book._id] || 0,
+          quantity: quantities[book._id] || 0,
         }))
         .filter((book) => book.quantity > 0);
 
-      if (soldBooks.length === 0) {
-        message.warning("No books selected for payment.");
-        return;
-      }
+      if (!soldBooks.length) return message.warning("No books selected for payment.");
 
       const payload = {
         soldBooks,
@@ -260,16 +275,12 @@ const InvoiceTab = ({ userId }) => {
       );
 
       const result = await response.json();
-      console.log("🚀 Get Paid API response:", result);
-
-      if (result.statusCode !== 200) {
-        throw new Error(result.message || result.error || "Payment failed.");
-      }
-
-      message.success(result.message || "Payment successful!");
-    } catch (error) {
-      console.error("❌ Payment Error:", error);
-      message.error(error.message || "Payment failed.");
+      if (result.statusCode !== 200) throw new Error(result.message);
+      message.success("Payment successful!");
+      refetch();
+    } catch (err) {
+      console.error("Payment Error:", err);
+      message.error(err.message || "Payment failed.");
     }
   };
 
@@ -277,12 +288,18 @@ const InvoiceTab = ({ userId }) => {
     <div className="p-6">
       <div className="flex justify-end gap-2 mb-4">
         <Link to="/invoice-history">
-          <Button type="default" style={{ border: "none", backgroundColor: primaryColor, color: "white" }}>
+          <Button
+            type="default"
+            style={{ border: "none", backgroundColor: primaryColor, color: "white" }}
+          >
             Invoice History
           </Button>
         </Link>
         <Link to="/book-list">
-          <Button type="default" style={{ border: "none", backgroundColor: primaryColor, color: "white" }}>
+          <Button
+            type="default"
+            style={{ border: "none", backgroundColor: primaryColor, color: "white" }}
+          >
             Add New Book
           </Button>
         </Link>
@@ -307,39 +324,56 @@ const InvoiceTab = ({ userId }) => {
         <Table
           columns={columns}
           dataSource={invoiceData}
-          pagination={false}
           rowKey="key"
+          pagination={{ pageSize: 8 }}
           bordered
           style={{ marginTop: 20 }}
         />
 
         <div className="flex justify-end py-2 mt-2 gap-x-10">
           <div>
-            <Button onClick={handleMakeShip} icon={<GiCargoShip />} style={{ marginRight: 10, color: primaryColor }}>
+            <Button
+              onClick={handleMakeShip}
+              icon={<GiCargoShip />}
+              style={{ marginRight: 10, color: primaryColor }}
+            >
               Make Ship
             </Button>
-            <Button onClick={getpaid} icon={<MdPaid />} style={{ marginRight: 10, color: primaryColor }}>
+            <Button
+              onClick={getpaid}
+              icon={<MdPaid />}
+              style={{ marginRight: 10, color: primaryColor }}
+            >
               Get Paid
             </Button>
           </div>
           <p className="text-xl font-bold">
-            Total:{" "}
-            <span style={{ color: primaryColor }}>
-              ${totalAmount.toFixed(2)}
-            </span>
+            Total: <span style={{ color: primaryColor }}>${totalAmount.toFixed(2)}</span>
           </p>
         </div>
       </div>
 
       <Row justify="end" className="mt-6">
         <Col>
-          <Button onClick={handleTrackingClick} icon={<MdSpatialTracking />} style={{ marginRight: 10, color: primaryColor }}>
+          <Button
+            onClick={handleTrackingClick}
+            icon={<MdSpatialTracking />}
+            style={{ marginRight: 10, color: primaryColor }}
+          >
             Tracking
           </Button>
-          <Button onClick={handleTrackingLabel} icon={<TbTruckReturn />} style={{ marginRight: 10, color: primaryColor }}>
+          <Button
+            onClick={handleTrackingLabel}
+            icon={<TbTruckReturn />}
+            style={{ marginRight: 10, color: primaryColor }}
+          >
             Return Label
           </Button>
-          <Button icon={<PrinterOutlined />} onClick={handlePrint} style={{ marginRight: 10, color: primaryColor }}>
+          <Button
+            icon={<PrinterOutlined />}
+            onClick={handlePrint}
+            style={{ marginRight: 10, color: primaryColor }}
+          >
             Print
           </Button>
         </Col>
