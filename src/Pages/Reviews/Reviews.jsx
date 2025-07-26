@@ -6,35 +6,56 @@ import { useGetAllReviewsQuery } from "../../redux/features/reviews/reviewsApi";
 const { Search } = Input;
 
 const ReviewsPage = () => {
-  const [searchText, setSearchText] = useState(""); // For search functionality
-  const [isModalVisible, setIsModalVisible] = useState(false); // Modal visibility state
-  const [selectedReview, setSelectedReview] = useState(null); // Selected review details
+  const [searchText, setSearchText] = useState("");
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedReview, setSelectedReview] = useState(null);
 
-  // Fetch reviews using the API
   const { data: response = {}, isLoading, error } = useGetAllReviewsQuery();
-  const reviews = response?.data || []; // Get reviews from the response
+  const reviews = response?.data || [];
+  
+  console.log(reviews)
 
-  // console.log(reviews)
-
-  // Handle opening modal and setting selected review
   const handleViewClick = (review) => {
     setSelectedReview(review);
-    setIsModalVisible(true); // Show modal when View button is clicked
+    setIsModalVisible(true);
   };
 
-  // Handle closing the modal
   const handleModalClose = () => {
     setIsModalVisible(false);
     setSelectedReview(null);
   };
 
+  // Handle search filtering with null-safe logic
+  const filteredData = reviews.filter((review) => {
+    const userName = review.user?.name || "";
+    const createdAt = review.createdAt || "";
+    const comment = review.comment || "";
+    return (
+      userName.toLowerCase().includes(searchText.toLowerCase()) ||
+      createdAt.toLowerCase().includes(searchText.toLowerCase()) ||
+      comment.toLowerCase().includes(searchText.toLowerCase())
+    );
+  });
+
   const columns = [
-    { title: "User", dataIndex: "user", key: "user" }, // Display user info
-    { title: "Comment", dataIndex: "comment", key: "comment" }, // Display comment
-    { title: "Created At", dataIndex: "createdAt", key: "createdAt" }, // Display createdAt date
-    { title: "Difficulty", dataIndex: "difficulty", key: "difficulty" }, // Display difficulty
-    { title: "Reader Thought", dataIndex: "readerThought", key: "readerThought" }, // Display reader thought
-    { title: "Topic & Theme", dataIndex: "topicAndTheme", key: "topicAndTheme" }, // Display topic and theme
+    {
+      title: "User",
+      key: "user",
+      render: (_, record) => record.user?.name || "Unknown",
+    },
+    { title: "Comment", dataIndex: "comment", key: "comment" },
+    { title: "Created At", dataIndex: "createdAt", key: "createdAt" },
+    { title: "Difficulty", dataIndex: "difficulty", key: "difficulty" },
+    {
+      title: "Reader Thought",
+      dataIndex: "readerThought",
+      key: "readerThought",
+    },
+    {
+      title: "Topic & Theme",
+      dataIndex: "topicAndTheme",
+      key: "topicAndTheme",
+    },
     {
       title: "Action",
       key: "action",
@@ -42,21 +63,14 @@ const ReviewsPage = () => {
         <Button
           icon={<ArrowRightOutlined />}
           style={{ backgroundColor: "#FF4D4F", color: "white" }}
-          onClick={() => handleViewClick(record)} // Open modal with the clicked review details
+          onClick={() => handleViewClick(record)}
         >
           View
         </Button>
       ),
     },
   ];
-  const filteredData = reviews.filter(
-    (review) =>
-      review.user.toLowerCase().includes(searchText.toLowerCase()) ||
-      review.feedbackDate.toLowerCase().includes(searchText.toLowerCase()) ||
-      review.comments.toLowerCase().includes(searchText.toLowerCase())
-  );
 
-  // Show loading or error messages
   if (isLoading) {
     return <div>Loading reviews...</div>;
   }
@@ -69,7 +83,6 @@ const ReviewsPage = () => {
     <div className="p-6">
       <h3 className="mb-4 text-2xl font-semibold">Reviews</h3>
 
-      {/* Search Bar */}
       <Row justify="end" className="mb-4">
         <Col>
           <Input
@@ -81,43 +94,42 @@ const ReviewsPage = () => {
         </Col>
       </Row>
 
-      {/* Table with pagination */}
       <Table
         columns={columns}
         dataSource={filteredData}
-        pagination={{
-          pageSize: 12,
-        }}
-        rowKey="orderId"
+        pagination={{ pageSize: 12 }}
+        rowKey={(record) => record.id || record.createdAt}
+        locale={{ emptyText: "No reviews found matching your search." }}
       />
 
-      {/* Modal to show review details */}
       {selectedReview && (
         <Modal
           title="Review Details"
-          visible={isModalVisible}
+          open={isModalVisible}
           onCancel={handleModalClose}
           footer={null}
         >
-           <p>
-            <strong>User:</strong> {selectedReview.user}
+          <p>
+            <strong>User:</strong> {selectedReview.user?.name || "Unknown"}
           </p>
           <p>
-            <strong>Comment:</strong> {selectedReview.comment}
+            <strong>Comment:</strong> {selectedReview.comment || "N/A"}
           </p>
           <p>
-            <strong>Created At:</strong> {new Date(selectedReview.createdAt).toLocaleString()}
+            <strong>Created At:</strong>{" "}
+            {new Date(selectedReview.createdAt).toLocaleString()}
           </p>
           <p>
-            <strong>Difficulty:</strong> {selectedReview.difficulty}
+            <strong>Difficulty:</strong> {selectedReview.difficulty || "N/A"}
           </p>
           <p>
-            <strong>Reader Thought:</strong> {selectedReview.readerThought}
+            <strong>Reader Thought:</strong>{" "}
+            {selectedReview.readerThought || "N/A"}
           </p>
           <p>
-            <strong>Topic & Theme:</strong> {selectedReview.topicAndTheme}
+            <strong>Topic & Theme:</strong>{" "}
+            {selectedReview.topicAndTheme || "N/A"}
           </p>
-
         </Modal>
       )}
     </div>
