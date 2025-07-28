@@ -24,9 +24,7 @@ const InvoiceHistoryPage = () => {
     skip: !userId,
   });
 
-  // console.log("Invoice history data:", data);
 
-  // **Fix here:** invoice data is in `data` as an array, not `data.invoices`
   const invoiceHistoryData = Array.isArray(data) ? data : [];
 
   //    {!isLoading && !error && invoiceHistoryData.length === 0 && (

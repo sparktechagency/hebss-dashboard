@@ -33,6 +33,8 @@ const InvoiceTab = ({ userId }) => {
 
   const invoice = data?.data;
 
+  console.log(invoice)
+
   const [skipState, setSkipState] = useState({});
   const [quantities, setQuantities] = useState({});
 
@@ -200,45 +202,156 @@ const InvoiceTab = ({ userId }) => {
     }
   };
 
+  // const handleMakeShip = async () => {
+  //   try {
+
+  //     if (!token) return message.error("Unauthorized. Please login.");
+  //     const address = invoice.user?.address;
+  //     if (!address?.street1 || !address?.zip) {
+  //       return message.error("Incomplete address for shipping.");
+  //     }
+
+  //     const response = await fetch(
+  //       `${import.meta.env.VITE_BACKEND_URL}/order/get-shipping-rates`,
+  //       {
+  //         method: "POST",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //         body: JSON.stringify({
+  //           toAddress: address,
+  //           parcelDetails: {
+  //             weight: invoice.box?.weight?.toString() || "17.6",
+  //           },
+  //         }),
+  //       }
+  //     );
+
+  //     const result = await response.json();
+  //        console.log(result)
+  //     if (result.statusCode !== 200) throw new Error(result.message);
+
+  //     message.success(result.message);
+  //     refetch();
+  //     if (result.data?.trackingUrl) {
+  //       window.open(result.data.trackingUrl, "_blank");
+  //     }
+  //   } catch (err) {
+  //     console.error("Shipping Error:", err);
+  //     message.error(err.message);
+  //   }
+  // };
+
+  // const handleMakeShip = async () => {
+  //   try {
+  //     if (!token) return message.error("Unauthorized. Please login.");
+  //      console.log(message)
+  //     const address = invoice.user?.address;
+  //     if (!address?.street1 || !address?.zip) {
+  //       return message.error("Incomplete address for shipping.");
+  //     }
+
+  //     const response = await fetch(
+  //       `${import.meta.env.VITE_BACKEND_URL}/order/get-shipping-rates`,
+  //       {
+  //         method: "POST",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //         body: JSON.stringify({
+  //           toAddress: address,
+  //           parcelDetails: {
+  //             weight: invoice.box?.weight?.toString(),
+  //           },
+  //         }),
+  //       }
+  //     );
+
+  //     const result = await response.json();
+
+  //     console.log("Full backend response:", result); 
+
+  //     if (result.statusCode !== 200) {
+  //       throw new Error(result.message || "Unexpected error from backend");
+  //     }
+
+  //     message.success("Shipping created successfully!");
+
+  //     alert(JSON.stringify(result.data, null, 2));
+
+  //     refetch();
+
+  //     if (result.data?.trackingUrl) {
+  //       window.open(result.data.trackingUrl, "_blank");
+  //     }
+
+  //   } catch (err) {
+  //     console.error("Shipping Error:", err);
+  //     message.error(err.message || "Shipping failed.");
+  //   }
+  // };
+
   const handleMakeShip = async () => {
-    try {
-      if (!token) return message.error("Unauthorized. Please login.");
+  try {
+    if (!token) return message.error("Unauthorized. Please login.");
 
-      const address = invoice.user?.address;
-      if (!address?.street1 || !address?.zip) {
-        return message.error("Incomplete address for shipping.");
-      }
+    const address = {
+      name: invoice.user?.name || "Customer",
+      phone: invoice.user?.phone || "0000000000",
+      street1: invoice.user?.address?.street1,
+      city: invoice.user?.address?.city,
+      state: invoice.user?.address?.state,
+      zip: invoice.user?.address?.zip,
+      country: invoice.user?.address?.country || "US",
+    };
 
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/order/get-shipping-rates`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+    if (!address.street1 || !address.zip) {
+      return message.error("Incomplete address for shipping.");
+    }
+
+    const response = await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/order/get-shipping-rates`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          toAddress: address,
+          parcelDetails: {
+            weight: invoice.box?.weight?.toString() || "17.6",
           },
-          body: JSON.stringify({
-            toAddress: address,
-            parcelDetails: {
-              weight: invoice.box?.weight?.toString() || "17.6",
-            },
-          }),
-        }
-      );
+        }),
+      }
+    );
 
-      const result = await response.json();
+    const result = await response.json();
 
-      if (result.statusCode !== 200) throw new Error(result.message);
-      message.success(result.message || "Shipping rates retrieved!");
+    console.log("📦 Full backend response:", result);
+
+    alert(JSON.stringify(result, null, 2));
+
+    if (response.ok && result?.data) {
+      message.success("Shipping created successfully!");
       refetch();
+
       if (result.data?.trackingUrl) {
         window.open(result.data.trackingUrl, "_blank");
       }
-    } catch (err) {
-      console.error("Shipping Error:", err);
-      message.error(err.message || "Shipping failed.");
+    } else {
+        throw new Error(result?.error || result?.message || "Shipping failed.");
     }
-  };
+
+  } catch (err) {
+    console.error("Shipping Error:", err);
+    message.error(err.message || "Shipping failed.");
+  }
+};
+
+
 
   const getpaid = async () => {
     try {
