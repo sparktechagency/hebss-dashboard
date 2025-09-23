@@ -17,6 +17,8 @@ const UserDetails = () => {
   // Fetch user data by ID
   const { data: userData, error: userError, isLoading: userLoading } = useGetSingleUserQuery(userId);
 
+  console.log("User data :", userData)
+
   if (userLoading) {
     return (
       <div className="flex justify-center p-10">
@@ -30,6 +32,7 @@ const UserDetails = () => {
   }
 
   const user = userData?.data;
+  // console.log(user)
 
   if (!user) {
     return <Alert message="User not found" type="warning" />;

@@ -14,7 +14,7 @@ const UserList = () => {
 
   // Fetch data using the API hook
   const { data, isLoading, error } = useGetAllUserQuery();
-  console.log(data)
+  // console.log(data)
 
   // Ensure data is correctly structured and has 'users' array
   const users = data?.data || [];

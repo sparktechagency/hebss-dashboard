@@ -1,59 +1,55 @@
 import React, { useState, useEffect } from "react";
-import { Row, Col, Input, Button, Card } from "antd";
-import { EditOutlined } from "@ant-design/icons";
 import { useUpdateUserByIdMutation } from "../../redux/features/user/userApi";
-
-const primaryColor = "#FF4D4F";
-
-const CustomInput = ({ value, onChange, disabled }) => (
-  <Input
-    value={value}
-    onChange={onChange}
-    disabled={disabled}
-    style={{
-      backgroundColor: "#f1f1f1",
-      border: "none",
-      borderRadius: "8px",
-      padding: "10px",
-      fontSize: "16px",
-      boxShadow: disabled ? "none" : "0 0 5px rgba(0, 0, 0, 0.1)",
-    }}
-  />
-);
 
 const ProfileTab = ({ user, isEditMode, setIsEditMode }) => {
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    dob: "",
-    gender: "",
-    address: "",
+    firstName: "N/A",
+    lastName: "N/A",
+    email: "N/A",
+    phone: "N/A",
+    dob: "N/A",
+    gender: "N/A",
+    address: "N/A",
   });
 
   const [updateUser, { isLoading: isUpdating }] = useUpdateUserByIdMutation();
 
+  const normalizeUserData = (user) => {
+    if (!user) return {};
+    const survey = user.survey || {};
+    const shipping = user.shippingAddress || {};
+
+    const firstName = survey.readerName
+      ? survey.readerName.split(" ")[0]
+      : user.firstName || "N/A";
+    const lastName = survey.readerName
+      ? survey.readerName.split(" ").slice(1).join(" ")
+      : user.lastName || "N/A";
+    const dob = survey.dateOfBirth
+      ? survey.dateOfBirth.slice(0, 10)
+      : user.dob
+      ? user.dob.slice(0, 10)
+      : "N/A";
+    const gender = survey.gender || user.gender || "N/A";
+    const address = shipping.street
+      ? `${shipping.street}, ${shipping.city || ""}, ${shipping.state || ""}, ${shipping.country || ""}, ${shipping.zipCode || ""}`
+      : user.address || "N/A";
+
+    return {
+      firstName,
+      lastName,
+      email: user.email || "N/A",
+      phone: user.phone || "N/A",
+      dob,
+      gender,
+      address,
+    };
+  };
+
   useEffect(() => {
     if (user) {
-      // Extract firstName and lastName from survey.readerName if survey exists
-      let firstName = "";
-      let lastName = "";
-      if (user.survey && user.survey.readerName) {
-        const names = user.survey.readerName.trim().split(" ");
-        firstName = names[0] || "";
-        lastName = names.slice(1).join(" ") || "";
-      }
-
-      setFormData({
-        firstName,
-        lastName,
-        email: user.email || "",
-        phone: user.phone || "",
-        dob: user.survey?.dateOfBirth ? user.survey.dateOfBirth.slice(0, 10) : "", // ISO date to yyyy-mm-dd
-        gender: user.gender || "",
-        address: user.address || "", // Assuming address is top level; blank if missing
-      });
+      console.log("User data:", user);
+      setFormData(normalizeUserData(user));
     }
   }, [user]);
 
@@ -63,113 +59,77 @@ const ProfileTab = ({ user, isEditMode, setIsEditMode }) => {
 
   const handleSave = async () => {
     try {
-      // Send updated data to backend
       await updateUser({ _id: user._id, ...formData }).unwrap();
       setIsEditMode(false);
-    } catch (error) {
-      alert("Failed to update user data");
-      console.error(error);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to save user data");
     }
   };
 
   const handleCancel = () => {
-    // Reset form to initial user data
-    if (user) {
-      let firstName = "";
-      let lastName = "";
-      if (user.survey && user.survey.readerName) {
-        const names = user.survey.readerName.trim().split(" ");
-        firstName = names[0] || "";
-        lastName = names.slice(1).join(" ") || "";
-      }
-
-      setFormData({
-        firstName,
-        lastName,
-        email: user.email || "",
-        phone: user.phone || "",
-        dob: user.survey?.dateOfBirth ? user.survey.dateOfBirth.slice(0, 10) : "",
-        gender: user.gender || "",
-        address: user.address || "",
-      });
-    }
+    if (user) setFormData(normalizeUserData(user));
     setIsEditMode(false);
   };
 
   return (
-    <Card style={{ maxWidth: "900px", margin: "auto" }} className="p-6 rounded-lg shadow-md">
-      {/* {!isEditMode && (
-        <div className="flex justify-end mb-4">
-          <Button
-            icon={<EditOutlined />}
-            style={{ backgroundColor: primaryColor, color: "white", border: "none", padding: "6px 16px" }}
+    <div className="max-w-3xl p-6 mx-auto bg-white rounded-lg shadow-md">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-semibold text-gray-800">Profile</h2>
+        {!isEditMode && (
+          <button
             onClick={() => setIsEditMode(true)}
+            className="px-4 py-2 text-white bg-red-500 rounded hover:bg-red-600"
           >
             Edit
-          </Button>
-        </div>
-      )} */}
+          </button>
+        )}
+      </div>
 
-      <Row gutter={24} className="mb-4">
-        <Col span={12}>
-          <label className="font-semibold text-gray-700">First Name</label>
-          <CustomInput value={formData.firstName} onChange={handleChange("firstName")} disabled={!isEditMode} />
-        </Col>
-        <Col span={12}>
-          <label className="font-semibold text-gray-700">Last Name</label>
-          <CustomInput value={formData.lastName} onChange={handleChange("lastName")} disabled={!isEditMode} />
-        </Col>
-      </Row>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {[
+          { key: "firstName", label: "First Name" },
+          { key: "lastName", label: "Last Name" },
+          { key: "email", label: "Email" },
+          { key: "phone", label: "Phone Number" },
+          { key: "dob", label: "Date of Birth", type: "date" },
+          { key: "gender", label: "Gender" },
+          { key: "address", label: "Address", full: true },
+        ].map(({ key, label, type, full }) => (
+          <div key={key} className={full ? "md:col-span-2" : ""}>
+            <label className="block mb-1 font-medium text-gray-700">{label}</label>
+            <input
+              type={type || "text"}
+              value={formData[key]}
+              onChange={handleChange(key)}
+              disabled={!isEditMode}
+              className={`w-full p-2 rounded border ${
+                isEditMode ? "border-gray-300" : "bg-gray-100"
+              }`}
+            />
+          </div>
+        ))}
+      </div>
 
-      <Row gutter={24} className="mb-4">
-        <Col span={12}>
-          <label className="font-semibold text-gray-700">Email</label>
-          <CustomInput value={formData.email} onChange={handleChange("email")} disabled={!isEditMode} />
-        </Col>
-        <Col span={12}>
-          <label className="font-semibold text-gray-700">Phone Number</label>
-          <CustomInput value={formData.phone} onChange={handleChange("phone")} disabled={!isEditMode} />
-        </Col>
-      </Row>
-
-      <Row gutter={24} className="mb-4">
-        <Col span={12}>
-          <label className="font-semibold text-gray-700">Date of Birth</label>
-          <CustomInput value={formData.dob} onChange={handleChange("dob")} disabled={!isEditMode} />
-        </Col>
-        <Col span={12}>
-          <label className="font-semibold text-gray-700">Gender</label>
-          <CustomInput value={formData.gender} onChange={handleChange("gender")} disabled={!isEditMode} />
-        </Col>
-      </Row>
-
-      {/* <Row gutter={24} className="mb-4">
-        <Col span={24}>
-          <label className="font-semibold text-gray-700">Address</label>
-          <CustomInput value={formData.address} onChange={handleChange("address")} disabled={!isEditMode} />
-        </Col>
-      </Row> */}
-
-      {/* {isEditMode && (
-        <div className="flex justify-end mt-4">
-          <Button
-            style={{ backgroundColor: "#FF4D4F", color: "white", border: "none", padding: "8px 16px", marginRight: "10px" }}
+      {isEditMode && (
+        <div className="flex justify-end gap-2 mt-6">
+          <button
             onClick={handleCancel}
             disabled={isUpdating}
+            className="px-4 py-2 text-gray-800 bg-gray-300 rounded hover:bg-gray-400"
           >
             Cancel
-          </Button>
-          <Button
-            type="primary"
-            style={{ backgroundColor: primaryColor, color: "white", border: "none", padding: "8px 16px" }}
+          </button>
+          <button
             onClick={handleSave}
-            loading={isUpdating}
+            disabled={isUpdating}
+            className="px-4 py-2 text-white bg-red-500 rounded hover:bg-red-600"
           >
-            Save
-          </Button>
+            {isUpdating ? "Saving..." : "Save"}
+          </button>
         </div>
-      )} */}
-    </Card>
+      )}
+    </div>
   );
 };
 
