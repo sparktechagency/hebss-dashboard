@@ -140,6 +140,7 @@ const EditBoxPage = () => {
       console.log("Update response:", res);
       message.success("Box updated successfully!");
       refetchBox();
+      navigate("/boxes"); 
     } catch (err) {
       console.error("Update error:", err);
       message.success(
