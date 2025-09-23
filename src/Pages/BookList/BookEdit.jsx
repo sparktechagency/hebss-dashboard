@@ -15,8 +15,6 @@ import { useUpdateBookMutation } from "../../redux/features/products/productsApi
 const EditBookPopup = ({ visible, onClose, book, onSave }) => {
   const [bookData, setBookData] = useState(null);
   const initializedRef = useRef(false);
-
-  // ADD this line to get isLoading from your mutation
   const [updateBook, { isLoading }] = useUpdateBookMutation();
 
   useEffect(() => {

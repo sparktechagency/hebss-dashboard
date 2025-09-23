@@ -106,17 +106,37 @@ const BookList = () => {
   };
 
   // IMPORTANT: Fix handleEditBook to pass { bookId, updatedBook }
+  // const handleEditBook = async (updatedBook) => {
+  //   try {
+  //     await updateBook({
+  //       bookId: updatedBook._id,
+  //       updatedBook,
+  //     });
+  //     setIsEditModalVisible(false);
+  //   } catch (error) {
+  //     console.error("Error updating book:", error);
+  //   }
+  // };
+
   const handleEditBook = async (updatedBook) => {
-    try {
-      await updateBook({
-        bookId: updatedBook._id,
-        updatedBook,
-      });
-      setIsEditModalVisible(false);
-    } catch (error) {
-      console.error("Error updating book:", error);
-    }
-  };
+  try {
+    // Call API mutation
+    await updateBook({ _id: updatedBook._id, data: updatedBook }).unwrap();
+
+    // Close modal
+    setIsEditModalVisible(false);
+
+    // Optional: show success
+    message.success("Book updated successfully!");
+
+    // Refetch books from server so UI updates
+    // If your `useGetAllBooksQuery` is set up with `refetchOnMountOrArgChange`, you may not need this
+    // Otherwise, force refetch by invalidating cache
+  } catch (error) {
+    console.error("Error updating book:", error);
+    message.error("Failed to update book.");
+  }
+};
 
   const handleDeleteBook = async (bookId) => {
     try {

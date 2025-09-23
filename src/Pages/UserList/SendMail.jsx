@@ -46,7 +46,7 @@ const SendMailTab = ({ userId, userEmail }) => {
     <div className="min-h-screen p-6 bg-gray-100">
       <h2 className="mb-6 text-3xl font-bold">Send Email</h2>
 
-      <div className="p-6 bg-white rounded-lg shadow-md">
+      <div className="p-20 bg-white rounded-lg shadow-md">
         <h3 className="mb-4 text-xl font-bold">Compose Your Email</h3>
 
         <ReactQuill
@@ -56,9 +56,9 @@ const SendMailTab = ({ userId, userEmail }) => {
           placeholder="Write your message here..."
           style={{
             height: "300px",
-            marginBottom: "20px",
+            marginBottom: "16px",
             borderRadius: "4px",
-            border: "1px solid #d9d9d9",
+            border: "0px solid #d9d9d9",
           }}
         />
 
@@ -66,13 +66,14 @@ const SendMailTab = ({ userId, userEmail }) => {
           <Alert
             type="error"
             message={errorMsg}
-            style={{ marginBottom: 16 }}
+            style={{ marginBottom: 5 }}
             closable
             onClose={() => setErrorMsg(null)}
           />
         )}
 
         <Button
+        className="mt-10"
           type="primary"
           style={{
             backgroundColor: "#F37975",
