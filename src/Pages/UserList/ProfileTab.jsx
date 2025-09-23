@@ -74,7 +74,7 @@ const ProfileTab = ({ user, isEditMode, setIsEditMode }) => {
 
   return (
     <div className="max-w-3xl p-6 mx-auto bg-white rounded-lg shadow-md">
-      <div className="flex items-center justify-between mb-6">
+      <div className="items-center justify-between hidden mb-6 ">
         <h2 className="text-xl font-semibold text-gray-800">Profile</h2>
         {!isEditMode && (
           <button
@@ -112,7 +112,7 @@ const ProfileTab = ({ user, isEditMode, setIsEditMode }) => {
       </div>
 
       {isEditMode && (
-        <div className="flex justify-end gap-2 mt-6">
+        <div className="justify-end hidden gap-2 mt-6 ">
           <button
             onClick={handleCancel}
             disabled={isUpdating}
