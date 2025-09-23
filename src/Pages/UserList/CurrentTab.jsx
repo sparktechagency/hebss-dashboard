@@ -3,13 +3,30 @@ import { AllImages } from "../../assets/image/AllImages";
 import { Button, Card, Spin, Alert } from "antd";
 import { Edit } from "lucide-react";
 import { useGetBoxByCategoryIdQuery } from "../../redux/features/box/boxApi";
+import { AiOutlineUser } from "react-icons/ai";
 
 const CurrentBoxTab = ({ categoryId }) => {
   const navigate = useNavigate();
 
-  if (!categoryId) {
-    return <Alert message="Category ID missing" type="warning" />;
-  }
+
+if (!categoryId) {
+  return (
+    <div className="flex justify-center items-center min-h-[200px] p-6">
+      <div className="w-full max-w-lg p-6 text-center bg-white border-l-4 border-blue-500 shadow-xl rounded-xl">
+        <div className="flex flex-col items-center gap-4">
+          <AiOutlineUser className="w-12 h-12 text-blue-500" />
+          <h2 className="text-2xl font-bold text-blue-600">
+            User Not Subscribed
+          </h2>
+          <p className="text-sm text-gray-700 md:text-base">
+            This user has not subscribed yet. After subscribing, the CurrentBox will be available here.
+          </p>
+ 
+        </div>
+      </div>
+    </div>
+  );
+}
 
   const {
     data: boxData,

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Card, Switch, Row, Col, Spin, Alert, message } from "antd";
+import { Card, Switch, Row, Col, Spin, message } from "antd";
 import {
   useGetSubscriptionByUserIdQuery,
   useCancelSubscriptionMutation,
   useCreateSubscriptionMutation,
 } from "../../redux/features/subscription/subscriptionApi";
+import { AiOutlineExclamationCircle } from "react-icons/ai";
 
 const SubscriptionTab = ({ userId }) => {
   const { data, error, isLoading } = useGetSubscriptionByUserIdQuery(userId, {
@@ -32,7 +33,6 @@ const SubscriptionTab = ({ userId }) => {
 
     try {
       if (checked) {
-        // Activate subscription - send required fields
         await createSubscription({
           userId,
           type: subscriptonInfo?.type || "defaultType",
@@ -41,7 +41,6 @@ const SubscriptionTab = ({ userId }) => {
         }).unwrap();
         message.success("Subscription activated successfully");
       } else {
-        // Cancel subscription - send required fields for patch
         if (subscriptionPurchases?._id) {
           await cancelSubscription({
             id: subscriptionPurchases._id,
@@ -63,19 +62,54 @@ const SubscriptionTab = ({ userId }) => {
     }
   };
 
-  if (!userId)
-    return <Alert type="warning" message="User ID is missing" />;
-  if (isLoading) return <Spin tip="Loading subscription..." />;
-  if (error)
+  // Card-style messages
+  if (!userId) {
     return (
-      <Alert
-        type="error"
-        message="Error fetching subscription"
-        description={JSON.stringify(error)}
-      />
+      <div className="flex justify-center p-6">
+        <div className="w-full max-w-md p-6 text-center border-l-4 border-yellow-400 rounded-lg shadow-lg bg-yellow-50">
+          <h2 className="mb-2 text-lg font-semibold text-yellow-600">Warning</h2>
+          <p className="text-gray-700">User ID is missing</p>
+        </div>
+      </div>
     );
-  if (!subscriptionPurchases)
-    return <Alert type="info" message="No subscription found." />;
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center p-10">
+        <Spin size="large" tip="Loading subscription..." />
+      </div>
+    );
+  }
+
+if (error || !subscriptionPurchases) {
+  return (
+    <div className="flex justify-center items-center min-h-[200px] p-6">
+      <div className="w-full max-w-lg p-6 text-center bg-white border-l-4 border-red-500 shadow-xl rounded-xl">
+        <div className="flex flex-col items-center gap-4">
+          <AiOutlineExclamationCircle className="w-12 h-12 text-red-500" />
+          <h2 className="text-2xl font-bold text-red-600">
+            No Subscription
+          </h2>
+          <p className="text-sm text-gray-700 md:text-base">
+            This user has not subscribed yet. They will gain access to subscription features once they subscribe.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+  if (!subscriptionPurchases) {
+    return (
+      <div className="flex justify-center p-6">
+        <div className="w-full max-w-md p-6 text-center border-l-4 border-blue-400 rounded-lg shadow-lg bg-blue-50">
+          <h2 className="mb-2 text-lg font-semibold text-blue-600">Info</h2>
+          <p className="text-gray-700">No subscription found.</p>
+        </div>
+      </div>
+    );
+  }
 
   const loading = isCancelling || isCreating;
 
@@ -97,16 +131,11 @@ const SubscriptionTab = ({ userId }) => {
         </p>
 
         <ul className="text-sm text-center text-gray-700">
-            {/* <li className="py-1">
-              Stripe Price ID: {subscriptionPurchases.subscription?.priceId}
-            </li>
-            <li className="py-1">User ID: {subscriptionPurchases.user}</li> */}
           <li className="py-1">
             Payment Status: {subscriptionPurchases.paymentStatus}
           </li>
         </ul>
 
-        {/* Features List */}
         {Array.isArray(subscriptonInfo?.features) && (
           <div className="flex flex-col items-center justify-center mt-4">
             <h4 className="mb-2 font-semibold text-center text-gray-800 text-md">

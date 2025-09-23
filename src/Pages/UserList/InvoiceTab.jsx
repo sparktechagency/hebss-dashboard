@@ -88,17 +88,37 @@ const InvoiceTab = ({ userId }) => {
     );
   }
 
-  if (isError) {
-    return (
-      <Alert
-        message="Error loading invoice"
-        type="error"
-        description={
-          error?.data?.message || error?.error || "Failed to fetch invoice data."
-        }
-      />
-    );
-  }
+ if (isError) {
+  return (
+    <div className="flex justify-center items-center min-h-[200px] p-6">
+      <div className="w-full max-w-lg p-6 text-center bg-white border-l-4 border-red-500 shadow-xl rounded-xl">
+        <div className="flex flex-col items-center gap-4">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-12 h-12 text-red-500"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 8v4m0 4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"
+            />
+          </svg>
+          <h2 className="text-2xl font-bold text-red-600">
+            Invoice Not Available
+          </h2>
+          <p className="text-sm text-gray-700 md:text-base">
+            The invoice for this user is not created at this moment. Please wait for the next month.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
   if (!invoice || !invoice?.user || !invoice?.box?.books) {
     return <Alert message="No valid invoice found." type="info" />;
