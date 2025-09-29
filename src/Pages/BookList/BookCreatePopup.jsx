@@ -168,7 +168,7 @@ const AddBookPopup = ({ visible, onClose }) => {
       centered
       className="p-4"
     >
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-2">
         <Upload beforeUpload={() => false} onChange={handleUpload} maxCount={1}>
           <Button icon={<UploadOutlined />}>Upload Cover Image</Button>
         </Upload>
@@ -180,7 +180,7 @@ const AddBookPopup = ({ visible, onClose }) => {
           />
         )}
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
           {/* Category Select */}
           <div>
             <label className="block text-sm font-medium">Category</label>
@@ -336,15 +336,15 @@ const AddBookPopup = ({ visible, onClose }) => {
               onChange={(value) => handleSelectChange("level", value)}
               placeholder="Select Level"
             >
-              <Select.Option value="beginner">Beginner</Select.Option>
-              <Select.Option value="intermediate">Intermediate</Select.Option>
-              <Select.Option value="advanced">Advanced</Select.Option>
+              <Select.Option className='w-full' value="beginner">Beginner</Select.Option>
+              <Select.Option className='w-full' value="intermediate">Intermediate</Select.Option>
+              <Select.Option className='w-full' value="advanced">Advanced</Select.Option>
             </Select>
           </div>
 
           {/* Weight */}
           <div className="col-span-2">
-            <label className="block text-sm font-medium">Weight (kg)</label>
+            <label className="block text-sm font-medium">Weight (Compound)</label>
             <Input
               name="weight"
               value={bookData.weight}
@@ -426,7 +426,7 @@ const AddBookPopup = ({ visible, onClose }) => {
         <Button
           type="primary"
           block
-          className="mt-4 bg-[#F37975] border-none"
+          className="mt-2 bg-[#F37975] border-none"
           onClick={handleSave}
           loading={isLoading}
         >

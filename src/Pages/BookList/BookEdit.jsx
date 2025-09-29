@@ -121,27 +121,79 @@ const EditBookPopup = ({ visible, onClose, book, onSave }) => {
     }
   };
 
-  const handleSave = async () => {
+
+// const handleSave = async () => {
+//   try {
+//     await updateBook({
+//       bookId: book._id,   
+//       updatedBook: {
+//         category: bookData.category || book.category?._id,
+//         grade: bookData.grade,
+//         bookCollection: bookData.bookCollection,
+//         name: bookData.name,
+//         author: bookData.author,
+//         description: bookData.summary || book.description,
+//         priceAmount: parseFloat(bookData.price.amount) || 0,
+//         quantity: Number(bookData.quantity) || 0,
+//         bookLanguage: bookData.bookLanguage,
+//         level: bookData.level,
+//         weight: parseFloat(bookData.weight) || 0,
+//       },
+//     }).unwrap();
+
+//     message.success("Book updated successfully!");
+//     onClose();
+//   } catch (err) {
+//     console.error("Update failed:", err);
+//     message.error("Failed to update book.");
+//   }
+// };
+
+
+const handleSave = async () => {
+  try {
+    // Build payload
     const updatedBook = {
-      ...bookData,
-      price: {
-        amount: parseFloat(bookData.price.amount) || 0,
-        currency: "USD",
-      },
-      discountAmount: parseFloat(bookData.discountPrice) || 0,
-      quantity: Number(bookData.quantity) || 0,
+      category: bookData.category || book.category?._id,
+      grade: bookData.grade,
+      bookCollection: bookData.bookCollection,
+      name: bookData.name,
+      author: bookData.author,
+      description: bookData.summary || book.description,
+      priceAmount: parseFloat(bookData.price.amount) || 0,
+      bookLanguage: bookData.bookLanguage,
+      level: bookData.level,
+      weight: parseFloat(bookData.weight) || 0,
     };
 
-    try {
-      // Call onSave passed from parent, passing _id
-      await onSave({ ...updatedBook, _id: book._id });
-      message.success("Book updated successfully!");
-      onClose();
-    } catch (err) {
-      console.error(err);
-      message.error("Failed to update book.");
+    // ✅ Only include quantity if user actually provided it
+    if (bookData.quantity !== "" && bookData.quantity !== null && bookData.quantity !== undefined) {
+      updatedBook.quantity = Number(bookData.quantity);
     }
-  };
+
+    // ✅ Only include discount fields if discount is enabled
+    if (bookData.discountAvailable) {
+      updatedBook.discountAvailable = true;
+      updatedBook.discountType = bookData.discountType;
+      updatedBook.discountPrice = Number(bookData.discountPrice) || 0;
+    } else {
+      updatedBook.discountAvailable = false;
+    }
+
+    // ✅ Make update call
+    await updateBook({
+      bookId: book._id,
+      updatedBook,
+    }).unwrap();
+
+    message.success("Book updated successfully!");
+    onClose();
+  } catch (err) {
+    console.error("Update failed:", err);
+    message.error("Failed to update book.");
+  }
+};
+
 
   return (
     <Modal
@@ -220,9 +272,9 @@ const EditBookPopup = ({ visible, onClose, book, onSave }) => {
               placeholder="Select Grade"
               allowClear
             >
-              <Select.Option value="1st">1st</Select.Option>
-              <Select.Option value="2nd">2nd</Select.Option>
-              <Select.Option value="3rd">3rd</Select.Option>
+              <Select.Option className='w-full' value="1st">1st</Select.Option>
+              <Select.Option className='w-full' value="2nd">2nd</Select.Option>
+              <Select.Option  className='w-full' value="3rd">3rd</Select.Option>
             </Select>
           </div>
 
@@ -324,13 +376,13 @@ const EditBookPopup = ({ visible, onClose, book, onSave }) => {
           )}
         </div>
 
-        <Button
+        {/* <Button
           type="default"
           onClick={handleReset}
           style={{ marginBottom: 8 }}
         >
           Reset Changes
-        </Button>
+        </Button> */}
 
         <Button
           type="primary"
