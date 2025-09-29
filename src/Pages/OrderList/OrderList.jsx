@@ -24,7 +24,7 @@ const { Search } = Input;
 const OrderList = () => {
   const [searchText, setSearchText] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10); // matches API
+  const [pageSize] = useState(10); 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [currentOrder, setCurrentOrder] = useState(null);
 

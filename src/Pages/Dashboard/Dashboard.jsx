@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Card, Modal, Spin, Alert } from "antd";
+import { Card, Modal, Spin, Alert, Table, Button, Row, Col, Divider } from "antd";
+import { EyeOutlined } from "@ant-design/icons";
+import { AllImages } from "../../assets/image/AllImages";
+import { useGetAllOrdersQuery } from "../../redux/features/order/orderApi";
 import {
   BarChart,
   Bar,
@@ -10,45 +13,38 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { Eye } from "lucide-react";
-import { useGetAllOrdersQuery } from "../../redux/features/order/orderApi";
+
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
 const Dashboard = () => {
-  const {
-    data: ordersResponse = {},
-    isLoading: ordersLoading, // Renamed to avoid conflict
-    error: ordersError, // Renamed to avoid conflict
-  } = useGetAllOrdersQuery();
-  const fetchedOrders = ordersResponse?.data || [];
+  // Fetch latest 5 orders
+  const { data: ordersResponse = {}, isLoading: ordersLoading, error: ordersError } = useGetAllOrdersQuery({
+    page: 1,
+    limit: 5,
+  });
 
-  // State for the selected year for charts
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear()); 
+  const latestOrders = ordersResponse?.data || [];
 
-  // States for fetch API data
+  // State for selected year for charts
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+
+  // States for dashboard metrics
   const [dashboardData, setDashboardData] = useState(null);
   const [dashLoading, setDashLoading] = useState(true);
   const [dashError, setDashError] = useState(null);
 
-  const [orders, setOrders] = useState([]); // This state is for recent orders table
+  // Modal state
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [activeOrder, setActiveOrder] = useState(null);
+  const [currentOrder, setCurrentOrder] = useState(null);
 
-  // Effect to fetch dashboard metrics using the Fetch API
+  // Fetch dashboard metrics
   useEffect(() => {
     const fetchDashboardMetrics = async () => {
       setDashLoading(true);
-      setDashError(null); // Clear previous errors
-
+      setDashError(null);
       try {
-        const response = await fetch(
-           `${API_BASE_URL}/dashboard-matrix/retrieve?year=${selectedYear}`
-        );
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
+        const response = await fetch(`${API_BASE_URL}/dashboard-matrix/retrieve?year=${selectedYear}`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
         setDashboardData(data);
       } catch (error) {
@@ -60,103 +56,143 @@ const Dashboard = () => {
     };
 
     fetchDashboardMetrics();
-  }, [selectedYear]); // Re-run effect when selectedYear changes
+  }, [selectedYear]);
 
-  // Update orders state on fetch
-  useEffect(() => {
-    setOrders(fetchedOrders);
-  }, [fetchedOrders]);
-
-  // Prepare chart data from dashboardData
-  // Safely destructure dashboardData.data if the API wraps it
-  const {
-    totalUsers = 0,
-    totalOrders = 0,
-    totalProducts = 0,
-    totalBlogs = 0,
-    chartData = {},
-  } = dashboardData?.data || {}; 
+  // Prepare chart data
+  const { totalUsers = 0, totalOrders = 0, totalProducts = 0, totalBlogs = 0, chartData = {} } =
+    dashboardData?.data || {};
 
   const { months = [], userStatistics = [], orderStatistics = [] } = chartData;
 
-  // Map chart data for recharts
-  const ordersData = months.map((month, i) => ({
-    name: month,
-    orders: orderStatistics[i] || 0,
-  }));
+  const ordersData = months.map((month, i) => ({ name: month, orders: orderStatistics[i] || 0 }));
+  const userGrowthData = months.map((month, i) => ({ name: month, users: userStatistics[i] || 0 }));
 
-  const userGrowthData = months.map((month, i) => ({
-    name: month,
-    users: userStatistics[i] || 0,
-  }));
+  const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
 
+  // Handlers
+  const handleYearChange = (e) => setSelectedYear(Number(e.target.value));
   const handleEyeClick = (order) => {
-    setActiveOrder(order);
+    setCurrentOrder(order);
     setIsModalVisible(true);
   };
-
   const handleModalClose = () => {
     setIsModalVisible(false);
-    setActiveOrder(null);
+    setCurrentOrder(null);
   };
 
-  // Handler for year selection change
-  const handleYearChange = (event) => {
-    setSelectedYear(Number(event.target.value));
+  const getStatusColor = (status) => {
+    switch ((status || "").toLowerCase()) {
+      case "ordered":
+        return "gold";
+      case "ongoing":
+        return "blue";
+      case "delivered":
+        return "green";
+      case "pending":
+        return "orange";
+      default:
+        return "gray";
+    }
   };
 
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 5 }, (_, i) => currentYear - i); 
+  const columns = [
+    { title: "Order ID", dataIndex: "orderId", key: "orderId" },
+    { title: "Name", dataIndex: ["user", "name"], key: "name" },
+    { title: "Email", dataIndex: ["user", "email"], key: "email" },
+    {
+      title: "Address",
+      key: "address",
+      render: (_, record) =>
+        `${record.shippingAddress?.street || ""}, ${record.shippingAddress?.city || ""}, ${record.shippingAddress?.state || ""}, ${record.shippingAddress?.zipCode || ""}`,
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      render: (status) => <span style={{ color: getStatusColor(status), fontWeight: "bold" }}>{status}</span>,
+    },
+    {
+      title: "Action",
+      key: "action",
+      render: (_, record) => <Button type="link" icon={<EyeOutlined />} onClick={() => handleEyeClick(record)} />,
+    },
+  ];
 
-  // Sort latest orders for table
-  const latestOrders = [...orders]
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-    .slice(0, 4);
+  const modalContent = currentOrder && (
+    <div>
+      <Row gutter={16}>
+        <Col span={12}>
+          <p>
+            <strong>Order ID:</strong> {currentOrder.orderId}
+          </p>
+          <p>
+            <strong>Order Date:</strong> {new Date(currentOrder.createdAt).toLocaleString()}
+          </p>
+        </Col>
+        <Col span={12}>
+          <p>
+            <strong>Status:</strong>{" "}
+            <span style={{ color: getStatusColor(currentOrder.status), fontWeight: "bold" }}>
+              {currentOrder.status}
+            </span>
+          </p>
+        </Col>
+      </Row>
+      <Divider />
+      <Row gutter={16}>
+        <Col span={12}>
+          <p><strong>Name:</strong> {currentOrder.user?.name}</p>
+          <p><strong>Email:</strong> {currentOrder.user?.email}</p>
+          <p><strong>Phone:</strong> {currentOrder.user?.phone || "Not provided"}</p>
+        </Col>
+        <Col span={12}>
+          <p>
+            <strong>Address:</strong>{" "}
+            {`${currentOrder.shippingAddress?.street}, ${currentOrder.shippingAddress?.city}, ${currentOrder.shippingAddress?.state}, ${currentOrder.shippingAddress?.zipCode}`}
+          </p>
+        </Col>
+      </Row>
+      <Divider />
+      <p><strong>Items:</strong></p>
+      <ul>
+        {currentOrder.items?.map((item, i) => (
+          <li key={i} className="flex items-center mb-2">
+            <img src={AllImages.book} alt={item.name} className="w-12 h-12 mr-4" />
+            <span>{item.name || "Item"} - ${item.price?.amount || 0}</span>
+          </li>
+        ))}
+      </ul>
+      <p><strong>Total Price:</strong> ${currentOrder.total?.amount || 0}</p>
+    </div>
+  );
 
-  // Loading or error handling for dashboard data (charts and stats)
-  if (dashLoading) return <Spin tip="Loading dashboard data..." />;
-  if (dashError)
-    return <Alert message={`Failed to load dashboard data: ${dashError.message}`} type="error" />;
+  if (dashLoading || ordersLoading) return <Spin tip="Loading..." size="large" />;
+  if (dashError) return <Alert message={`Dashboard Error: ${dashError.message}`} type="error" />;
+  if (ordersError) return <Alert message={`Orders Error: ${ordersError.message}`} type="error" />;
 
   return (
-    <div className="min-h-screen p-4 bg-gray-100 sm:p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold sm:text-2xl">Dashboard</h1>
-      </div>
+    <div className="min-h-screen p-6 bg-gray-100">
+      <h2 className="mb-6 text-3xl font-bold">Dashboard</h2>
 
-      {/* Stats Section */}
+      {/* Stats */}
       <div className="grid grid-cols-1 gap-4 mb-6 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          { title: "Total Users", value: totalUsers },
-          { title: "Total Orders", value: totalOrders },
-          { title: "Total Products", value: totalProducts },
-          { title: "Total Blogs", value: totalBlogs },
-        ].map(({ title, value }, i) => (
-          <Card key={i} className="p-4 bg-white shadow-md">
-            <h3 className="text-sm text-gray-600">{title}</h3>
-            <p className="text-xl font-bold sm:text-2xl">{value}</p>
-            <span className="text-xs text-green-600">
-              {["8.5% Up", "1.3% Up", "4.3% Down", "1.8% Up"][i]}
-            </span>
-          </Card>
-        ))}
+        {[{ title: "Total Users", value: totalUsers }, { title: "Total Orders", value: totalOrders }, { title: "Total Products", value: totalProducts }, { title: "Total Blogs", value: totalBlogs }].map(
+          ({ title, value }, i) => (
+            <Card key={i} className="p-4 bg-white shadow-md">
+              <h3 className="text-sm text-gray-600">{title}</h3>
+              <p className="text-xl font-bold sm:text-2xl">{value}</p>
+            </Card>
+          )
+        )}
       </div>
 
-      {/* Charts Section */}
-      <div className="flex flex-wrap gap-x-4">
-        {/* Orders Bar Chart */}
-        <div
-          className="p-4 mb-6 bg-white shadow-md sm:p-6 rounded-xl flex-1 min-w-[300px]"
-          style={{ border: "1px solid #ddd" }}
-        >
-          <div className="flex justify-between">
-            <h2 className="mb-4 text-lg font-semibold">Orders (Monthly)</h2>
-            <select onChange={handleYearChange} value={selectedYear}>
-              {years.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
+      {/* Charts */}
+      <div className="flex flex-wrap gap-4 mb-6">
+        <div className="p-4 bg-white shadow-md rounded-xl flex-1 min-w-[300px]">
+          <div className="flex justify-between mb-2">
+            <h3 className="text-lg font-semibold">Orders (Monthly)</h3>
+            <select value={selectedYear} onChange={handleYearChange}>
+              {years.map((year) => <option key={year} value={year}>{year}</option>)}
             </select>
           </div>
           <ResponsiveContainer width="100%" height={250}>
@@ -169,19 +205,11 @@ const Dashboard = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* User Growth Line Chart */}
-        <div
-          className="p-4 mb-6 bg-white shadow-md sm:p-6 rounded-xl flex-1 min-w-[300px]"
-          style={{ border: "1px solid #ddd" }}
-        >
-          <div className="flex justify-between">
-            <h2 className="mb-4 text-lg font-semibold">User Growth (Monthly)</h2>
-            <select onChange={handleYearChange} value={selectedYear}>
-              {years.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
+        <div className="p-4 bg-white shadow-md rounded-xl flex-1 min-w-[300px]">
+          <div className="flex justify-between mb-2">
+            <h3 className="text-lg font-semibold">User Growth (Monthly)</h3>
+            <select value={selectedYear} onChange={handleYearChange}>
+              {years.map((year) => <option key={year} value={year}>{year}</option>)}
             </select>
           </div>
           <ResponsiveContainer width="100%" height={250}>
@@ -189,77 +217,22 @@ const Dashboard = () => {
               <XAxis dataKey="name" tick={{ fontSize: 12 }} />
               <YAxis tick={{ fontSize: 12 }} />
               <Tooltip />
-              <Line
-                type="monotone"
-                dataKey="users"
-                stroke="#f87171"
-                strokeWidth={2}
-                fill="#fecaca"
-              />
+              <Line type="monotone" dataKey="users" stroke="#f87171" strokeWidth={2} fill="#fecaca" />
             </LineChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      {/* Recent Orders Table (unchanged from your original, still uses RTK Query) */}
-      <div className="p-4 overflow-x-auto bg-white shadow-md sm:p-6 rounded-xl">
-        <h2 className="mb-4 text-lg font-semibold">Recent Orders</h2>
-
-        {ordersLoading && <Spin tip="Loading orders..." />}
-        {ordersError && <Alert message="Error loading orders" type="error" />}
-
-        {!ordersLoading && !ordersError && (
-          <table className="w-full min-w-[600px] border-collapse">
-            <thead>
-              <tr className="border-b">
-                {[
-                  "ID",
-                  "Name",
-                  "Address",
-                  "Date",
-                  "Payment Status",
-                  "Details",
-                ].map((col, i) => (
-                  <th key={i} className="p-2 text-sm text-left text-gray-600">
-                    {col}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {latestOrders.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="p-4 text-center text-gray-500">
-                    No orders found.
-                  </td>
-                </tr>
-              ) : (
-                latestOrders.map((order, i) => (
-                  <tr key={order.id || i} className="border-b">
-                    <td className="p-2 text-sm">{order.orderId}</td>
-                    <td className="p-2 text-sm">
-                      {order.name || order.user?.name}
-                    </td>
-                    <td className="p-2 text-sm">
-                      {order.address || order.shippingAddress?.street}
-                    </td>
-                    <td className="p-2 text-sm">
-                      {order.date ||
-                        new Date(order.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="p-2 text-sm">{order.paymentInfo?.status}</td>
-                    <td className="p-2 text-sm">
-                      <Eye
-                        className="w-5 h-5 text-gray-500 cursor-pointer"
-                        onClick={() => handleEyeClick(order)}
-                      />
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        )}
+      {/* Latest Orders Table */}
+      <div className="p-5 bg-white rounded shadow-md">
+        <h3 className="mb-4 text-xl font-semibold">Latest 5 Orders</h3>
+        <Table
+          columns={columns}
+          dataSource={latestOrders}
+          pagination={false}
+          rowKey="_id"
+          scroll={{ x: "max-content" }}
+        />
       </div>
 
       {/* Modal */}
@@ -269,30 +242,7 @@ const Dashboard = () => {
         onCancel={handleModalClose}
         footer={null}
       >
-        {activeOrder && (
-          <div>
-            <p>
-              <strong>Order ID:</strong> {activeOrder.orderId}
-            </p>
-            <p>
-              <strong>Name:</strong>
-              {activeOrder.name || activeOrder.user?.name}
-            </p>
-            <p>
-              <strong>Address:</strong>
-              {activeOrder.address || activeOrder.shippingAddress?.street}
-            </p>
-            <p>
-              <strong>Date:</strong>
-              {activeOrder.date ||
-                new Date(activeOrder.createdAt).toLocaleDateString()}
-            </p>
-            <p>
-              <strong>Type:</strong>
-              {activeOrder.type || activeOrder.items?.[0]?.type || "N/A"}
-            </p>
-          </div>
-        )}
+        {modalContent}
       </Modal>
     </div>
   );
