@@ -324,7 +324,6 @@ const AddBookPopup = ({ visible, onClose }) => {
             >
               <Select.Option value="arabic">Arabic</Select.Option>
               <Select.Option value="english">English</Select.Option>
-              <Select.Option value="french">French</Select.Option>
             </Select>
           </div>
 

@@ -28,8 +28,6 @@ const EditBookPopup = ({ visible, onClose, book }) => {
   const { data: grades } = useGetAllGradeQuery();
   const { data: collections } = useGetAllCollectionQuery();
 
-  console.log(collections)
-
   const categoryList = Array.isArray(categories?.data)
     ? categories.data
     : Array.isArray(categories?.categories)
@@ -103,6 +101,18 @@ const EditBookPopup = ({ visible, onClose, book }) => {
     setBookData((prev) => ({ ...prev, discountType: e.target.value }));
   };
 
+  const handleBookInputChange = (e) => {
+  const { name, value } = e.target;
+
+  if (name === "quantity") {
+    // Keep only numeric characters
+    const numericValue = value === "" ? "" : value.replace(/\D/g, "");
+    setBookData((prev) => ({ ...prev, [name]: numericValue }));
+  } else {
+    setBookData((prev) => ({ ...prev, [name]: value }));
+  }
+};
+
   const handleSave = async () => {
     if (!bookData.category || !bookData.grade || !bookData.bookCollection) {
       message.error("Please select Category, Grade, and Collection");
@@ -120,13 +130,10 @@ const EditBookPopup = ({ visible, onClose, book }) => {
       bookLanguage: bookData.bookLanguage || bookData.language,
       level: bookData.level,
       weight: parseFloat(bookData.weight) || 0,
+      // quantity: Number(bookData.quantity) || 0,
     };
 
-    // if (bookData.quantity !== "" && bookData.quantity !== book.quantity) {
-    //   updatedBook.quantity = Number(bookData.quantity);
-    // }
-
-      if (String(bookData.quantity) !== String(book.quantity)) {
+    if (String(bookData.quantity) !== String(book.quantity)) {
       updatedBook.quantity = Number(bookData.quantity);
     }
 
@@ -202,7 +209,7 @@ const EditBookPopup = ({ visible, onClose, book }) => {
             <Input
               name="quantity"
               value={bookData.quantity}
-              onChange={handleInputChange}
+              onChange={handleBookInputChange}
             />
           </div>
 
@@ -277,7 +284,6 @@ const EditBookPopup = ({ visible, onClose, book }) => {
             >
               <Select.Option value="English">English</Select.Option>
               <Select.Option value="Arabic">Arabic</Select.Option>
-              <Select.Option value="French">French</Select.Option>
             </Select>
           </div>
 
@@ -320,7 +326,9 @@ const EditBookPopup = ({ visible, onClose, book }) => {
 
           {/* Discount */}
           <div className="col-span-2">
-            <label className="block text-sm font-medium">Discount Available</label>
+            <label className="block text-sm font-medium">
+              Discount Available
+            </label>
             <Switch
               checked={bookData.discountAvailable || false}
               onChange={handleDiscountToggle}
@@ -330,7 +338,9 @@ const EditBookPopup = ({ visible, onClose, book }) => {
           {bookData.discountAvailable && (
             <div className="flex col-span-2 gap-4">
               <div className="w-1/2">
-                <label className="block text-sm font-medium">Discount Type</label>
+                <label className="block text-sm font-medium">
+                  Discount Type
+                </label>
                 <Radio.Group
                   value={bookData.discountType}
                   onChange={handleDiscountTypeChange}
@@ -342,7 +352,9 @@ const EditBookPopup = ({ visible, onClose, book }) => {
               </div>
 
               <div className="w-1/2">
-                <label className="block text-sm font-medium">Discount Price</label>
+                <label className="block text-sm font-medium">
+                  Discount Price
+                </label>
                 <Input
                   name="discountPrice"
                   type="number"
