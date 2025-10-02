@@ -122,37 +122,9 @@ const EditBookPopup = ({ visible, onClose, book, onSave }) => {
   };
 
 
-// const handleSave = async () => {
-//   try {
-//     await updateBook({
-//       bookId: book._id,   
-//       updatedBook: {
-//         category: bookData.category || book.category?._id,
-//         grade: bookData.grade,
-//         bookCollection: bookData.bookCollection,
-//         name: bookData.name,
-//         author: bookData.author,
-//         description: bookData.summary || book.description,
-//         priceAmount: parseFloat(bookData.price.amount) || 0,
-//         quantity: Number(bookData.quantity) || 0,
-//         bookLanguage: bookData.bookLanguage,
-//         level: bookData.level,
-//         weight: parseFloat(bookData.weight) || 0,
-//       },
-//     }).unwrap();
-
-//     message.success("Book updated successfully!");
-//     onClose();
-//   } catch (err) {
-//     console.error("Update failed:", err);
-//     message.error("Failed to update book.");
-//   }
-// };
-
 
 const handleSave = async () => {
   try {
-    // Build payload
     const updatedBook = {
       category: bookData.category || book.category?._id,
       grade: bookData.grade,
@@ -166,8 +138,8 @@ const handleSave = async () => {
       weight: parseFloat(bookData.weight) || 0,
     };
 
-    // ✅ Only include quantity if user actually provided it
-    if (bookData.quantity !== "" && bookData.quantity !== null && bookData.quantity !== undefined) {
+    // ✅ Only include quantity if it was actually changed
+    if (String(bookData.quantity) !== String(book.quantity)) {
       updatedBook.quantity = Number(bookData.quantity);
     }
 
@@ -180,7 +152,6 @@ const handleSave = async () => {
       updatedBook.discountAvailable = false;
     }
 
-    // ✅ Make update call
     await updateBook({
       bookId: book._id,
       updatedBook,
@@ -193,6 +164,7 @@ const handleSave = async () => {
     message.error("Failed to update book.");
   }
 };
+
 
 
   return (
