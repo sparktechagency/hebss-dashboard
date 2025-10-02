@@ -10,29 +10,69 @@ import {
   message,
 } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
-import { useUpdateBookMutation } from "../../redux/features/products/productsApi";
+import {
+  useUpdateBookMutation,
+  useGetAllCategoryQuery,
+  useGetAllGradeQuery,
+  useGetAllCollectionQuery,
+} from "../../redux/features/products/productsApi";
 
-const EditBookPopup = ({ visible, onClose, book, onSave }) => {
+const EditBookPopup = ({ visible, onClose, book }) => {
   const [bookData, setBookData] = useState(null);
   const initializedRef = useRef(false);
+
   const [updateBook, { isLoading }] = useUpdateBookMutation();
 
+  // Fetch all categories, grades, and collections
+  const { data: categories } = useGetAllCategoryQuery();
+  const { data: grades } = useGetAllGradeQuery();
+  const { data: collections } = useGetAllCollectionQuery();
+
+  console.log(collections)
+
+  const categoryList = Array.isArray(categories?.data)
+    ? categories.data
+    : Array.isArray(categories?.categories)
+    ? categories.categories
+    : Array.isArray(categories)
+    ? categories
+    : [];
+
+  const gradeList = Array.isArray(grades?.data)
+    ? grades.data
+    : Array.isArray(grades?.grades)
+    ? grades.grades
+    : Array.isArray(grades)
+    ? grades
+    : [];
+
+  const collectionList = Array.isArray(collections?.data)
+    ? collections.data
+    : Array.isArray(collections?.collections)
+    ? collections.collections
+    : Array.isArray(collections)
+    ? collections
+    : [];
+
+  // Initialize bookData when modal opens
   useEffect(() => {
     if (visible && book && !initializedRef.current) {
       setBookData({
         ...book,
-        price: book.price || { amount: "", currency: "USD" },
-        discountPrice:
-          book.discountAmount !== undefined
-            ? String(book.discountAmount)
-            : "",
+        category: book.category?._id || "",
+        grade: book.grade?._id || "",
+        bookCollection: book.bookCollection?._id || "",
+        priceAmount: book.price?.amount || "",
+        discountPrice: book.discountAmount ? String(book.discountAmount) : "",
         quantity:
           book.quantity !== undefined && book.quantity !== null
             ? String(book.quantity)
             : "",
+        cover: book.cover || null,
       });
       initializedRef.current = true;
     }
+
     if (!visible) {
       initializedRef.current = false;
       setBookData(null);
@@ -41,109 +81,55 @@ const EditBookPopup = ({ visible, onClose, book, onSave }) => {
 
   if (!bookData) return null;
 
+  // Handlers
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setBookData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handlePriceChange = (e) => {
-    const amount = e.target.value;
-    setBookData((prev) => ({
-      ...prev,
-      price: {
-        ...prev.price,
-        amount,
-      },
-    }));
-  };
-
-  const handleQuantityChange = (e) => {
-    const val = e.target.value;
-    if (val === "" || /^\d+$/.test(val)) {
-      setBookData((prev) => ({
-        ...prev,
-        quantity: val,
-      }));
-    }
+    setBookData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSelectChange = (name, value) => {
-    setBookData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleDiscountToggle = (checked) => {
-    setBookData((prev) => ({
-      ...prev,
-      discountAvailable: checked,
-    }));
-  };
-
-  const handleDiscountTypeChange = (e) => {
-    setBookData((prev) => ({
-      ...prev,
-      discountType: e.target.value,
-    }));
-  };
-
-  const handleDiscountPriceChange = (e) => {
-    setBookData((prev) => ({
-      ...prev,
-      discountPrice: e.target.value,
-    }));
+    setBookData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleUpload = ({ file }) => {
-    setBookData((prev) => ({
-      ...prev,
-      cover: file,
-    }));
+    setBookData((prev) => ({ ...prev, cover: file.originFileObj || file }));
   };
 
-  const handleReset = () => {
-    if (book) {
-      setBookData({
-        ...book,
-        price: book.price || { amount: "", currency: "USD" },
-        discountPrice:
-          book.discountAmount !== undefined ? String(book.discountAmount) : "",
-        quantity:
-          book.quantity !== undefined && book.quantity !== null
-            ? String(book.quantity)
-            : "",
-        cover: book.cover || null,
-      });
+  const handleDiscountToggle = (checked) => {
+    setBookData((prev) => ({ ...prev, discountAvailable: checked }));
+  };
+
+  const handleDiscountTypeChange = (e) => {
+    setBookData((prev) => ({ ...prev, discountType: e.target.value }));
+  };
+
+  const handleSave = async () => {
+    if (!bookData.category || !bookData.grade || !bookData.bookCollection) {
+      message.error("Please select Category, Grade, and Collection");
+      return;
     }
-  };
 
-
-
-const handleSave = async () => {
-  try {
     const updatedBook = {
-      category: bookData.category || book.category?._id,
+      category: bookData.category,
       grade: bookData.grade,
       bookCollection: bookData.bookCollection,
       name: bookData.name,
       author: bookData.author,
       description: bookData.summary || book.description,
-      priceAmount: parseFloat(bookData.price.amount) || 0,
-      bookLanguage: bookData.bookLanguage,
+      priceAmount: parseFloat(bookData.priceAmount) || 0,
+      bookLanguage: bookData.bookLanguage || bookData.language,
       level: bookData.level,
       weight: parseFloat(bookData.weight) || 0,
     };
 
-    // ✅ Only include quantity if it was actually changed
-    if (String(bookData.quantity) !== String(book.quantity)) {
+    // if (bookData.quantity !== "" && bookData.quantity !== book.quantity) {
+    //   updatedBook.quantity = Number(bookData.quantity);
+    // }
+
+      if (String(bookData.quantity) !== String(book.quantity)) {
       updatedBook.quantity = Number(bookData.quantity);
     }
 
-    // ✅ Only include discount fields if discount is enabled
     if (bookData.discountAvailable) {
       updatedBook.discountAvailable = true;
       updatedBook.discountType = bookData.discountType;
@@ -152,30 +138,28 @@ const handleSave = async () => {
       updatedBook.discountAvailable = false;
     }
 
-    await updateBook({
-      bookId: book._id,
-      updatedBook,
-    }).unwrap();
+    try {
+      await updateBook({
+        bookId: book._id,
+        updatedBook,
+      }).unwrap();
 
-    message.success("Book updated successfully!");
-    onClose();
-  } catch (err) {
-    console.error("Update failed:", err);
-    message.error("Failed to update book.");
-  }
-};
-
-
+      message.success("Book updated successfully!");
+      onClose();
+    } catch (err) {
+      console.error("Update failed:", err);
+      message.error("Failed to update book.");
+    }
+  };
 
   return (
     <Modal
-      title="Edit Product"
+      title="Edit Book"
       open={visible}
       onCancel={onClose}
       footer={null}
       centered
       className="p-4"
-      destroyOnClose={false}
     >
       <div className="flex flex-col gap-4">
         <Upload beforeUpload={() => false} onChange={handleUpload} maxCount={1}>
@@ -190,52 +174,56 @@ const handleSave = async () => {
         )}
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {/* Product Name */}
           <div>
             <label className="block text-sm font-medium">Product Name</label>
             <Input
               name="name"
               value={bookData.name || ""}
               onChange={handleInputChange}
-              placeholder="Enter product name"
             />
           </div>
 
+          {/* Price */}
           <div>
-            <label className="block text-sm font-medium">Product Price</label>
+            <label className="block text-sm font-medium">Price</label>
             <Input
               name="priceAmount"
               type="number"
               step="0.01"
-              value={bookData.price.amount || ""}
-              onChange={handlePriceChange}
-              placeholder="$0.00"
+              value={bookData.priceAmount || ""}
+              onChange={handleInputChange}
             />
           </div>
 
+          {/* Quantity */}
           <div>
             <label className="block text-sm font-medium">Quantity</label>
             <Input
               name="quantity"
               value={bookData.quantity}
-              onChange={handleQuantityChange}
-              placeholder="Enter quantity"
+              onChange={handleInputChange}
             />
           </div>
 
+          {/* Category */}
           <div>
-            <label className="block text-sm font-medium">Reader Age</label>
+            <label className="block text-sm font-medium">Category</label>
             <Select
-              value={bookData.readerAge || undefined}
-              onChange={(value) => handleSelectChange("readerAge", value)}
-              placeholder="Select Age Group"
+              value={bookData.category || undefined}
+              onChange={(value) => handleSelectChange("category", value)}
+              placeholder="Select Category"
               allowClear
             >
-              <Select.Option value="0-3">0-3</Select.Option>
-              <Select.Option value="4-7">4-7</Select.Option>
-              <Select.Option value="8+">8+</Select.Option>
+              {categoryList.map((cat) => (
+                <Select.Option key={cat._id} value={cat._id}>
+                  {cat.title}
+                </Select.Option>
+              ))}
             </Select>
           </div>
 
+          {/* Grade */}
           <div>
             <label className="block text-sm font-medium">Reader Grade</label>
             <Select
@@ -244,42 +232,48 @@ const handleSave = async () => {
               placeholder="Select Grade"
               allowClear
             >
-              <Select.Option className='w-full' value="1st">1st</Select.Option>
-              <Select.Option className='w-full' value="2nd">2nd</Select.Option>
-              <Select.Option  className='w-full' value="3rd">3rd</Select.Option>
+              {gradeList.map((grade) => (
+                <Select.Option key={grade._id} value={grade._id}>
+                  {grade.title}
+                </Select.Option>
+              ))}
             </Select>
           </div>
 
+          {/* Collection */}
           <div>
             <label className="block text-sm font-medium">Collections</label>
             <Select
-              value={bookData.bookCollection || bookData.collection || undefined}
+              value={bookData.bookCollection || undefined}
               onChange={(value) => handleSelectChange("bookCollection", value)}
               placeholder="Select Collection"
               allowClear
             >
-              <Select.Option value="Fiction">Fiction</Select.Option>
-              <Select.Option value="Non-Fiction">Non-Fiction</Select.Option>
+              {collectionList.map((col) => (
+                <Select.Option key={col._id} value={col._id}>
+                  {col.title}
+                </Select.Option>
+              ))}
             </Select>
           </div>
 
+          {/* Author */}
           <div>
             <label className="block text-sm font-medium">Author</label>
             <Input
               name="author"
               value={bookData.author || ""}
               onChange={handleInputChange}
-              placeholder="Enter author's name"
             />
           </div>
 
+          {/* Language */}
           <div>
             <label className="block text-sm font-medium">Language</label>
             <Select
               value={bookData.bookLanguage || bookData.language || undefined}
               onChange={(value) => handleSelectChange("bookLanguage", value)}
               placeholder="Select Language"
-              allowClear
             >
               <Select.Option value="English">English</Select.Option>
               <Select.Option value="Arabic">Arabic</Select.Option>
@@ -287,13 +281,13 @@ const handleSave = async () => {
             </Select>
           </div>
 
+          {/* Level */}
           <div>
             <label className="block text-sm font-medium">Level</label>
             <Select
               value={bookData.level || undefined}
               onChange={(value) => handleSelectChange("level", value)}
               placeholder="Select Level"
-              allowClear
             >
               <Select.Option value="Beginner">Beginner</Select.Option>
               <Select.Option value="Intermediate">Intermediate</Select.Option>
@@ -301,18 +295,30 @@ const handleSave = async () => {
             </Select>
           </div>
 
+          {/* Weight */}
+          <div>
+            <label className="block text-sm font-medium">Weight</label>
+            <Input
+              name="weight"
+              type="number"
+              step="0.01"
+              value={bookData.weight || ""}
+              onChange={handleInputChange}
+            />
+          </div>
+
+          {/* Summary */}
           <div className="col-span-2">
             <label className="block text-sm font-medium">Summary</label>
             <Input.TextArea
               name="summary"
               value={bookData.summary || ""}
               onChange={handleInputChange}
-              placeholder="Enter a brief summary of the book"
               rows={4}
-              className="w-full"
             />
           </div>
 
+          {/* Discount */}
           <div className="col-span-2">
             <label className="block text-sm font-medium">Discount Available</label>
             <Switch
@@ -339,22 +345,14 @@ const handleSave = async () => {
                 <label className="block text-sm font-medium">Discount Price</label>
                 <Input
                   name="discountPrice"
+                  type="number"
                   value={bookData.discountPrice || ""}
-                  onChange={handleDiscountPriceChange}
-                  placeholder="$0.00"
+                  onChange={handleInputChange}
                 />
               </div>
             </div>
           )}
         </div>
-
-        {/* <Button
-          type="default"
-          onClick={handleReset}
-          style={{ marginBottom: 8 }}
-        >
-          Reset Changes
-        </Button> */}
 
         <Button
           type="primary"
