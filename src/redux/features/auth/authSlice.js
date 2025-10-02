@@ -6,6 +6,7 @@ const initialState = {
   isAuthenticated: !!localStorage.getItem("token"),
   verificationEmail: localStorage.getItem("verificationEmail") || null,
 };
+
 const authSlice = createSlice({
   name: "auth",
   initialState,
@@ -31,9 +32,16 @@ const authSlice = createSlice({
       state.verificationEmail = action.payload;
       localStorage.setItem("verificationEmail", action.payload);
     },
+
+    // ✅ NEW: update user info (e.g., after profile update)
+    updateUser: (state, action) => {
+      state.user = { ...state.user, ...action.payload };
+      localStorage.setItem("user", JSON.stringify(state.user));
+    },
   },
 });
 
-export const { setCredentials, logout, setVerificationEmail } =
+export const { setCredentials, logout, setVerificationEmail, updateUser } =
   authSlice.actions;
+
 export default authSlice.reducer;

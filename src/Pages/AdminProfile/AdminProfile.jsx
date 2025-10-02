@@ -1,8 +1,10 @@
 import React, { useState } from "react";
-import { Tabs, Button, Input, Form, message, Typography, ConfigProvider } from "antd";
+import { Tabs, Button, Input, Form, message, Typography } from "antd";
 import { FaRegEye, FaRegEyeSlash } from "react-icons/fa";
 import { useChangePasswordMutation } from "../../redux/features/auth/authApi";
-import { useSelector } from "react-redux";
+import { useUpdateAdminMutation } from "../../redux/features/admin/adminApi";
+import { useSelector, useDispatch } from "react-redux";
+import { updateUser } from "../../redux/features/auth/authSlice"; // ✅ import
 
 const { TabPane } = Tabs;
 
@@ -11,57 +13,61 @@ const AdminProfile = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Use the change password mutation
-  const [changePassword] = useChangePasswordMutation();  
+  // ✅ hooks
+  const [changePassword] = useChangePasswordMutation();
+  const [updateAdmin] = useUpdateAdminMutation();
+  const dispatch = useDispatch();
 
+  // ✅ Get user data from Redux authSlice
+  const user = useSelector((state) => state.auth.user);
 
-
-    // ✅ Get user data from Redux authSlice
-    const user = useSelector((state) => state.auth.user);
-   
-  
-
-  
-    // ✅adminProfile based on logged-in user
-    const adminProfile = {
-      name: user?.fullName ,
-      email: user?.email ,
-      role: "admin", // If you store role in user, replace "admin" with user.role
-    };
-  
-
-  const onFinish = (values) => {
-    setLoading(true);
-    setTimeout(() => {
-      message.success("Profile updated successfully!");
-      setLoading(false);
-    }, 1000);
+  // ✅ Initial form values
+  const adminProfile = {
+    fullName: user?.fullName,
+    email: user?.email,
   };
 
-  // Handle password change form submission
+  // ✅ Handle profile update
+  const onFinish = async (values) => {
+    setLoading(true);
+    try {
+      const id = user?._id; // Ensure your auth slice has _id
+      const payload = { fullName: values.fullName };
+
+      const res = await updateAdmin({ id, data: payload }).unwrap();
+      message.success(res.message || "Profile updated successfully!");
+
+      // ✅ update Redux + localStorage immediately
+      dispatch(updateUser({ fullName: values.fullName }));
+    } catch (err) {
+      console.error("Update error:", err);
+      message.error(err?.data?.message || "Failed to update profile.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ Handle password change
   const onPasswordChange = async (values) => {
     if (values.newPassword === "") {
-      message.error("New password can not be empty!");
+      message.error("New password cannot be empty!");
       return;
     }
 
     setLoading(true);
-
-    // Prepare the data to send to the backend
     const data = {
-      email: values.email, 
+      email: values.email,
       oldPassword: values.oldPassword,
       newPassword: values.newPassword,
     };
 
     try {
-      // Call the API to change the password
-      const response = await changePassword(data).unwrap();  // Using .unwrap() to get the response directly
-      message.success("Password changed successfully!");
-      setLoading(false);
+      const response = await changePassword(data).unwrap();
+      message.success(response.message || "Password changed successfully!");
     } catch (error) {
       console.error("Error changing password:", error);
-      message.error("Failed to change password. Please try again.");
+      message.error(error?.data?.message || "Failed to change password.");
+    } finally {
       setLoading(false);
     }
   };
@@ -72,7 +78,9 @@ const AdminProfile = () => {
         <Tabs defaultActiveKey="1" size="large" className="space-y-6">
           {/* Profile Tab */}
           <TabPane tab="Update Profile" key="1">
-            <Typography.Title level={3} className="mb-6 text-center">Update Profile</Typography.Title>
+            <Typography.Title level={3} className="mb-6 text-center">
+              Update Profile
+            </Typography.Title>
 
             <Form
               name="updateProfile"
@@ -81,11 +89,11 @@ const AdminProfile = () => {
               layout="vertical"
               className="space-y-4"
             >
-              <Form.Item label="Full Name" name="name">
-                <Input placeholder="Enter your name" />
+              <Form.Item label="Full Name" name="fullName">
+                <Input placeholder="Enter your full name" />
               </Form.Item>
               <Form.Item label="Email" name="email">
-                <Input placeholder="Enter your email" />
+                <Input placeholder="Enter your email" disabled />
               </Form.Item>
               <div className="flex justify-end">
                 <Button type="primary" htmlType="submit" loading={loading}>
@@ -93,12 +101,13 @@ const AdminProfile = () => {
                 </Button>
               </div>
             </Form>
-
           </TabPane>
 
           {/* Change Password Tab */}
           <TabPane tab="Change Password" key="2">
-            <Typography.Title level={3} className="mb-6 text-center">Change Password</Typography.Title>
+            <Typography.Title level={3} className="mb-6 text-center">
+              Change Password
+            </Typography.Title>
             <Form
               name="changePassword"
               onFinish={onPasswordChange}
@@ -107,10 +116,7 @@ const AdminProfile = () => {
             >
               {/* Email Field */}
               <Form.Item label="Email" name="email" required>
-                <Input
-                  type="email"
-                  placeholder="Enter your email"
-                />
+                <Input type="email" placeholder="Enter your email" />
               </Form.Item>
 
               {/* Old Password Field */}
