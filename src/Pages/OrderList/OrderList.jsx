@@ -35,6 +35,8 @@ const OrderList = () => {
     limit: pageSize,
   });
 
+  console.log(response)
+
   const [updateOrderStatus, { isLoading: isUpdating }] = useUpdateOrderStatusMutation();
 
   const orders = response?.data || [];
@@ -82,6 +84,12 @@ const OrderList = () => {
     { title: "Order ID", dataIndex: "orderId", key: "orderId" },
     { title: "Name", dataIndex: ["user", "name"], key: "name" },
     { title: "Email", dataIndex: ["user", "email"], key: "email" },
+     {
+    title: "Order Date",
+    dataIndex: "createdAt",
+    key: "createdAt",
+    render: (createdAt) => new Date(createdAt).toLocaleString(), // ✅ nicely formatted date/time
+  },
     {
       title: "Address",
       key: "address",
