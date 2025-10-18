@@ -17,7 +17,7 @@ const UserDetails = () => {
   // Fetch user data by ID
   const { data: userData, error: userError, isLoading: userLoading } = useGetSingleUserQuery(userId);
 
-  console.log("User data :", userData)
+  // console.log("User data :", userData)
 
   if (userLoading) {
     return (

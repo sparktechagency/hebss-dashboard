@@ -34,6 +34,8 @@ if (!categoryId) {
     isLoading: boxLoading,
   } = useGetBoxByCategoryIdQuery(categoryId);
 
+  console.log(boxData)
+
   if (boxLoading) {
     return <Spin tip="Loading boxes by category..." />;
   }

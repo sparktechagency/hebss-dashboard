@@ -10,7 +10,7 @@ const UserList = () => {
   const [searchText, setSearchText] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
-  const pageSize = 8;
+  const pageSize = 20;
 
   // Fetch data using the API hook
   const { data, isLoading, error } = useGetAllUserQuery();
@@ -21,30 +21,42 @@ const UserList = () => {
   const totalPage = data?.meta?.totalPage || 1;
   const totalUsers = data?.meta?.totalData || 0;
 
-
   const columns = [
-    { title: "Name", dataIndex: "firstName", key: "firstName" },
-    { title: "Email", dataIndex: "email", key: "email" },
-    { title: "Phone", dataIndex: "phone", key: "phone" },
+  { title: "Name", dataIndex: "firstName", key: "firstName" },
+  { title: "Email", dataIndex: "email", key: "email" },
     {
-      title: "Role",
-      dataIndex: "role",
-      key: "role",
-      responsive: ["md"],
-    },
-    {
-      title: "View",
-      key: "view",
-      render: (_, record) => (
-        <button
-          className="px-2 py-1 text-white bg-red-500 rounded"
-          onClick={() => navigate(`/user-details/${record._id}`)}
-        >
-          <EyeOutlined />
-        </button>
-      ),
-    },
-  ];
+    title: "Date",
+    key: "createdAt",
+    render: (record) =>
+      new Date(record.createdAt).toLocaleDateString("en-GB"), 
+  },
+  {
+    title: "Subscription",
+    key: "subscription",
+    render: (record) => (
+      <span
+        className={`px-2 py-1 rounded text-white ${
+          record.subscription?.isActive ? "bg-green-500" : "bg-gray-400"
+        }`}
+      >
+        {record.subscription?.isActive ? "Active" : "Inactive"}
+      </span>
+    ),
+  },
+  {
+    title: "View",
+    key: "view",
+    render: (_, record) => (
+      <button
+        className="px-2 py-1 text-white bg-red-500 rounded"
+        onClick={() => navigate(`/user-details/${record._id}`)}
+      >
+        <EyeOutlined />
+      </button>
+    ),
+  },
+];
+
 
   // Filter based on search text (adjusted filtering logic)
   const filteredData = users.filter((item) =>
@@ -57,7 +69,6 @@ const UserList = () => {
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
-
 
   return (
     <div className="min-h-screen p-6 bg-gray-100">
