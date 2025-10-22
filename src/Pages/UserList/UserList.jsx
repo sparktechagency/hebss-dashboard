@@ -24,6 +24,11 @@ const UserList = () => {
   const columns = [
   { title: "Name", dataIndex: "firstName", key: "firstName" },
   { title: "Email", dataIndex: "email", key: "email" },
+   {
+  title: "Box Category",
+  key: "category",
+  render: (record) => record.survey?.category?.title || "N/A",
+},
     {
     title: "Date",
     key: "createdAt",
