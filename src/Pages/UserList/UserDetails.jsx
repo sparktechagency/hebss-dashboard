@@ -32,7 +32,7 @@ const UserDetails = () => {
   }
 
   const user = userData?.data;
-  // console.log(user)
+
 
   if (!user) {
     return <Alert message="User not found" type="warning" />;
