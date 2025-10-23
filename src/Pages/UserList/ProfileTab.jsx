@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useUpdateUserByIdMutation } from "../../redux/features/user/userApi";
 
 const ProfileTab = ({ user, isEditMode, setIsEditMode }) => {
+    console.log("user data------------->",user)
   const [formData, setFormData] = useState({
     firstName: "N/A",
     lastName: "N/A",

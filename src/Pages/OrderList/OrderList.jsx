@@ -20,6 +20,18 @@ import {
 } from "../../redux/features/order/orderApi";
 
 const { Search } = Input;
+function formatDate(d) {
+  if (!d) return '';
+  try {
+    return new Date(d).toLocaleDateString('en-US', {
+      year: '2-digit',
+      month: '2-digit',
+      day: '2-digit',
+    });
+  } catch {
+    return '';
+  }
+}
 
 const OrderList = () => {
   const [searchText, setSearchText] = useState("");
@@ -57,6 +69,7 @@ const OrderList = () => {
     }
   };
 
+
   const showOrderDetails = (order) => {
     setCurrentOrder(order);
     setIsModalVisible(true);
@@ -88,7 +101,7 @@ const OrderList = () => {
     title: "Order Date",
     dataIndex: "createdAt",
     key: "createdAt",
-    render: (createdAt) => new Date(createdAt).toLocaleString(), // ✅ nicely formatted date/time
+    render: (createdAt) => formatDate(createdAt), 
   },
     {
       title: "Address",

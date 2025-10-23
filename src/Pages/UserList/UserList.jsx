@@ -33,7 +33,7 @@ const UserList = () => {
     title: "Date",
     key: "createdAt",
     render: (record) =>
-      new Date(record.createdAt).toLocaleDateString("en-GB"), 
+      new Date(record.createdAt).toLocaleDateString(), 
   },
   {
     title: "Subscription",
