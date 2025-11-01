@@ -33,35 +33,18 @@ const InvoiceTab = ({ userId }) => {
 
   const invoice = data?.data;
 
-  console.log(invoice)
-
+  // State to track which books are skipped
   const [skipState, setSkipState] = useState({});
+  // State to track the quantity for books that are not skipped
   const [quantities, setQuantities] = useState({});
 
-  const baseCost = Number(invoice?.dueAmount) || 0;
+  // Assuming dueAmount is the unit price for each book
+  // If your API provides a price per book (e.g., book.price), use that instead of baseCost.
+  const baseCost = Number(invoice?.dueAmount) || 0; 
 
-  const invoiceData = useMemo(() => {
-    if (!invoice?.box?.books) return [];
-    return invoice.box.books.map((book) => {
-      const skipped = skipState[book._id] ?? true;
-      const quantity = skipped ? 0 : quantities[book._id] || 0;
-      const total = quantity * baseCost;
-      return {
-        key: book._id,
-        invoiceId: invoice.invoiceId,
-        description: book.name,
-        skip: skipped,
-        quantity,
-        baseCost,
-        total,
-      };
-    });
-  }, [invoice?.box?.books, skipState, quantities, baseCost, invoice?.invoiceId]);
+  // --- FIX START ---
 
-  const totalAmount = useMemo(() => {
-    return invoiceData.reduce((acc, book) => acc + book.total, 0);
-  }, [invoiceData]);
-
+  // Initialize skipState and quantities from fetched invoice data (soldBooks)
   useEffect(() => {
     if (!invoice?.box?.books) return;
 
@@ -72,14 +55,51 @@ const InvoiceTab = ({ userId }) => {
       const soldBook = invoice.soldBooks?.find(
         (sb) => sb.bookId._id === book._id
       );
-      initialSkip[book._id] = !soldBook;
-      qty[book._id] = soldBook?.quantity || 1;
+      
+      // Determine initial skip state: not skipped if found in soldBooks
+      const isKept = !!soldBook;
+      initialSkip[book._id] = !isKept;
+      
+      // Initial quantity: use sold quantity, or 1 if kept, or 0 if skipped/not found
+      qty[book._id] = soldBook?.quantity || (isKept ? 1 : 0);
     });
 
     setSkipState(initialSkip);
     setQuantities(qty);
-  }, [invoice]);
+  }, [invoice]); // Re-run when the invoice data changes
 
+  // Recalculate invoice data whenever book list, skip state, or quantities change
+  const invoiceData = useMemo(() => {
+    if (!invoice?.box?.books) return [];
+    
+    return invoice.box.books.map((book) => {
+      const skipped = skipState[book._id] ?? true;
+      
+      // FIX: Only use quantity if the book is NOT skipped.
+      const quantity = !skipped ? (quantities[book._id] || 0) : 0;
+      
+      // FIX: Calculate total based on the quantity and baseCost (unit price)
+      const total = quantity * baseCost;
+      
+      return {
+        key: book._id,
+        invoiceId: invoice.invoiceId,
+        description: book.name,
+        skip: skipped,
+        quantity, // This is the calculated quantity (0 if skipped)
+        baseCost,
+        total,
+      };
+    });
+  }, [invoice?.box?.books, skipState, quantities, baseCost, invoice?.invoiceId]);
+
+  // Total amount recalculates automatically when invoiceData changes
+  const totalAmount = useMemo(() => {
+    return invoiceData.reduce((acc, book) => acc + book.total, 0);
+  }, [invoiceData]);
+
+  // --- FIX END ---
+  
   if (isLoading) {
     return (
       <div className="flex justify-center p-10">
@@ -88,36 +108,36 @@ const InvoiceTab = ({ userId }) => {
     );
   }
 
- if (isError) {
-  return (
-    <div className="flex justify-center items-center min-h-[200px] p-6">
-      <div className="w-full max-w-lg p-6 text-center bg-white border-l-4 border-red-500 shadow-xl rounded-xl">
-        <div className="flex flex-col items-center gap-4">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="w-12 h-12 text-red-500"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 8v4m0 4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"
-            />
-          </svg>
-          <h2 className="text-2xl font-bold text-red-600">
-            Invoice Not Available
-          </h2>
-          <p className="text-sm text-gray-700 md:text-base">
-            The invoice for this user is not created at this moment. Please wait for the next month.
-          </p>
+  if (isError) {
+    return (
+      <div className="flex justify-center items-center min-h-[200px] p-6">
+        <div className="w-full max-w-lg p-6 text-center bg-white border-l-4 border-red-500 shadow-xl rounded-xl">
+          <div className="flex flex-col items-center gap-4">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-12 h-12 text-red-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 8v4m0 4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"
+              />
+            </svg>
+            <h2 className="text-2xl font-bold text-red-600">
+              Invoice Not Available
+            </h2>
+            <p className="text-sm text-gray-700 md:text-base">
+              The invoice for this user is not created at this moment. Please wait for the next month.
+            </p>
+          </div>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
 
   if (!invoice || !invoice?.user || !invoice?.box?.books) {
@@ -126,10 +146,20 @@ const InvoiceTab = ({ userId }) => {
 
   const toggleSkip = (bookId, value) => {
     setSkipState((prev) => ({ ...prev, [bookId]: value }));
+    // When skipping, set the quantity to 0 in the quantities state for clarity, 
+    // although it's handled in useMemo as well.
+    if (value === true) { 
+        setQuantities((prev) => ({ ...prev, [bookId]: 0 }));
+    } else {
+        // When un-skipping, set quantity to 1 if it was 0, otherwise keep existing
+        setQuantities((prev) => ({ ...prev, [bookId]: prev[bookId] > 0 ? prev[bookId] : 1 }));
+    }
   };
 
   const updateQuantity = (bookId, value) => {
-    setQuantities((prev) => ({ ...prev, [bookId]: value }));
+    // Ensure value is at least 1 when updating quantity
+    const finalValue = Math.max(1, value || 1); 
+    setQuantities((prev) => ({ ...prev, [bookId]: finalValue }));
   };
 
   const columns = [
@@ -154,15 +184,16 @@ const InvoiceTab = ({ userId }) => {
     {
       title: "Quantity",
       dataIndex: "key",
-      render: (bookId) =>
+      // Use the 'quantity' from the memoized invoiceData for display
+      render: (bookId, record) =>
         !skipState[bookId] ? (
           <InputNumber
             min={1}
-            value={quantities[bookId]}
+            value={record.quantity} // Use record.quantity for display
             onChange={(val) => updateQuantity(bookId, val)}
           />
         ) : (
-          0
+          record.quantity // Will be 0 if skipped
         ),
     },
     {
@@ -222,155 +253,63 @@ const InvoiceTab = ({ userId }) => {
     }
   };
 
-  // const handleMakeShip = async () => {
-  //   try {
-
-  //     if (!token) return message.error("Unauthorized. Please login.");
-  //     const address = invoice.user?.address;
-  //     if (!address?.street1 || !address?.zip) {
-  //       return message.error("Incomplete address for shipping.");
-  //     }
-
-  //     const response = await fetch(
-  //       `${import.meta.env.VITE_BACKEND_URL}/order/get-shipping-rates`,
-  //       {
-  //         method: "POST",
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //           Authorization: `Bearer ${token}`,
-  //         },
-  //         body: JSON.stringify({
-  //           toAddress: address,
-  //           parcelDetails: {
-  //             weight: invoice.box?.weight?.toString() || "17.6",
-  //           },
-  //         }),
-  //       }
-  //     );
-
-  //     const result = await response.json();
-  //        console.log(result)
-  //     if (result.statusCode !== 200) throw new Error(result.message);
-
-  //     message.success(result.message);
-  //     refetch();
-  //     if (result.data?.trackingUrl) {
-  //       window.open(result.data.trackingUrl, "_blank");
-  //     }
-  //   } catch (err) {
-  //     console.error("Shipping Error:", err);
-  //     message.error(err.message);
-  //   }
-  // };
-
-  // const handleMakeShip = async () => {
-  //   try {
-  //     if (!token) return message.error("Unauthorized. Please login.");
-  //      console.log(message)
-  //     const address = invoice.user?.address;
-  //     if (!address?.street1 || !address?.zip) {
-  //       return message.error("Incomplete address for shipping.");
-  //     }
-
-  //     const response = await fetch(
-  //       `${import.meta.env.VITE_BACKEND_URL}/order/get-shipping-rates`,
-  //       {
-  //         method: "POST",
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //           Authorization: `Bearer ${token}`,
-  //         },
-  //         body: JSON.stringify({
-  //           toAddress: address,
-  //           parcelDetails: {
-  //             weight: invoice.box?.weight?.toString(),
-  //           },
-  //         }),
-  //       }
-  //     );
-
-  //     const result = await response.json();
-
-  //     console.log("Full backend response:", result); 
-
-  //     if (result.statusCode !== 200) {
-  //       throw new Error(result.message || "Unexpected error from backend");
-  //     }
-
-  //     message.success("Shipping created successfully!");
-
-  //     alert(JSON.stringify(result.data, null, 2));
-
-  //     refetch();
-
-  //     if (result.data?.trackingUrl) {
-  //       window.open(result.data.trackingUrl, "_blank");
-  //     }
-
-  //   } catch (err) {
-  //     console.error("Shipping Error:", err);
-  //     message.error(err.message || "Shipping failed.");
-  //   }
-  // };
-
   const handleMakeShip = async () => {
-  try {
-    if (!token) return message.error("Unauthorized. Please login.");
+    try {
+      if (!token) return message.error("Unauthorized. Please login.");
 
-    const address = {
-      name: invoice.user?.name || "Customer",
-      phone: invoice.user?.phone || "0000000000",
-      street1: invoice.user?.address?.street1,
-      city: invoice.user?.address?.city,
-      state: invoice.user?.address?.state,
-      zip: invoice.user?.address?.zip,
-      country: invoice.user?.address?.country || "US",
-    };
+      const address = {
+        name: invoice.user?.name || "Customer",
+        phone: invoice.user?.phone || "0000000000",
+        street1: invoice.user?.address?.street1,
+        city: invoice.user?.address?.city,
+        state: invoice.user?.address?.state,
+        zip: invoice.user?.address?.zip,
+        country: invoice.user?.address?.country || "US",
+      };
 
-    if (!address.street1 || !address.zip) {
-      return message.error("Incomplete address for shipping.");
-    }
+      if (!address.street1 || !address.zip) {
+        return message.error("Incomplete address for shipping.");
+      }
 
-    const response = await fetch(
-      `${import.meta.env.VITE_BACKEND_URL}/order/get-shipping-rates`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          toAddress: address,
-          parcelDetails: {
-            weight: invoice.box?.weight?.toString() || "17.6",
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/order/get-shipping-rates`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
-        }),
+          body: JSON.stringify({
+            toAddress: address,
+            parcelDetails: {
+              weight: invoice.box?.weight?.toString() || "17.6",
+            },
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      console.log("📦 Full backend response:", result);
+
+      alert(JSON.stringify(result, null, 2));
+
+      if (response.ok && result?.data) {
+        message.success("Shipping created successfully!");
+        refetch();
+
+        if (result.data?.trackingUrl) {
+          window.open(result.data.trackingUrl, "_blank");
+        }
+      } else {
+          throw new Error(result?.error || result?.message || "Shipping failed.");
       }
-    );
 
-    const result = await response.json();
-
-    console.log("📦 Full backend response:", result);
-
-    alert(JSON.stringify(result, null, 2));
-
-    if (response.ok && result?.data) {
-      message.success("Shipping created successfully!");
-      refetch();
-
-      if (result.data?.trackingUrl) {
-        window.open(result.data.trackingUrl, "_blank");
-      }
-    } else {
-        throw new Error(result?.error || result?.message || "Shipping failed.");
+    } catch (err) {
+      console.error("Shipping Error:", err);
+      message.error(err.message || "Shipping failed.");
     }
-
-  } catch (err) {
-    console.error("Shipping Error:", err);
-    message.error(err.message || "Shipping failed.");
-  }
-};
-
+  };
 
 
   const getpaid = async () => {
