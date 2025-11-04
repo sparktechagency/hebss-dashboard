@@ -1,9 +1,4 @@
-import {
-  useState,
-  useEffect,
-  useMemo,
-  useRef,
-} from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import {
   Table,
   Button,
@@ -30,8 +25,7 @@ const InvoiceTab = ({ userId }) => {
   const { data, isLoading, isError, error, refetch } =
     useGetCurrentInvoiceByUserIdQuery(userId);
 
-    console.log(data)
-
+  console.log(data);
 
   const printRef = useRef();
 
@@ -44,7 +38,7 @@ const InvoiceTab = ({ userId }) => {
 
   // Assuming dueAmount is the unit price for each book
   // If your API provides a price per book (e.g., book.price), use that instead of baseCost.
-  const baseCost = Number(invoice?.dueAmount) || 0; 
+  const baseCost = Number(invoice?.dueAmount) || 0;
 
   // --- FIX START ---
 
@@ -59,11 +53,11 @@ const InvoiceTab = ({ userId }) => {
       const soldBook = invoice.soldBooks?.find(
         (sb) => sb.bookId._id === book._id
       );
-      
+
       // Determine initial skip state: not skipped if found in soldBooks
       const isKept = !!soldBook;
       initialSkip[book._id] = !isKept;
-      
+
       // Initial quantity: use sold quantity, or 1 if kept, or 0 if skipped/not found
       qty[book._id] = soldBook?.quantity || (isKept ? 1 : 0);
     });
@@ -75,17 +69,17 @@ const InvoiceTab = ({ userId }) => {
   // Recalculate invoice data whenever book list, skip state, or quantities change
   const invoiceData = useMemo(() => {
     if (!invoice?.box?.books) return [];
-    
+
     return invoice.box.books.map((book) => {
       const skipped = skipState[book._id] ?? true;
-      
+
       // FIX: Only use quantity if the book is NOT skipped.
-      const quantity = !skipped ? (quantities[book._id] || 0) : 0;
+      const quantity = !skipped ? quantities[book._id] || 0 : 0;
       const baseCost = Number(book.price?.amount) || 0;
-      
+
       // FIX: Calculate total based on the quantity and baseCost (unit price)
       const total = quantity * baseCost;
-      
+
       return {
         key: book._id,
         invoiceId: invoice.invoiceId,
@@ -96,7 +90,13 @@ const InvoiceTab = ({ userId }) => {
         total,
       };
     });
-  }, [invoice?.box?.books, skipState, quantities, baseCost, invoice?.invoiceId]);
+  }, [
+    invoice?.box?.books,
+    skipState,
+    quantities,
+    baseCost,
+    invoice?.invoiceId,
+  ]);
 
   // Total amount recalculates automatically when invoiceData changes
   const totalAmount = useMemo(() => {
@@ -104,7 +104,7 @@ const InvoiceTab = ({ userId }) => {
   }, [invoiceData]);
 
   // --- FIX END ---
-  
+
   if (isLoading) {
     return (
       <div className="flex justify-center p-10">
@@ -136,7 +136,8 @@ const InvoiceTab = ({ userId }) => {
               Invoice Not Available
             </h2>
             <p className="text-sm text-gray-700 md:text-base">
-              The invoice for this user is not created at this moment. Please wait for the next month.
+              The invoice for this user is not created at this moment. Please
+              wait for the next month.
             </p>
           </div>
         </div>
@@ -144,26 +145,28 @@ const InvoiceTab = ({ userId }) => {
     );
   }
 
-
   if (!invoice || !invoice?.user || !invoice?.box?.books) {
     return <Alert message="No valid invoice found." type="info" />;
   }
 
   const toggleSkip = (bookId, value) => {
     setSkipState((prev) => ({ ...prev, [bookId]: value }));
-    // When skipping, set the quantity to 0 in the quantities state for clarity, 
+    // When skipping, set the quantity to 0 in the quantities state for clarity,
     // although it's handled in useMemo as well.
-    if (value === true) { 
-        setQuantities((prev) => ({ ...prev, [bookId]: 0 }));
+    if (value === true) {
+      setQuantities((prev) => ({ ...prev, [bookId]: 0 }));
     } else {
-        // When un-skipping, set quantity to 1 if it was 0, otherwise keep existing
-        setQuantities((prev) => ({ ...prev, [bookId]: prev[bookId] > 0 ? prev[bookId] : 1 }));
+      // When un-skipping, set quantity to 1 if it was 0, otherwise keep existing
+      setQuantities((prev) => ({
+        ...prev,
+        [bookId]: prev[bookId] > 0 ? prev[bookId] : 1,
+      }));
     }
   };
 
   const updateQuantity = (bookId, value) => {
     // Ensure value is at least 1 when updating quantity
-    const finalValue = Math.max(1, value || 1); 
+    const finalValue = Math.max(1, value || 1);
     setQuantities((prev) => ({ ...prev, [bookId]: finalValue }));
   };
 
@@ -307,15 +310,13 @@ const InvoiceTab = ({ userId }) => {
           window.open(result.data.trackingUrl, "_blank");
         }
       } else {
-          throw new Error(result?.error || result?.message || "Shipping failed.");
+        throw new Error(result?.error || result?.message || "Shipping failed.");
       }
-
     } catch (err) {
       console.error("Shipping Error:", err);
       message.error(err.message || "Shipping failed.");
     }
   };
-
 
   const getpaid = async () => {
     try {
@@ -329,7 +330,8 @@ const InvoiceTab = ({ userId }) => {
         }))
         .filter((book) => book.quantity > 0);
 
-      if (!soldBooks.length) return message.warning("No books selected for payment.");
+      if (!soldBooks.length)
+        return message.warning("No books selected for payment.");
 
       const payload = {
         soldBooks,
@@ -367,15 +369,23 @@ const InvoiceTab = ({ userId }) => {
         <Link to="/invoice-history">
           <Button
             type="default"
-            style={{ border: "none", backgroundColor: primaryColor, color: "white" }}
+            style={{
+              border: "none",
+              backgroundColor: primaryColor,
+              color: "white",
+            }}
           >
             Invoice History
           </Button>
         </Link>
-        <Link to="/book-list">
+        <Link to={`/edit-box/${invoice.box._id}`}>
           <Button
             type="default"
-            style={{ border: "none", backgroundColor: primaryColor, color: "white" }}
+            style={{
+              border: "none",
+              backgroundColor: primaryColor,
+              color: "white",
+            }}
           >
             Add New Book
           </Button>
@@ -393,7 +403,9 @@ const InvoiceTab = ({ userId }) => {
             <h2>Invoice To:</h2>
             <p>{invoice.user.email}</p>
             <p>{invoice.user.phone}</p>
-            <p>Invoice Date: {new Date(invoice.createdAt).toLocaleDateString()}</p>
+            <p>
+              Invoice Date: {new Date(invoice.createdAt).toLocaleDateString()}
+            </p>
             <p>Due Date: {new Date(invoice.updatedAt).toLocaleDateString()}</p>
           </div>
         </div>
@@ -425,7 +437,10 @@ const InvoiceTab = ({ userId }) => {
             </Button>
           </div>
           <p className="text-xl font-bold">
-            Total: <span style={{ color: primaryColor }}>${totalAmount.toFixed(2)}</span>
+            Total:{" "}
+            <span style={{ color: primaryColor }}>
+              ${totalAmount.toFixed(2)}
+            </span>
           </p>
         </div>
       </div>

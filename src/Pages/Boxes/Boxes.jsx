@@ -91,11 +91,11 @@ const BoxesList = () => {
         <h2 className="mb-4 text-xl font-bold">Summary</h2>
         <p>Total Boxes: {boxes.length}</p>
         <p>
-          Total Books:{" "}
+          Total Books:
           {boxes.reduce((sum, box) => sum + (box.books?.length || 0), 0)}
         </p>
         <p>
-          Total Price:{" "}
+          Total Price:
           {boxes.reduce((sum, box) => sum + (box.price?.amount || 0), 0)} USD
         </p>
       </div>
