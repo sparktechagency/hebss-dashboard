@@ -156,7 +156,6 @@ const InvoiceTab = ({ userId }) => {
     if (value === true) {
       setQuantities((prev) => ({ ...prev, [bookId]: 0 }));
     } else {
-      // When un-skipping, set quantity to 1 if it was 0, otherwise keep existing
       setQuantities((prev) => ({
         ...prev,
         [bookId]: prev[bookId] > 0 ? prev[bookId] : 1,
@@ -165,7 +164,6 @@ const InvoiceTab = ({ userId }) => {
   };
 
   const updateQuantity = (bookId, value) => {
-    // Ensure value is at least 1 when updating quantity
     const finalValue = Math.max(1, value || 1);
     setQuantities((prev) => ({ ...prev, [bookId]: finalValue }));
   };
@@ -192,16 +190,15 @@ const InvoiceTab = ({ userId }) => {
     {
       title: "Quantity",
       dataIndex: "key",
-      // Use the 'quantity' from the memoized invoiceData for display
       render: (bookId, record) =>
         !skipState[bookId] ? (
           <InputNumber
             min={1}
-            value={record.quantity} // Use record.quantity for display
+            value={record.quantity}
             onChange={(val) => updateQuantity(bookId, val)}
           />
         ) : (
-          record.quantity // Will be 0 if skipped
+          record.quantity
         ),
     },
     {
@@ -396,8 +393,8 @@ const InvoiceTab = ({ userId }) => {
         <div className="flex justify-between header-section">
           <div>
             <h2>Invoice From:</h2>
-            <p>Virginia Walker</p>
-            <p>9694 Krajick Locks Suite 635</p>
+            <p>12346 S KEELER AVE</p>
+            <p>ALSIP IL 60803</p>
           </div>
           <div>
             <h2>Invoice To:</h2>
