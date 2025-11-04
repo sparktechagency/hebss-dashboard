@@ -24,7 +24,7 @@ const EditBoxPage = () => {
   const navigate = useNavigate();
   const { boxId } = useParams();
 
-  const backendBaseUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+  const backendBaseUrl = import.meta.env.VITE_BACKEND_URL || "http://13.48.93.57:5003/v1";
 
   // Helper to fix and build full image URLs
   const getFullImageUrl = (imagePath) => {
@@ -70,38 +70,81 @@ const EditBoxPage = () => {
     allBooksData?.data &&
     Array.isArray(allBooksData.data);
 
+  // useEffect(() => {
+  //   if (!isReady) return;
+
+  //   const boxBookIds = boxData.data.books.map((id) => id.toString());
+
+  //   const formattedBooks = allBooksData.data.map((book) => {
+  //     const bookIdStr = book._id.toString();
+
+  //     // Use coverImage if exists, else image
+  //     const rawImage = book.coverImage || book.image || "";
+
+  //     return {
+  //       key: bookIdStr,
+  //       _id: bookIdStr,
+  //       name: book.name || book.title || "Untitled Book",
+  //       price:
+  //         typeof book.price === "object"
+  //           ? `${book.price.amount} ${book.price.currency}`
+  //           : book.price || "$0.00",
+  //       readerAge: book.readerAge || "All ages",
+  //       grade: book.grade || "N/A",
+  //       collection: book.collection || "N/A",
+  //       author: book.author || "Unknown",
+  //       language: book.language || "English",
+  //       level: book.level || "Beginner",
+  //       image: getFullImageUrl(rawImage),
+  //       isChecked: boxBookIds.includes(bookIdStr),
+  //     };
+  //   });
+
+  //   setBooks(formattedBooks);
+  // }, [boxData, allBooksData, isReady]);
+
+
   useEffect(() => {
-    if (!isReady) return;
+  if (!isReady) return;
 
-    const boxBookIds = boxData.data.books.map((id) => id.toString());
+  // ✅ Handle both array and single object responses
+  const box =
+    Array.isArray(boxData?.data)
+      ? boxData.data.find((b) => b._id === boxId)
+      : boxData?.data;
 
-    const formattedBooks = allBooksData.data.map((book) => {
-      const bookIdStr = book._id.toString();
+  if (!box) return;
 
-      // Use coverImage if exists, else image
-      const rawImage = book.coverImage || book.image || "";
+  const boxBookIds = (box.books || []).map(String);
 
-      return {
-        key: bookIdStr,
-        _id: bookIdStr,
-        name: book.name || book.title || "Untitled Book",
-        price:
-          typeof book.price === "object"
-            ? `${book.price.amount} ${book.price.currency}`
-            : book.price || "$0.00",
-        readerAge: book.readerAge || "All ages",
-        grade: book.grade || "N/A",
-        collection: book.collection || "N/A",
-        author: book.author || "Unknown",
-        language: book.language || "English",
-        level: book.level || "Beginner",
-        image: getFullImageUrl(rawImage),
-        isChecked: boxBookIds.includes(bookIdStr),
-      };
-    });
+  const formattedBooks = (allBooksData?.data || []).map((book) => {
+    const bookIdStr = book._id.toString();
+    const rawImage = book.coverImage || book.image || "";
 
-    setBooks(formattedBooks);
-  }, [boxData, allBooksData, isReady]);
+    return {
+      key: bookIdStr,
+      _id: bookIdStr,
+      name: book.name || book.title || "Untitled Book",
+      price:
+        typeof book.price === "object"
+          ? `${book.price.amount} ${book.price.currency}`
+          : book.price || "$0.00",
+      readerAge: book.readerAge || "All ages",
+      grade: book.grade || "N/A",
+      collection: book.collection || "N/A",
+      author: book.author || "Unknown",
+      language: book.language || "English",
+      level: book.level || "Beginner",
+      image: getFullImageUrl(rawImage),
+      isChecked: boxBookIds.includes(bookIdStr), 
+    };
+  });
+
+  setBooks(formattedBooks);
+}, [boxData, allBooksData, isReady, boxId]);
+
+
+
 
   const paginatedBooks = books.slice(
     (currentPage - 1) * pageSize,
@@ -116,39 +159,77 @@ const EditBoxPage = () => {
     );
   };
 
+  // const handleSaveChanges = async () => {
+  //   if (!boxData || !boxData.data) {
+  //     alert("Box data not loaded yet.");
+  //     return;
+  //   }
+
+  //   const selectedBooks = books.filter((book) => book.isChecked);
+  //   const selectedBookIds = selectedBooks.map((book) => book._id);
+
+  //   const currentBookIds = (boxData.data.books || []).map((id) => id.toString());
+
+  //   const addedBooks = selectedBookIds.filter((id) => !currentBookIds.includes(id));
+  //   const removedBooks = currentBookIds.filter((id) => !selectedBookIds.includes(id));
+
+  //   const payload = {
+  //     addedBooks,
+  //     removedBooks,
+  //   };
+
+  //   try {
+  //     const res = await updateBox({ _id: boxId, data: payload }).unwrap();
+  //     console.log("Update response:", res);
+  //     message.success("Box updated successfully!");
+  //     refetchBox();
+  //     navigate("/boxes"); 
+  //   } catch (err) {
+  //     console.error("Update error:", err);
+  //     message.success(
+  //       "Failed to update box: " +
+  //         (err?.data?.message || err.error || "Unknown error")
+  //     );
+  //   }
+  // };
+
   const handleSaveChanges = async () => {
-    if (!boxData || !boxData.data) {
-      alert("Box data not loaded yet.");
-      return;
-    }
+  if (!boxData || !boxData.data) {
+    message.warning("Box data not loaded yet.");
+    return;
+  }
 
-    const selectedBooks = books.filter((book) => book.isChecked);
-    const selectedBookIds = selectedBooks.map((book) => book._id);
+  const selectedBooks = books.filter((book) => book.isChecked);
+  const selectedBookIds = selectedBooks.map((book) => book._id);
 
-    const currentBookIds = (boxData.data.books || []).map((id) => id.toString());
+  const currentBookIds = (boxData.data.books || []).map((id) => id.toString());
 
-    const addedBooks = selectedBookIds.filter((id) => !currentBookIds.includes(id));
-    const removedBooks = currentBookIds.filter((id) => !selectedBookIds.includes(id));
+  const addedBooks = selectedBookIds.filter((id) => !currentBookIds.includes(id));
+  const removedBooks = currentBookIds.filter((id) => !selectedBookIds.includes(id));
+   const totalBookPrice = selectedBooks.reduce((sum, book) => {
+    const amount =
+      typeof book.price === "object"
+        ? parseFloat(book.price.amount || 0)
+        : parseFloat(book.price || 0);
+    return sum + amount;
+  }, 0);
 
-    const payload = {
-      addedBooks,
-      removedBooks,
-    };
+  const payload = { addedBooks, removedBooks ,books: selectedBookIds,
+    totalPrice: totalBookPrice,};
 
-    try {
-      const res = await updateBox({ _id: boxId, data: payload }).unwrap();
-      console.log("Update response:", res);
-      message.success("Box updated successfully!");
-      refetchBox();
-      navigate("/boxes"); 
-    } catch (err) {
-      console.error("Update error:", err);
-      message.success(
-        "Failed to update box: " +
-          (err?.data?.message || err.error || "Unknown error")
-      );
-    }
-  };
+  try {
+    const res = await updateBox({ _id: boxId, data: payload }).unwrap();
+    message.success("Box updated successfully!");
+
+    // ✅ No need to navigate — just refetch data
+    await refetchBox();
+    navigate("/boxes")
+  } catch (err) {
+    console.error("Update error:", err);
+    message.error("Failed to update box.");
+  }
+};
+
 
   if (!isReady || isUpdating) return <Spin size="large" className="p-10" />;
 

@@ -24,11 +24,16 @@ const UserList = () => {
   const columns = [
   { title: "Name", dataIndex: "firstName", key: "firstName" },
   { title: "Email", dataIndex: "email", key: "email" },
+   {
+  title: "Box Category",
+  key: "category",
+  render: (record) => record.survey?.category?.title || "N/A",
+},
     {
     title: "Date",
     key: "createdAt",
     render: (record) =>
-      new Date(record.createdAt).toLocaleDateString("en-GB"), 
+      new Date(record.createdAt).toLocaleDateString(), 
   },
   {
     title: "Subscription",

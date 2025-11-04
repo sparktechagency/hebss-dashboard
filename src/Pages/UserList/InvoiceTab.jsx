@@ -29,6 +29,10 @@ const InvoiceTab = ({ userId }) => {
   const token = useSelector((state) => state.auth.token);
   const { data, isLoading, isError, error, refetch } =
     useGetCurrentInvoiceByUserIdQuery(userId);
+
+    console.log(data)
+
+
   const printRef = useRef();
 
   const invoice = data?.data;
@@ -77,6 +81,7 @@ const InvoiceTab = ({ userId }) => {
       
       // FIX: Only use quantity if the book is NOT skipped.
       const quantity = !skipped ? (quantities[book._id] || 0) : 0;
+      const baseCost = Number(book.price?.amount) || 0;
       
       // FIX: Calculate total based on the quantity and baseCost (unit price)
       const total = quantity * baseCost;
