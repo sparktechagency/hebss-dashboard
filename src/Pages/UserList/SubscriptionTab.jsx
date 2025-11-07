@@ -9,7 +9,6 @@ import {
 import { AiOutlineExclamationCircle } from "react-icons/ai";
 
 const SubscriptionTab = ({ userId }) => {
-  // Fetch user's subscription data
   const {
     data,
     error,
