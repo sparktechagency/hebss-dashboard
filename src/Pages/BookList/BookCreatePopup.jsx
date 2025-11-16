@@ -18,6 +18,7 @@ import {
 } from "../../redux/features/products/productsApi";
 
 const AddBookPopup = ({ visible, onClose }) => {
+
   const [bookData, setBookData] = useState({
     name: "",
     price: "",
@@ -31,7 +32,7 @@ const AddBookPopup = ({ visible, onClose }) => {
     cover: null,
     summary: "",
     description: "",
-    discountAvailable: false,
+    discountAvailable: true,
     discountType: "",
     discountPrice: "",
     category: "", // store only ID string
@@ -103,6 +104,30 @@ const AddBookPopup = ({ visible, onClose }) => {
     setBookData({ ...bookData, discountType: e.target.value });
   };
 
+
+    const resetForm = () => {
+    setBookData({
+      name: "",
+      price: "",
+      readerAge: "",
+      grade: "",
+      quantity: "",
+      collections: "",
+      author: "",
+      language: "",
+      level: "",
+      cover: null,
+      summary: "",
+      description: "",
+      discountAvailable: true,
+      discountType: "",
+      discountPrice: "",
+      category: "",
+      weight: "",
+    });
+    setFileList([]); // reset Upload component
+  };
+
   const handleSave = async () => {
     if (!bookData.category || !bookData.grade || !bookData.collections) {
       message.error("Please select Category, Grade, and Collection");
@@ -150,6 +175,7 @@ const AddBookPopup = ({ visible, onClose }) => {
     try {
       await createBook(formData).unwrap();
       message.success("Book created successfully!");
+      resetForm(); 
       onClose();
     } catch (err) {
       message.error("Failed to create book. Please try again.");
@@ -169,7 +195,7 @@ const AddBookPopup = ({ visible, onClose }) => {
       className="p-4"
     >
       <div className="flex flex-col gap-2">
-        <Upload beforeUpload={() => false} onChange={handleUpload} maxCount={1}>
+        <Upload beforeUpload={() => false} onChange={handleUpload}  maxCount={1}>
           <Button icon={<UploadOutlined />}>Upload Cover Image</Button>
         </Upload>
         {bookData.cover && (

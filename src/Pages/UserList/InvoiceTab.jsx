@@ -145,8 +145,8 @@ const InvoiceTab = ({ userId }) => {
       if (!token) return messageApi.error("Unauthorized. Please login.");
 
       const address = {
-        name: invoice.user?.name || "Customer",
-        phone: invoice.user?.phone || "0000000000",
+        name: invoice.user?.name ,
+        phone: invoice.user?.phone ,
         street1: invoice.user?.address?.street1,
         city: invoice.user?.address?.city,
         state: invoice.user?.address?.state,
@@ -154,9 +154,9 @@ const InvoiceTab = ({ userId }) => {
         country: invoice.user?.address?.country || "US",
       };
 
-      // if (!address.street1 || !address.zip) {
-      //   return messageApi.warning("Incomplete address for shipping.");
-      // }
+      if (!address.street1 || !address.zip) {
+        return messageApi.warning("Incomplete address for shipping.");
+      }
 
       const response = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/order/get-shipping-rates`,
@@ -169,7 +169,7 @@ const InvoiceTab = ({ userId }) => {
           body: JSON.stringify({
             toAddress: address,
             parcelDetails: {
-              weight: invoice.box?.weight?.toString() || "17.6",
+              weight: invoice.box?.weight?.toString() ,
             },
           }),
         }
