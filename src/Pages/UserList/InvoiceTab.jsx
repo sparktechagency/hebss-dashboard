@@ -171,6 +171,7 @@ const InvoiceTab = ({ userId }) => {
             parcelDetails: {
               weight: invoice.box?.weight?.toString() ,
             },
+            forceAccept: true, 
           }),
         }
       );
