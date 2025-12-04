@@ -29,6 +29,11 @@ const BookList = () => {
 
   // Fetch data
   const { data, isLoading, isError } = useGetAllBooksQuery();
+
+  console.log("===============",
+
+    isError, data
+  )
   const [updateBook] = useUpdateBookMutation();
   const [createBook] = useCreateBookMutation();
   const [deleteBook] = useDeleteBookMutation();
@@ -147,7 +152,7 @@ const BookList = () => {
   if (isLoading || categoriesLoading) {
     return <Spin size="large" className="p-10" />;
   }
-  if (isError || categoriesError) {
+  if (  categoriesError) {
     return <div>Error loading books or categories.</div>;
   }
 
@@ -342,4 +347,4 @@ const BookList = () => {
   );
 };
 
-export default BookList;
+export default BookList;

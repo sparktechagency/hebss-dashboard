@@ -178,7 +178,7 @@ const AddBookPopup = ({ visible, onClose }) => {
       resetForm(); 
       onClose();
     } catch (err) {
-      message.error("Failed to create book. Please try again.");
+      // message.error("Failed to create book. Please try again.");
       console.error("Full error object:", err);
       if (err?.data) console.error("Backend response data:", err.data);
       if (err?.error) console.error("Backend error message:", err.error);
@@ -462,4 +462,4 @@ const AddBookPopup = ({ visible, onClose }) => {
   );
 };
 
-export default AddBookPopup;
+export default AddBookPopup;
